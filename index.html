@@ -3,50 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Maxwelivin 的學習工具箱</title>
+    <title>Maxwelivin 的數學/物理實驗室</title>
     <style>
-        body { font-family: sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 50px; }
+        body { font-family: "Helvetica Neue", Arial, sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 40px 20px; }
         .container { text-align: center; max-width: 600px; width: 100%; }
         h1 { color: #333; margin-bottom: 30px; }
         .card { 
             background: white; 
-            padding: 20px; 
+            padding: 25px; 
             margin-bottom: 20px; 
             border-radius: 15px; 
             box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
             transition: 0.3s;
             cursor: pointer;
             text-decoration: none;
-            display: block;
+            display: flex;
+            align-items: center;
+            text-align: left;
             color: #333;
         }
         .card:hover { transform: translateY(-5px); box-shadow: 0 8px 15px rgba(0,0,0,0.15); }
-        .icon { font-size: 40px; margin-bottom: 10px; display: block; }
-        .title { font-size: 20px; font-weight: bold; }
-        .desc { color: #666; font-size: 14px; margin-top: 5px; }
+        .icon { font-size: 30px; margin-right: 20px; }
+        .info .title { font-size: 18px; font-weight: bold; margin-bottom: 5px; }
+        .info .desc { color: #666; font-size: 14px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>🚀 Maxwelivin 的 AI 學習中心</h1>
+    <h1>🚀 Maxwelivin 的學習實驗室</h1>
 
-    <a href="english.html" class="card">
-        <span class="icon">🇬🇧</span>
-        <div class="title">AI 英文家教</div>
-        <div class="desc">國中英語閱讀測驗與對話練習</div>
+    <a href="Lens11.html" class="card">
+        <span class="icon">🔍</span>
+        <div class="info">
+            <div class="title">透鏡實驗 (Lens11)</div>
+            <div class="desc">光學透鏡模擬實驗</div>
+        </div>
     </a>
 
-    <a href="physics.html" class="card">
-        <span class="icon">⚛️</span>
-        <div class="title">物理觀念大師</div>
-        <div class="desc">針對光學、力學進行觀念釐清</div>
+    <a href="凸透鏡多點成像.html" class="card">
+        <span class="icon">🕯️</span>
+        <div class="info">
+            <div class="title">凸透鏡多點成像</div>
+            <div class="desc">觀察物體在凸透鏡下的多點成像原理</div>
+        </div>
     </a>
 
-    <a href="geo.html" class="card">
-        <span class="icon">🌏</span>
-        <div class="title">地理公民小幫手</div>
-        <div class="desc">台灣地理與公民知識問答</div>
+    <a href="針孔成像.html" class="card">
+        <span class="icon">🕳️</span>
+        <div class="info">
+            <div class="title">針孔成像實驗</div>
+            <div class="desc">光線直線傳播與針孔成像演示</div>
+        </div>
+    </a>
+
+    <a href="廣義角三角比V6.html" class="card">
+        <span class="icon">📐</span>
+        <div class="info">
+            <div class="title">廣義角三角比 V6</div>
+            <div class="desc">數學三角函數互動模擬</div>
+        </div>
     </a>
     
 </div>

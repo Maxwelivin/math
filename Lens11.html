@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>全方位光學實驗室 (Responsive Edition)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #e67e22;
+            --dark: #2c3e50;
+            --light: #fcf3cf;
+            --real: #2980b9;
+            --virtual: #8e44ad;
+            --toggle-bg: #dfe6e9;
+            --toggle-active: #3498db;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--light);
+            margin: 0;
+            padding: 20px;
+            color: #333;
+            box-sizing: border-box;
+        }
+
+        /* --- 佈局容器 (Layout Container) --- */
+        .main-container {
+            display: flex;
+            flex-direction: column; /* 手機預設：垂直排列 */
+            gap: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* --- 電腦版樣式 (Desktop Styles) --- */
+        @media (min-width: 960px) {
+            .main-container {
+                flex-direction: row; /* 電腦版：改為水平排列 */
+                align-items: flex-start;
+            }
+
+            /* 左側畫布區：佔比較大 */
+            .canvas-section {
+                flex: 3; 
+                order: 1; /* 視覺上放左邊 */
+            }
+
+            /* 右側控制區：佔比較小，且固定在右側 */
+            .controls-section {
+                flex: 1;
+                order: 2; /* 視覺上放右邊 */
+                min-width: 320px; /* 最小寬度保障 */
+                position: sticky; /* 釘選效果 */
+                top: 20px;
+            }
+            
+            /* 電腦版時，HUD 面板稍微縮小一點 */
+            .hud-bar {
+                margin-top: 0;
+            }
+        }
+
+        /* --- HUD 數據條 --- */
+        .hud-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--dark);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            font-size: 0.95em;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .hud-group { display: flex; gap: 20px; }
+        .hud-item { display: flex; flex-direction: column; align-items: center; }
+        .hud-label { font-size: 0.75em; opacity: 0.7; font-weight: 400; text-transform: uppercase; }
+        .hud-val { font-weight: 700; color: #f1c40f; font-size: 1.1em; }
+        .hud-tag { background: rgba(255,255,255,0.2); padding: 5px 12px; border-radius: 6px; font-weight: 600; font-size: 0.9em; }
+
+        /* --- 控制區塊 --- */
+        .controls-wrapper {
+            background: white;
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+        }
+
+        /* 鏡頭切換按鈕 */
+        .lens-switch {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            background: var(--toggle-bg);
+            border-radius: 10px;
+            padding: 6px;
+            margin-bottom: 20px;
+        }
+        .switch-option {
+            flex: 1;
+            min-width: 70px;
+            text-align: center;
+            padding: 8px 0;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.85em;
+            color: #7f8c8d;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: rgba(255,255,255,0.5);
+            border: 1px solid transparent;
+        }
+        .switch-option:hover { background: white; }
+        .switch-option.active {
+            background: white;
+            color: var(--toggle-active);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            border-color: #eee;
+        }
+
+        /* 控制滑桿網格 */
+        .controls-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .control-item { display: flex; flex-direction: column; }
+        .label-row { display: flex; justify-content: space-between; font-size: 0.9em; color: #555; margin-bottom: 8px; font-weight: 700; }
+        .val-text { color: var(--primary); }
+
+        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; margin: 0; cursor: pointer; }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 8px; background: #ecf0f1; border-radius: 4px; }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; height: 24px; width: 24px;
+            border-radius: 50%; background: var(--primary); border: 3px solid white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2); margin-top: -8px; transition: transform 0.1s;
+        }
+        input[type=range]:active::-webkit-slider-thumb { transform: scale(1.1); background: #d35400; }
+
+        /* --- 畫布區 --- */
+        .canvas-container {
+            position: relative; width: 100%; background: white;
+            border-radius: 16px; box-shadow: 0 4px 25px rgba(0,0,0,0.08);
+            overflow: hidden; 
+            /* 讓畫布高度有點彈性，但保持比例 */
+            aspect-ratio: 16/9; 
+        }
+        canvas { display: block; width: 100%; height: 100%; cursor: grab; touch-action: none; }
+        canvas:active { cursor: grabbing; }
+
+        .legend {
+            font-size: 0.85em; color: #777; text-align: center; margin-top: 15px;
+            display: flex; justify-content: center; gap: 20px; font-weight: 500;
+        }
+        .dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; vertical-align: middle; }
+    </style>
+</head>
+<body>
+
+<div class="main-container">
+
+    <section class="canvas-section">
+        <div class="hud-bar">
+            <div class="hud-group">
+                <div class="hud-item"><span class="hud-label">放大率 M</span><span id="magVal" class="hud-val">1.0x</span></div>
+                <div class="hud-item"><span class="hud-label">物距 do</span><span id="doVal" class="hud-val">0</span></div>
+                <div class="hud-item"><span class="hud-label">像距 di</span><span id="diVal" class="hud-val">0</span></div>
+            </div>
+            <div class="hud-tag" id="imgNatureTag">實像</div>
+        </div>
+
+        <div class="canvas-container">
+            <canvas id="canvas" width="1000" height="600"></canvas>
+        </div>
+        
+        <div class="legend">
+            <span><span class="dot" style="background:#e74c3c"></span>平行光 (紅)</span>
+            <span><span class="dot" style="background:#27ae60"></span>焦點光 (綠)</span>
+            <span><span class="dot" style="background:#3498db"></span>中心光 (藍)</span>
+        </div>
+    </section>
+
+    <section class="controls-section">
+        <div class="controls-wrapper">
+            <div class="lens-switch" id="lensSwitch">
+                <div class="switch-option active" data-type="convex">凸透鏡</div>
+                <div class="switch-option" data-type="concave">凹透鏡</div>
+                <div class="switch-option" data-type="concaveMirror">凹面鏡</div>
+                <div class="switch-option" data-type="convexMirror">凸面鏡</div>
+                <div class="switch-option" data-type="planeMirror">平面鏡</div>
+            </div>
+
+            <div class="controls-grid">
+                <div class="control-item">
+                    <div class="label-row"><label>焦距 (f)</label><span id="fText" class="val-text">150</span></div>
+                    <input type="range" id="fSlider" min="50" max="250" value="150">
+                </div>
+                <div class="control-item">
+                    <div class="label-row"><label>蠟燭高度 (ho)</label><span id="hText" class="val-text">100</span></div>
+                    <input type="range" id="hSlider" min="60" max="180" value="100">
+                </div>
+                <div class="control-item">
+                    <div class="label-row"><label>物體位置 (do)</label></div>
+                    <input type="range" id="objSlider" min="50" max="950" value="300">
+                </div>
+                <div class="control-item">
+                    <div class="label-row"><label>元件位置</label></div>
+                    <input type="range" id="lensSlider" min="100" max="900" value="600">
+                </div>
+            </div>
+        </div>
+        <p style="text-align:center; font-size:0.8em; color:#999; margin-top:10px;">
+            💡 提示：您也可以直接拖曳畫布上的元件
+        </p>
+    </section>
+
+</div>
+
+<script>
+// --- JavaScript 邏輯保持完全一致 (Logic Unchanged) ---
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const width = 1000; 
+const height = 600; 
+canvas.width = width;
+canvas.height = height;
+const centerY = height / 2;
+
+let state = {
+    type: 'convex',
+    f: 150,
+    lensX: 600,
+    objX: 300,   
+    objH: 100, 
+    dragging: null
+};
+
+const ui = {
+    fText: document.getElementById('fText'),
+    hText: document.getElementById('hText'),
+    imgNatureTag: document.getElementById('imgNatureTag'),
+    magVal: document.getElementById('magVal'),
+    doVal: document.getElementById('doVal'),
+    diVal: document.getElementById('diVal'),
+    sliders: {
+        f: document.getElementById('fSlider'),
+        obj: document.getElementById('objSlider'),
+        lens: document.getElementById('lensSlider'),
+        h: document.getElementById('hSlider')
+    },
+    switch: document.getElementById('lensSwitch')
+};
+
+ui.switch.querySelectorAll('.switch-option').forEach(opt => {
+    opt.addEventListener('click', () => {
+        ui.switch.querySelectorAll('.switch-option').forEach(o => o.classList.remove('active'));
+        opt.classList.add('active');
+        state.type = opt.dataset.type;
+        if(state.type === 'planeMirror') {
+            ui.sliders.f.disabled = true;
+            ui.sliders.f.parentElement.style.opacity = 0.5;
+        } else {
+            ui.sliders.f.disabled = false;
+            ui.sliders.f.parentElement.style.opacity = 1;
+        }
+        draw();
+    });
+});
+
+function toCanvasY(physicsY) { return centerY - physicsY; }
+
+function calculate() {
+    state.objX = Math.max(30, Math.min(width-30, state.objX));
+    state.lensX = Math.max(100, Math.min(width-100, state.lensX));
+    if (state.objX > state.lensX - 20) { state.objX = state.lensX - 20; ui.sliders.obj.value = state.objX; }
+
+    let do_dist = state.lensX - state.objX;
+    let f_effective = state.f;
+    if (state.type === 'concave' || state.type === 'convexMirror') f_effective = -state.f;
+    else if (state.type === 'convex' || state.type === 'concaveMirror') f_effective = state.f;
+    else if (state.type === 'planeMirror') f_effective = Infinity;
+
+    let di_dist, M;
+    if (state.type === 'planeMirror') { di_dist = -do_dist; M = 1; } 
+    else {
+        if (Math.abs(do_dist - f_effective) < 1) do_dist = f_effective + 0.5;
+        di_dist = (f_effective * do_dist) / (do_dist - f_effective);
+        M = -di_dist / do_dist;
+    }
+    
+    let imgH_phys = M * state.objH;
+    let imgX;
+    if (state.type === 'convex' || state.type === 'concave') imgX = state.lensX + di_dist;
+    else imgX = state.lensX - di_dist;
+    
+    let isReal = di_dist > 0;
+    return { do: do_dist, di: di_dist, M, imgX, imgH_phys, isReal };
+}
+
+function getImageDescription(p) {
+    let absM = Math.abs(p.M);
+    let sizeStr = absM > 1.02 ? "放大" : (absM < 0.98 ? "縮小" : "等大");
+    let orientStr = p.isReal ? "倒立" : "正立";
+    let natureStr = p.isReal ? "實像" : "虛像";
+    if (state.type === 'planeMirror') return "等大正立虛像";
+    return `${sizeStr}${orientStr}${natureStr}`;
+}
+
+function draw() {
+    ctx.clearRect(0, 0, width, height);
+    drawGrid();
+    const p = calculate();
+    if (state.type !== 'planeMirror') drawFocalPoints();
+
+    if (state.type === 'convex') drawConvexLens();
+    else if (state.type === 'concave') drawConcaveLens();
+    else if (state.type === 'concaveMirror') drawConcaveMirror();
+    else if (state.type === 'convexMirror') drawConvexMirror();
+    else drawPlaneMirror();
+
+    drawCandle(state.objX, centerY, state.objH, 1.0, "物 (Object)");
+    
+    let opacity = p.isReal ? 0.9 : 0.4;
+    let richLabel = getImageDescription(p); 
+    drawCandle(p.imgX, centerY, p.imgH_phys, opacity, richLabel);
+
+    switch(state.type) {
+        case 'convex': drawRayTracingConvex(p); break;
+        case 'concave': drawRayTracingConcave(p); break;
+        case 'concaveMirror': drawRayTracingConcaveMirror(p); break;
+        case 'convexMirror': drawRayTracingConvexMirror(p); break;
+        case 'planeMirror': drawRayTracingPlaneMirror(p); break;
+    }
+    updateUI(p);
+}
+
+const line = (p1, p2) => { ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke(); };
+const dash = (p1, p2) => { ctx.beginPath(); ctx.setLineDash([5, 6]); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke(); ctx.setLineDash([]); };
+
+function drawCandle(x, baseY, h_phys, opacity, label) {
+    ctx.save(); ctx.translate(x, baseY);
+    let isUpright = h_phys > 0; let h = Math.abs(h_phys);
+    if (!isUpright) ctx.scale(1, -1);
+    ctx.globalAlpha = opacity;
+    let candleW = h * 0.15; let flameH = h * 0.25; let bodyH = h * 0.7; let wickH = h * 0.05;
+    let gradBody = ctx.createLinearGradient(-candleW/2, 0, candleW/2, 0);
+    gradBody.addColorStop(0, '#e74c3c'); gradBody.addColorStop(0.4, '#ff7675'); gradBody.addColorStop(1, '#c0392b');
+    ctx.fillStyle = gradBody; ctx.fillRect(-candleW/2, -bodyH, candleW, bodyH);
+    ctx.strokeStyle = '#a93226'; ctx.lineWidth = 1; ctx.strokeRect(-candleW/2, -bodyH, candleW, bodyH);
+    ctx.strokeStyle = '#2d3436'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, -bodyH); ctx.lineTo(0, -(bodyH + wickH)); ctx.stroke();
+    let flameBottomY = -(bodyH + wickH);
+    ctx.beginPath(); ctx.moveTo(0, flameBottomY); 
+    ctx.quadraticCurveTo(-candleW*0.8, flameBottomY - flameH*0.4, 0, -h);
+    ctx.quadraticCurveTo(candleW*0.8, flameBottomY - flameH*0.4, 0, flameBottomY);
+    let gradFlame = ctx.createRadialGradient(0, -h + flameH*0.6, 0, 0, -h + flameH*0.6, flameH);
+    gradFlame.addColorStop(0, '#f1c40f'); gradFlame.addColorStop(0.6, '#e67e22'); gradFlame.addColorStop(1, 'rgba(230, 126, 34, 0.0)');
+    ctx.fillStyle = gradFlame; ctx.fill();
+    ctx.restore();
+    if (label) {
+        ctx.fillStyle = (opacity < 1) ? '#8e44ad' : '#c0392b'; ctx.font = 'bold 14px Inter';
+        let labelY = isUpright ? baseY + 25 : baseY - 15;
+        ctx.textAlign = "center"; ctx.fillText(label, x, labelY); ctx.textAlign = "start";
+    }
+}
+
+function drawConvexLens() {
+    let x = state.lensX; y = centerY; hTotal = 260; thickness = 35;
+    ctx.save(); let gradient = ctx.createLinearGradient(x-thickness, y, x+thickness, y);
+    gradient.addColorStop(0, 'rgba(137, 196, 244, 0.2)'); gradient.addColorStop(0.5, 'rgba(137, 196, 244, 0.5)'); gradient.addColorStop(1, 'rgba(137, 196, 244, 0.2)');
+    ctx.fillStyle = gradient; ctx.strokeStyle = '#3498db'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(x, y-hTotal); ctx.quadraticCurveTo(x+thickness, y, x, y+hTotal); ctx.quadraticCurveTo(x-thickness, y, x, y-hTotal); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)'; ctx.lineWidth = 3;
+    ctx.moveTo(x-thickness/2, y-hTotal+40); ctx.quadraticCurveTo(x-thickness/1.5, y, x-thickness/2, y+hTotal-40); ctx.stroke();
+    ctx.restore(); ctx.fillStyle = '#2c3e50'; ctx.font = 'bold 14px Inter'; ctx.fillText("凸透鏡", x-25, y-hTotal-15);
+}
+function drawConcaveLens() {
+    let x = state.lensX; y = centerY; hTotal = 260; thick = 30; thin = 10;
+    ctx.save(); let gradient = ctx.createLinearGradient(x-thick, y, x+thick, y);
+    gradient.addColorStop(0, 'rgba(137, 196, 244, 0.2)'); gradient.addColorStop(0.5, 'rgba(137, 196, 244, 0.4)'); gradient.addColorStop(1, 'rgba(137, 196, 244, 0.2)');
+    ctx.fillStyle = gradient; ctx.strokeStyle = '#3498db'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(x-thick, y-hTotal); ctx.lineTo(x+thick, y-hTotal); 
+    ctx.quadraticCurveTo(x+thin, y, x+thick, y+hTotal); ctx.lineTo(x-thick, y+hTotal); 
+    ctx.quadraticCurveTo(x-thin, y, x-thick, y-hTotal); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore();
+    ctx.fillStyle = '#2c3e50'; ctx.font = 'bold 14px Inter'; ctx.fillText("凹透鏡", x-25, y-hTotal-15);
+}
+function drawConvexMirror() {
+    let x = state.lensX; y = centerY; hTotal = 260; curveDepth = 40;
+    ctx.save(); ctx.beginPath(); ctx.moveTo(x, y-hTotal); ctx.quadraticCurveTo(x-curveDepth, y, x, y+hTotal);
+    ctx.strokeStyle = '#3498db'; ctx.lineWidth = 3; ctx.stroke();
+    ctx.beginPath(); ctx.strokeStyle = '#95a5a6'; ctx.lineWidth = 1;
+    for (let i = -hTotal; i < hTotal; i += 10) { ctx.moveTo(x, y+i); ctx.lineTo(x+10, y+i+10); } ctx.stroke(); ctx.restore();
+    ctx.fillStyle = '#2c3e50'; ctx.font = 'bold 14px Inter'; ctx.fillText("凸面鏡", x-30, y-hTotal-15);
+}
+function drawConcaveMirror() {
+    let x = state.lensX; y = centerY; hTotal = 260; curveDepth = 40;
+    ctx.save(); ctx.beginPath(); ctx.moveTo(x, y-hTotal); ctx.quadraticCurveTo(x+curveDepth, y, x, y+hTotal);
+    ctx.strokeStyle = '#3498db'; ctx.lineWidth = 3; ctx.stroke();
+    ctx.beginPath(); ctx.strokeStyle = '#95a5a6'; ctx.lineWidth = 1;
+    for (let i = -hTotal; i < hTotal; i += 10) { ctx.moveTo(x+(curveDepth/2), y+i); ctx.lineTo(x+(curveDepth/2)+10, y+i+10); }
+    ctx.stroke(); ctx.restore(); ctx.fillStyle = '#2c3e50'; ctx.font = 'bold 14px Inter'; ctx.fillText("凹面鏡", x-30, y-hTotal-15);
+}
+function drawPlaneMirror() {
+    let x = state.lensX; y = centerY; hTotal = 260;
+    ctx.save(); ctx.beginPath(); ctx.moveTo(x, y-hTotal); ctx.lineTo(x, y+hTotal);
+    ctx.strokeStyle = '#3498db'; ctx.lineWidth = 3; ctx.stroke();
+    ctx.beginPath(); ctx.strokeStyle = '#95a5a6'; ctx.lineWidth = 1;
+    for (let i = -hTotal; i < hTotal; i += 10) { ctx.moveTo(x, y+i); ctx.lineTo(x+10, y+i+10); }
+    ctx.stroke(); ctx.restore(); ctx.fillStyle = '#2c3e50'; ctx.font = 'bold 14px Inter'; ctx.fillText("平面鏡", x-25, y-hTotal-15);
+}
+
+function drawRayTracingConvex(p) {
+    let objTip={x:state.objX,y:toCanvasY(state.objH)}; let imgTip={x:p.imgX,y:toCanvasY(p.imgH_phys)}; let lx=state.lensX; let f=state.f;
+    let rightF={x:lx+f,y:centerY}; let leftF={x:lx-f,y:centerY}; ctx.lineWidth=2.5; ctx.lineCap='round'; ctx.lineJoin='round';
+    ctx.strokeStyle='#e74c3c'; line(objTip,{x:lx,y:objTip.y}); if(p.isReal) line({x:lx,y:objTip.y},imgTip); else { let m=(rightF.y-objTip.y)/(rightF.x-lx); line({x:lx,y:objTip.y},{x:width,y:objTip.y+m*(width-lx)}); dash({x:lx,y:objTip.y},imgTip); }
+    ctx.strokeStyle='#3498db'; if(p.isReal) line(objTip,imgTip); else { let m=(centerY-objTip.y)/(lx-state.objX); line(objTip,{x:width,y:centerY+m*(width-lx)}); dash({x:lx,y:centerY},imgTip); }
+    ctx.strokeStyle='#27ae60'; let hitY; if(p.do>f){ hitY=toCanvasY(p.imgH_phys); line(objTip,{x:lx,y:hitY}); } else { let m=(objTip.y-centerY)/(state.objX-leftF.x); hitY=centerY+m*(lx-leftF.x); line(objTip,{x:lx,y:hitY}); }
+    if(p.isReal) line({x:lx,y:hitY},imgTip); else { line({x:lx,y:hitY},{x:width,y:hitY}); dash({x:lx,y:hitY},imgTip); }
+}
+function drawRayTracingConcave(p) {
+    let objTip={x:state.objX,y:toCanvasY(state.objH)}; let imgTip={x:p.imgX,y:toCanvasY(p.imgH_phys)}; let lx=state.lensX; let f=state.f;
+    let leftF={x:lx-f,y:centerY}; let rightF={x:lx+f,y:centerY}; ctx.lineWidth=2.5; ctx.lineCap='round'; ctx.lineJoin='round';
+    ctx.strokeStyle='#e74c3c'; let hit1={x:lx,y:objTip.y}; line(objTip,hit1); let m1=(hit1.y-leftF.y)/(hit1.x-leftF.x); line(hit1,{x:width,y:hit1.y+m1*(width-hit1.x)}); dash(hit1,leftF);
+    ctx.strokeStyle='#3498db'; let m2=(centerY-objTip.y)/(lx-state.objX); line(objTip,{x:width,y:centerY+m2*(width-lx)});
+    ctx.strokeStyle='#27ae60'; let m3=(rightF.y-objTip.y)/(rightF.x-state.objX); let hitY3=objTip.y+m3*(lx-state.objX); let hit3={x:lx,y:hitY3}; line(objTip,hit3); line(hit3,{x:width,y:hit3.y}); dash(hit3,imgTip);
+}
+function drawRayTracingConvexMirror(p) {
+    let objTip={x:state.objX,y:toCanvasY(state.objH)}; let imgTip={x:p.imgX,y:toCanvasY(p.imgH_phys)}; let lx=state.lensX; let f=state.f;
+    let rightF={x:lx+f,y:centerY}; let rightC={x:lx+2*f,y:centerY}; ctx.lineWidth=2.5; ctx.lineCap='round'; ctx.lineJoin='round';
+    ctx.strokeStyle='#e74c3c'; let hit1={x:lx,y:objTip.y}; line(objTip,hit1); let m1=(hit1.y-rightF.y)/(hit1.x-rightF.x); line(hit1,{x:0,y:hit1.y+m1*(0-hit1.x)}); dash(hit1,imgTip);
+    ctx.strokeStyle='#3498db'; let m2=(centerY-objTip.y)/(rightC.x-state.objX); let hitY2=objTip.y+m2*(lx-state.objX); let hit2={x:lx,y:hitY2}; line(objTip,hit2); line(hit2,objTip); dash(hit2,imgTip);
+    ctx.strokeStyle='#27ae60'; let m3=(centerY-objTip.y)/(rightF.x-state.objX); let hitY3=objTip.y+m3*(lx-state.objX); let hit3={x:lx,y:hitY3}; line(objTip,hit3); line(hit3,{x:0,y:hitY3}); dash(hit3,imgTip);
+}
+function drawRayTracingConcaveMirror(p) {
+    let objTip={x:state.objX,y:toCanvasY(state.objH)}; let imgTip={x:p.imgX,y:toCanvasY(p.imgH_phys)}; let lx=state.lensX; let f=state.f;
+    let leftF={x:lx-f,y:centerY}; let leftC={x:lx-2*f,y:centerY}; ctx.lineWidth=2.5; ctx.lineCap='round'; ctx.lineJoin='round';
+    ctx.strokeStyle='#e74c3c'; let hit1={x:lx,y:objTip.y}; line(objTip,hit1); let m1=(hit1.y-leftF.y)/(hit1.x-leftF.x);
+    if(p.isReal) line(hit1,imgTip); else { let endY=hit1.y+m1*(0-hit1.x); line(hit1,{x:0,y:endY}); dash(hit1,imgTip); }
+    ctx.strokeStyle='#3498db'; let m2=(objTip.y-centerY)/(state.objX-leftC.x); let hitY2=centerY+m2*(lx-leftC.x); let hit2={x:lx,y:hitY2}; line(objTip,hit2); if(!p.isReal) dash(hit2,imgTip);
+    ctx.strokeStyle='#27ae60'; let m3=(objTip.y-centerY)/(state.objX-leftF.x); let hitY3=centerY+m3*(lx-leftF.x); let hit3={x:lx,y:hitY3}; line(objTip,hit3);
+    if(p.isReal) line(hit3,imgTip); else { line(hit3,{x:0,y:hit3.y}); dash(hit3,imgTip); }
+}
+function drawRayTracingPlaneMirror(p) {
+    let objTip={x:state.objX,y:toCanvasY(state.objH)}; let imgTip={x:p.imgX,y:toCanvasY(p.imgH_phys)}; let lx=state.lensX;
+    ctx.lineWidth=2.5; ctx.lineCap='round'; ctx.lineJoin='round';
+    ctx.strokeStyle='#e74c3c'; let hit1={x:lx,y:objTip.y}; line(objTip,hit1); line(hit1,{x:0,y:hit1.y}); dash(hit1,imgTip);
+    ctx.strokeStyle='#3498db'; let hit2={x:lx,y:centerY}; line(objTip,hit2); dash(hit2,imgTip); let slopeRefl=(imgTip.y-centerY)/(imgTip.x-lx); line(hit2,{x:0,y:centerY+slopeRefl*(0-lx)});
+}
+
+function drawGrid() {
+    ctx.strokeStyle = '#e6e6e6'; ctx.lineWidth = 1;
+    for(let i=0; i<width; i+=50) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,height); ctx.stroke(); }
+    for(let i=0; i<height; i+=50) { ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(width,i); ctx.stroke(); }
+    ctx.strokeStyle = '#bdc3c7'; ctx.lineWidth = 2; ctx.setLineDash([10, 5]); ctx.beginPath(); ctx.moveTo(0, centerY); ctx.lineTo(width, centerY); ctx.stroke(); ctx.setLineDash([]);
+}
+function drawFocalPoints() {
+    let f = state.f, lx = state.lensX;
+    drawDot(lx-f, centerY, 'F'); drawDot(lx+f, centerY, 'F'); drawDot(lx-2*f, centerY, '2F'); drawDot(lx+2*f, centerY, '2F');
+}
+function drawDot(x, y, t) {
+    ctx.fillStyle = '#7f8c8d'; ctx.beginPath(); ctx.arc(x,y,4,0,Math.PI*2); ctx.fill(); ctx.font='600 13px Inter'; ctx.fillText(t, x-5, y+25);
+}
+
+function updateUI(p) {
+    ui.fText.innerText = state.f; ui.hText.innerText = state.objH;
+    ui.magVal.innerText = Math.abs(p.M).toFixed(1) + 'x'; 
+    ui.doVal.innerText = p.do.toFixed(0); 
+    ui.diVal.innerText = Math.abs(p.di).toFixed(0);
+    ui.imgNatureTag.innerText = p.isReal ? "實像" : "虛像";
+    ui.imgNatureTag.style.backgroundColor = p.isReal ? "var(--real)" : "var(--virtual)";
+    ui.sliders.obj.value = state.objX; ui.sliders.lens.value = state.lensX;
+    if(!p.isReal) ui.diVal.innerText = Math.abs(p.di).toFixed(0) + " (虛)";
+}
+
+ui.sliders.f.oninput = function() { state.f = parseInt(this.value); draw(); };
+ui.sliders.h.oninput = function() { state.objH = parseInt(this.value); draw(); };
+ui.sliders.obj.oninput = function() { state.objX = parseInt(this.value); draw(); };
+ui.sliders.lens.oninput = function() { state.lensX = parseInt(this.value); draw(); };
+
+function handleStart(x, y) {
+    let rect = canvas.getBoundingClientRect(); let scaleX = canvas.width / rect.width; let canvasX = (x - rect.left) * scaleX;
+    if (Math.abs(canvasX - state.objX) < 60) state.dragging = 'obj'; else if (Math.abs(canvasX - state.lensX) < 60) state.dragging = 'lens';
+}
+function handleMove(x, y) {
+    let rect = canvas.getBoundingClientRect(); let scaleX = canvas.width / rect.width; let canvasX = (x - rect.left) * scaleX;
+    if (state.dragging) { if (state.dragging === 'obj') state.objX = canvasX; else state.lensX = canvasX; draw(); }
+}
+canvas.addEventListener('mousedown', e => handleStart(e.clientX, e.clientY)); canvas.addEventListener('mousemove', e => handleMove(e.clientX, e.clientY)); canvas.addEventListener('mouseup', () => state.dragging = null);
+canvas.addEventListener('touchstart', e => handleStart(e.touches[0].clientX, e.touches[0].clientY), {passive: false});
+canvas.addEventListener('touchmove', e => { handleMove(e.touches[0].clientX, e.touches[0].clientY); e.preventDefault(); }, {passive: false});
+canvas.addEventListener('touchend', () => state.dragging = null);
+
+draw();
+</script>
+</body>
+</html>

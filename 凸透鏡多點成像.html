@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>凸透鏡成像：實體透鏡版</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 10px;
+            color: #333;
+        }
+        h3 { margin: 5px 0 10px 0; text-align: center; font-size: 1.2rem; }
+        
+        .container {
+            background: white;
+            padding: 10px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        canvas {
+            width: 100%;
+            display: block;
+            border-bottom: 1px solid #eee;
+            background-color: #fcfcfc;
+        }
+
+        .legend {
+            margin-top: 10px;
+            font-size: 0.8rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+        .dot { height: 8px; width: 8px; display: inline-block; border-radius: 50%; margin-right: 3px; }
+
+        .controls {
+            margin-top: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .control-group {
+            background: #f9f9f9;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #eee;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        input[type=range] { width: 100%; }
+
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            font-size: 1rem;
+        }
+        input[type=checkbox] { transform: scale(1.3); margin-right: 10px; }
+        
+        .status-bar {
+            font-size: 0.8rem; 
+            color:#666; 
+            margin-top:5px;
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+<body>
+
+    <h3>凸透鏡成像：實體透鏡版</h3>
+    
+    <div class="container">
+        <canvas id="opticsCanvas"></canvas>
+        
+        <div class="legend">
+            <span><span class="dot" style="background:orange;"></span>物 (蠟燭)</span>
+            <span><span class="dot" style="background:#999;"></span>像</span>
+            <span><span class="dot" style="background:#E91E63;"></span>A (火)</span>
+            <span><span class="dot" style="background:#4CAF50;"></span>B (芯)</span>
+            <span><span class="dot" style="background:#2196F3;"></span>C (身)</span>
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <label>1. 調整蠟燭位置 (物距)</label>
+                <input type="range" id="objDistSlider" min="5" max="100" value="30">
+                <div class="status-bar">
+                    <span id="objDistVal">物距: --</span>
+                    <span id="imgTypeVal">成像: --</span>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <label class="toggle-container">
+                    <input type="checkbox" id="multiPointToggle">
+                    開啟「多點同時成像」
+                </label>
+                
+                <div id="singlePointControls" style="margin-top:15px; border-top: 1px dashed #ccc; padding-top:10px;">
+                    <label>2. 選擇單一特定點</label>
+                    <input type="range" id="pointSlider" min="0" max="100" value="100">
+                    <div id="pointVal" style="font-size:0.8rem; color:#666; margin-top:5px;">目前關注：火焰頂端 (100%)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    const canvas = document.getElementById('opticsCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    let centerX, centerY, width, height;
+    
+    let f, u, objHeight;
+    let sampleRatio = 1.0;
+    let isMultiPoint = false;
+
+    // DOM
+    const objDistSlider = document.getElementById('objDistSlider');
+    const pointSlider = document.getElementById('pointSlider');
+    const multiPointToggle = document.getElementById('multiPointToggle');
+    const objDistVal = document.getElementById('objDistVal');
+    const imgTypeVal = document.getElementById('imgTypeVal');
+    const singlePointControls = document.getElementById('singlePointControls');
+
+    function initCanvas() {
+        const containerWidth = canvas.parentElement.clientWidth;
+        canvas.width = containerWidth;
+        canvas.height = containerWidth * 0.55; 
+        
+        width = canvas.width;
+        height = canvas.height;
+        centerX = width / 2;
+        centerY = height / 2;
+
+        f = width * 0.12;  
+        objHeight = height * 0.25; 
+        
+        updatePhysics();
+    }
+
+    function updatePhysics() {
+        let sliderVal = parseInt(objDistSlider.value);
+        let minU = 0.2 * f;
+        let maxU = 3.8 * f; 
+        u = minU + (sliderVal / 100) * (maxU - minU);
+        
+        let ratio = u / f;
+        let typeText = "";
+        
+        if (Math.abs(u - f) < 2) {
+            typeText = "不成像 (無限遠)";
+        } else if (u < f) {
+            typeText = "正立放大虛像";
+        } else if (Math.abs(u - 2*f) < 2) { 
+            typeText = "倒立等大實像";
+        } else if (u > f && u < 2*f) {
+            typeText = "倒立放大實像";
+        } else {
+            typeText = "倒立縮小實像";
+        }
+        
+        let relation = (u/f).toFixed(1) + "F";
+        objDistVal.textContent = `物距: ${relation}`;
+        imgTypeVal.textContent = typeText;
+        
+        draw();
+    }
+
+    objDistSlider.addEventListener('input', updatePhysics);
+
+    pointSlider.addEventListener('input', (e) => {
+        sampleRatio = parseInt(e.target.value) / 100;
+        let text = sampleRatio === 1 ? "火焰頂端" : 
+                   sampleRatio > 0.8 ? "火焰中段" :
+                   sampleRatio === 0 ? "蠟燭底部" : 
+                   `燭身 (${Math.round(sampleRatio*100)}%)`;
+        pointVal.textContent = `目前關注：${text}`;
+        draw();
+    });
+
+    multiPointToggle.addEventListener('change', (e) => {
+        isMultiPoint = e.target.checked;
+        if(isMultiPoint) {
+            singlePointControls.style.opacity = '0.3';
+            singlePointControls.style.pointerEvents = 'none';
+        } else {
+            singlePointControls.style.opacity = '1';
+            singlePointControls.style.pointerEvents = 'auto';
+        }
+        draw();
+    });
+
+    window.addEventListener('resize', initCanvas);
+
+    function draw() {
+        if (!ctx) return;
+        ctx.clearRect(0, 0, width, height);
+        
+        let v = (f * u) / (u - f);
+        let m = -v / u; 
+        let imgHeight = objHeight * m;
+
+        let drawImage = true;
+        if (Math.abs(u - f) < 2) drawImage = false;
+
+        drawEnvironment();
+
+        // 繪製蠟燭
+        drawCandle(centerX - u, centerY, objHeight, false, '物');
+
+        // 繪製像
+        if (drawImage) {
+            let label = v > 0 ? '實像' : '虛像';
+            drawCandle(centerX + v, centerY, imgHeight, true, label);
+        }
+
+        // 畫光線
+        if (isMultiPoint) {
+            drawRayTrace(1.0, '#E91E63', v, imgHeight, drawImage);
+            drawRayTrace(0.7, '#4CAF50', v, imgHeight, drawImage); 
+            drawRayTrace(0.3, '#2196F3', v, imgHeight, drawImage); 
+        } else {
+            drawRayTrace(sampleRatio, '#E91E63', v, imgHeight, drawImage);
+        }
+    }
+
+    // --- 實體透鏡繪製函式 ---
+    function drawLensShape(cx, cy, h) {
+        // 透鏡厚度
+        const thickness = h * 0.15; 
+        const halfH = h / 2;
+
+        ctx.save();
+        ctx.beginPath();
+        // 玻璃顏色：淡藍色帶一點透明
+        ctx.fillStyle = 'rgba(200, 235, 255, 0.4)'; 
+        ctx.strokeStyle = '#8ab';
+        ctx.lineWidth = 2;
+
+        // 左弧：從上頂點畫到下頂點，控制點在左側
+        ctx.moveTo(cx, cy - halfH);
+        ctx.quadraticCurveTo(cx - thickness, cy, cx, cy + halfH);
+        
+        // 右弧：從下頂點畫回上頂點，控制點在右側
+        ctx.quadraticCurveTo(cx + thickness, cy, cx, cy - halfH);
+        
+        ctx.fill();
+        ctx.stroke();
+
+        // 畫中間的虛線軸 (代表薄透鏡近似的主平面)
+        ctx.beginPath();
+        ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([4, 4]);
+        ctx.moveTo(cx, cy - halfH);
+        ctx.lineTo(cx, cy + halfH);
+        ctx.stroke();
+
+        ctx.restore();
+    }
+
+    function drawCandle(x, y, h, isImage, label) {
+        ctx.save();
+        ctx.translate(x, y);
+        if (h < 0) {
+            ctx.scale(1, -1);
+            h = Math.abs(h);
+        }
+
+        const bodyH = h * 0.6;
+        const wickH = h * 0.1;
+        const flameH = h * 0.3;
+        const bodyW = h * 0.12; 
+
+        // 燭身
+        ctx.fillStyle = isImage ? '#ccc' : '#F5DEB3'; 
+        ctx.strokeStyle = isImage ? '#999' : '#D2B48C';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.rect(-bodyW / 2, 0, bodyW, -bodyH);
+        ctx.fill();
+        ctx.stroke();
+
+        // 燭芯
+        ctx.strokeStyle = isImage ? '#666' : '#333';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, -bodyH);
+        ctx.lineTo(0, -bodyH - wickH);
+        ctx.stroke();
+
+        // 火焰
+        const flameColor1 = isImage ? 'rgba(255, 100, 0, 0.5)' : 'rgba(255, 69, 0, 0.9)'; 
+        const flameColor2 = isImage ? 'rgba(255, 200, 0, 0.5)' : 'rgba(255, 215, 0, 0.9)';
+
+        let gradient = ctx.createRadialGradient(0, -bodyH - wickH - flameH/2, 0, 0, -bodyH - wickH - flameH/2, flameH/1.5);
+        gradient.addColorStop(0, flameColor2);
+        gradient.addColorStop(1, flameColor1);
+
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.moveTo(0, -bodyH - wickH); 
+        ctx.quadraticCurveTo(-bodyW, -bodyH - wickH - flameH / 2, 0, -bodyH - wickH - flameH); 
+        ctx.quadraticCurveTo(bodyW, -bodyH - wickH - flameH / 2, 0, -bodyH - wickH);
+        ctx.fill();
+
+        ctx.restore();
+        ctx.fillStyle = '#333';
+        ctx.font = "12px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(label, x, y + 15);
+    }
+
+    function drawRayTrace(ratio, color, v, imgHeight, hasImage) {
+        let currentObjY = objHeight * ratio;
+        let currentImgY = imgHeight * ratio;
+
+        let pSrc = { x: centerX - u, y: centerY - currentObjY };
+        let pImg = { x: centerX + v, y: centerY - currentImgY };
+
+        // 物點
+        ctx.beginPath();
+        ctx.fillStyle = color;
+        ctx.arc(pSrc.x, pSrc.y, 4, 0, Math.PI*2);
+        ctx.fill();
+
+        if (hasImage) {
+            ctx.beginPath();
+            ctx.arc(pImg.x, pImg.y, 4, 0, Math.PI*2);
+            ctx.fill();
+        }
+
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1.5;
+
+        // 光線 1: 平行 -> 焦點
+        ctx.beginPath();
+        ctx.setLineDash([]);
+        ctx.moveTo(pSrc.x, pSrc.y);
+        ctx.lineTo(centerX, pSrc.y); 
+        ctx.stroke();
+
+        ctx.beginPath();
+        let fPos = { x: centerX + f, y: centerY };
+        let ray1Out = extendLine(centerX, pSrc.y, fPos.x, fPos.y, width * 1.5); 
+        ctx.moveTo(centerX, pSrc.y);
+        ctx.lineTo(ray1Out.x, ray1Out.y);
+        ctx.stroke();
+
+        if (hasImage && v < 0) {
+            ctx.beginPath();
+            ctx.setLineDash([4, 4]); 
+            ctx.moveTo(centerX, pSrc.y); 
+            ctx.lineTo(pImg.x, pImg.y);  
+            ctx.stroke();
+            ctx.setLineDash([]); 
+        }
+
+        // 光線 2: 過鏡心
+        ctx.beginPath();
+        ctx.setLineDash([]);
+        let ray2Out = extendLine(pSrc.x, pSrc.y, centerX, centerY, width * 1.5); 
+        ctx.moveTo(pSrc.x, pSrc.y);
+        ctx.lineTo(ray2Out.x, ray2Out.y);
+        ctx.stroke();
+
+        if (hasImage && v < 0) {
+            ctx.beginPath();
+            ctx.setLineDash([4, 4]);
+            ctx.moveTo(pSrc.x, pSrc.y); 
+            ctx.lineTo(pImg.x, pImg.y); 
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+    }
+
+    function drawEnvironment() {
+        // 主軸
+        ctx.beginPath();
+        ctx.strokeStyle = '#ccc';
+        ctx.setLineDash([4, 4]);
+        ctx.moveTo(0, centerY);
+        ctx.lineTo(width, centerY);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // 取代原本的箭頭，改畫透鏡
+        // 透鏡高度設為畫布高度的 60% 比較美觀
+        drawLensShape(centerX, centerY, height * 0.6);
+        
+        // 焦點與2F點
+        drawDot(centerX - f, centerY, 'F');
+        drawDot(centerX - 2*f, centerY, '2F'); 
+        drawDot(centerX + f, centerY, "F'");
+        drawDot(centerX + 2*f, centerY, "2F'"); 
+    }
+    
+    function drawDot(x, y, label) {
+        ctx.beginPath();
+        ctx.fillStyle = '#444';
+        ctx.arc(x, y, 3, 0, Math.PI*2);
+        ctx.fill();
+        ctx.font = "12px sans-serif";
+        ctx.textAlign = "center"; // 文字置中
+        let yOffset = 20;
+        ctx.fillText(label, x, y + yOffset);
+    }
+
+    function extendLine(x1, y1, x2, y2, length) {
+        const dx = x2 - x1;
+        const dy = y2 - y1;
+        const currentLen = Math.sqrt(dx*dx + dy*dy);
+        if(currentLen === 0) return {x:x1, y:y1};
+        const scale = (currentLen + length) / currentLen;
+        return { x: x1 + dx * scale, y: y1 + dy * scale };
+    }
+
+    initCanvas();
+</script>
+</body>
+</html>
+

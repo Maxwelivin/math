@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>針孔成像互動實驗室 (帶標註版)</title>
+    <style>
+        :root {
+            --bg-color: #000000;
+            --text-color: #e0e0e0;
+            --accent-color: #4CAF50;
+            --ray-top-color: #FFD700;
+            --ray-bottom-color: #00BFFF;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 { margin-bottom: 10px; color: var(--accent-color); font-size: 1.5rem; }
+
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .canvas-container {
+            flex: 2;
+            min-width: 300px;
+            border: 2px solid #333;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #111;
+            /* 確保 canvas 不會被拉伸變形 */
+            display: flex; 
+            justify-content: center;
+            align-items: center;
+        }
+
+        canvas {
+            display: block;
+            /* 使用固定寬高比，透過 CSS max-width 控制 RWD */
+            max-width: 100%; 
+            height: auto;
+            background: radial-gradient(circle at center, #222 0%, #000 100%);
+        }
+
+        .controls-container {
+            flex: 1;
+            min-width: 280px;
+            background: #1a1a1a;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+
+        .control-group { margin-bottom: 20px; }
+
+        label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            cursor: pointer;
+            accent-color: var(--accent-color);
+        }
+
+        .value-display { color: var(--accent-color); font-family: monospace; }
+
+        .data-panel {
+            margin-top: 20px;
+            padding: 15px;
+            background: #2a2a2a;
+            border-radius: 8px;
+            border-left: 5px solid var(--accent-color);
+        }
+
+        .formula {
+            font-size: 1.2em;
+            text-align: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #444;
+            color: #fff;
+        }
+
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 1em;
+        }
+        
+        .highlight { font-weight: bold; color: var(--accent-color); }
+    </style>
+</head>
+<body>
+
+    <h1>針孔成像互動實驗室</h1>
+
+    <div class="container">
+        <div class="canvas-container">
+            <canvas id="simulationCanvas" width="800" height="500"></canvas>
+        </div>
+
+        <div class="controls-container">
+            <div class="control-group">
+                <label for="objPos">蠟燭位置: <span id="objPosVal" class="value-display">100</span></label>
+                <input type="range" id="objPos" min="50" max="750" value="100">
+            </div>
+
+            <div class="control-group">
+                <label for="pinPos">針孔位置: <span id="pinPosVal" class="value-display">400</span></label>
+                <input type="range" id="pinPos" min="50" max="750" value="400">
+            </div>
+
+            <div class="control-group">
+                <label for="scrPos">紙屏位置: <span id="scrPosVal" class="value-display">700</span></label>
+                <input type="range" id="scrPos" min="50" max="750" value="700">
+            </div>
+
+            <div class="data-panel">
+                <div class="formula">H = h × (R / L)</div>
+                <div class="data-row"><span>物高 (h):</span> <span class="value-display">100</span></div>
+                <div class="data-row"><span>物距 (L):</span> <span id="dataL" class="value-display">300</span></div>
+                <div class="data-row"><span>像距 (R):</span> <span id="dataR" class="value-display">300</span></div>
+                <div class="data-row" style="margin-top: 10px; border-top: 1px solid #444; padding-top: 10px;">
+                    <span>像高 (H):</span> <span id="dataH" class="highlight">100.0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('simulationCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const sliders = {
+            obj: document.getElementById('objPos'),
+            pin: document.getElementById('pinPos'),
+            scr: document.getElementById('scrPos')
+        };
+        const displays = {
+            obj: document.getElementById('objPosVal'),
+            pin: document.getElementById('pinPosVal'),
+            scr: document.getElementById('scrPosVal'),
+            L: document.getElementById('dataL'),
+            R: document.getElementById('dataR'),
+            H: document.getElementById('dataH')
+        };
+
+        const CONSTANTS = {
+            groundY: 380,        // 稍微調高地面，留出底部標註空間
+            candleHeight: 100,   // h
+            candleWidth: 20,
+            pinholeSize: 4,
+            rayTopColor: '#FFD700',
+            rayBottomColor: '#00BFFF',
+            labelColor: '#ffffff'
+        };
+
+        let state = {
+            objX: parseInt(sliders.obj.value),
+            pinX: parseInt(sliders.pin.value),
+            scrX: parseInt(sliders.scr.value),
+            L: 0, R: 0, H: 0
+        };
+
+        function init() {
+            sliders.obj.addEventListener('input', (e) => updateState('objX', e.target.value));
+            sliders.pin.addEventListener('input', (e) => updateState('pinX', e.target.value));
+            sliders.scr.addEventListener('input', (e) => updateState('scrX', e.target.value));
+            draw();
+        }
+
+        function updateState(key, value) {
+            state[key] = parseInt(value);
+            displays.obj.textContent = state.objX;
+            displays.pin.textContent = state.pinX;
+            displays.scr.textContent = state.scrX;
+            draw();
+        }
+
+        function calculatePhysics() {
+            state.L = state.pinX - state.objX;
+            state.R = state.scrX - state.pinX;
+
+            if (state.L > 0 && state.R > 0) {
+                state.H = CONSTANTS.candleHeight * (state.R / state.L);
+            } else {
+                state.H = 0;
+            }
+            
+            displays.L.textContent = state.L > 0 ? state.L : "無效";
+            displays.R.textContent = state.R > 0 ? state.R : "無效";
+            displays.H.textContent = (state.L > 0 && state.R > 0) ? state.H.toFixed(1) : "-";
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            calculatePhysics();
+
+            const { groundY, candleHeight, candleWidth, pinholeSize, rayTopColor, rayBottomColor } = CONSTANTS;
+            const { objX, pinX, scrX, L, R } = state;
+            const isValid = L > 0 && R > 0;
+
+            // 1. 繪製光軸 (地面)
+            ctx.beginPath();
+            ctx.moveTo(0, groundY);
+            ctx.lineTo(canvas.width, groundY);
+            ctx.strokeStyle = '#555';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            // 2. 繪製物體 (蠟燭)
+            const candleBaseY = groundY;
+            const candleTopY = groundY - candleHeight;
+            drawCandle(objX, candleBaseY, candleHeight, candleWidth, false);
+
+            // 3. 繪製針孔板
+            const pinCenterY = groundY - candleHeight / 2;
+            ctx.fillStyle = '#888';
+            ctx.fillRect(pinX - 2, 0, 4, pinCenterY - pinholeSize/2);
+            ctx.fillRect(pinX - 2, pinCenterY + pinholeSize/2, 4, canvas.height);
+            ctx.beginPath();
+            ctx.arc(pinX, pinCenterY, pinholeSize/2, 0, Math.PI*2);
+            ctx.fillStyle = '#000';
+            ctx.fill();
+
+            // 4. 繪製紙屏
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(scrX - 2, 50, 4, groundY + 100);
+
+            if (isValid) {
+                const topRayImgY = pinCenterY + R * (pinCenterY - candleTopY) / L;
+                const bottomRayImgY = pinCenterY + R * (pinCenterY - candleBaseY) / L;
+
+                // 畫光線
+                ctx.beginPath();
+                ctx.moveTo(objX, candleTopY);
+                ctx.lineTo(scrX, topRayImgY);
+                ctx.strokeStyle = rayTopColor;
+                ctx.setLineDash([5, 5]);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.moveTo(objX, candleBaseY);
+                ctx.lineTo(scrX, bottomRayImgY);
+                ctx.strokeStyle = rayBottomColor;
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                // 畫成像
+                const imgHeight = Math.abs(topRayImgY - bottomRayImgY);
+                drawCandle(scrX, bottomRayImgY, imgHeight, candleWidth * (R/L), true);
+
+                // --- 新增：繪製標註 ---
+                drawLabels(objX, pinX, scrX, candleTopY, candleBaseY, bottomRayImgY, topRayImgY);
+            }
+        }
+
+        // 新增：繪製標註線和文字的函數
+        function drawLabels(objX, pinX, scrX, objTopY, objBaseY, imgTopY, imgBottomY) {
+            ctx.fillStyle = CONSTANTS.labelColor;
+            ctx.strokeStyle = CONSTANTS.labelColor;
+            ctx.lineWidth = 1;
+            ctx.font = 'bold 16px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            const groundY = CONSTANTS.groundY;
+            const vOffset = 35; // 垂直標註距離物體的偏移量
+            const hOffset = 40; // 水平標註距離地面的偏移量
+
+            // --- 標註 h (物高) ---
+            const hX = objX - vOffset;
+            ctx.beginPath();
+            ctx.moveTo(hX, objTopY); ctx.lineTo(hX, objBaseY); // 主線
+            ctx.moveTo(hX-5, objTopY); ctx.lineTo(hX+5, objTopY); // 上刻度
+            ctx.moveTo(hX-5, objBaseY); ctx.lineTo(hX+5, objBaseY); // 下刻度
+            ctx.stroke();
+            ctx.fillText("h", hX - 15, objTopY + (objBaseY - objTopY) / 2);
+
+            // --- 標註 H (像高) ---
+            // 注意：成像中，imgTopY 在視覺上比 imgBottomY 更高（Y值更小）
+            const HX = scrX + vOffset;
+            ctx.beginPath();
+            ctx.moveTo(HX, imgTopY); ctx.lineTo(HX, imgBottomY); // 主線
+            ctx.moveTo(HX-5, imgTopY); ctx.lineTo(HX+5, imgTopY); // 上刻度
+            ctx.moveTo(HX-5, imgBottomY); ctx.lineTo(HX+5, imgBottomY); // 下刻度
+            ctx.stroke();
+            ctx.fillText("H", HX + 15, imgTopY + (imgBottomY - imgTopY) / 2);
+
+            // --- 標註 L (物距) 和 R (像距) ---
+            const distY = groundY + hOffset;
+            ctx.beginPath();
+            // L 線
+            ctx.moveTo(objX, distY); ctx.lineTo(pinX, distY);
+            // R 線
+            ctx.moveTo(pinX, distY); ctx.lineTo(scrX, distY);
+            // 刻度
+            ctx.moveTo(objX, distY-5); ctx.lineTo(objX, distY+5); // 物體處刻度
+            ctx.moveTo(pinX, distY-5); ctx.lineTo(pinX, distY+5); // 針孔處刻度
+            ctx.moveTo(scrX, distY-5); ctx.lineTo(scrX, distY+5); // 紙屏處刻度
+            ctx.stroke();
+
+            // L 文字
+            ctx.fillText("L", objX + (pinX - objX) / 2, distY + 20);
+            // R 文字
+            ctx.fillText("R", pinX + (scrX - pinX) / 2, distY + 20);
+        }
+
+
+        function drawCandle(x, baseY, height, width, inverted) {
+            const bodyColor = '#D2691E'; 
+            const flameColorOuter = '#FF4500';
+            const flameColorInner = '#FFFF00';
+            const direction = inverted ? 1 : -1;
+            const bodyHeight = height * 0.75;
+            const flameHeight = height * 0.25;
+
+            ctx.save();
+            ctx.translate(x, baseY);
+
+            // 蠟燭身體
+            ctx.fillStyle = bodyColor;
+            ctx.fillRect(-width / 2, 0, width, bodyHeight * direction);
+
+            // 燭芯
+            ctx.beginPath();
+            ctx.moveTo(0, bodyHeight * direction);
+            ctx.lineTo(0, (bodyHeight + flameHeight*0.1) * direction);
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // 火焰
+            const flameBaseY = (bodyHeight + flameHeight*0.1) * direction;
+            ctx.beginPath();
+            ctx.moveTo(0, flameBaseY);
+            ctx.quadraticCurveTo(-width*0.6, flameBaseY + flameHeight*0.5*direction, 0, flameBaseY + flameHeight*direction);
+            ctx.quadraticCurveTo(width*0.6, flameBaseY + flameHeight*0.5*direction, 0, flameBaseY);
+            ctx.fillStyle = flameColorOuter;
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.moveTo(0, flameBaseY + flameHeight*0.1*direction);
+            ctx.quadraticCurveTo(-width*0.3, flameBaseY + flameHeight*0.5*direction, 0, flameBaseY + flameHeight*0.8*direction);
+            ctx.quadraticCurveTo(width*0.3, flameBaseY + flameHeight*0.5*direction, 0, flameBaseY + flameHeight*0.1*direction);
+            ctx.fillStyle = flameColorInner;
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        init();
+    </script>
+</body>
+</html>

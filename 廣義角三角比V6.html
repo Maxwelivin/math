@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>廣義角三角比：逐步推導教學 (V6 防重疊終極版)</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            color: #333;
+        }
+        h2 { color: #2c3e50; margin-bottom: 10px; }
+        .container {
+            display: flex; flex-wrap: wrap; background: white; padding: 20px;
+            border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            max-width: 900px; width: 100%;
+        }
+        .controls { flex: 1; min-width: 300px; padding-right: 20px; border-right: 1px solid #eee; }
+        .canvas-area { flex: 1.5; display: flex; justify-content: center; align-items: center; min-width: 300px; padding: 10px; }
+        canvas { border: 1px solid #ddd; background-color: #fff; border-radius: 4px; }
+        .step-box { background: #e8f4fd; border-left: 5px solid #3498db; padding: 15px; margin: 15px 0; min-height: 120px; }
+        .step-title { font-weight: bold; color: #2980b9; margin-bottom: 8px; display: block; }
+        select, button { padding: 10px 15px; font-size: 16px; border-radius: 6px; border: 1px solid #ccc; margin-right: 10px; cursor: pointer; transition: all 0.2s; }
+        button { background-color: #27ae60; color: white; border: none; }
+        button:hover { background-color: #219150; }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+        .highlight { color: #e74c3c; font-weight: bold; }
+        .progress-bar { display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 0.9em; color: #7f8c8d; }
+        .progress-step { flex: 1; text-align: center; padding-bottom: 5px; border-bottom: 3px solid #eee; }
+        .progress-step.active { color: #2c3e50; font-weight: bold; border-bottom-color: #3498db; }
+    </style>
+</head>
+<body>
+
+    <h2>廣義角三角比：第一性原理推導 (V6)</h2>
+
+    <div class="container">
+        <div class="controls">
+            <div style="margin-bottom: 20px;">
+                <label for="angleSelect">選擇練習角度：</label>
+                <select id="angleSelect" onchange="resetScenario()">
+                    <optgroup label="正角 (逆時針)">
+                        <option value="120">120° (第二象限)</option>
+                        <option value="135">135° (第二象限)</option>
+                        <option value="150">150° (第二象限)</option>
+                        <option value="210">210° (第三象限)</option>
+                        <option value="225">225° (第三象限)</option>
+                        <option value="300">300° (第四象限)</option>
+                        <option value="330">330° (第四象限)</option>
+                    </optgroup>
+                    <optgroup label="負角 (順時針)">
+                        <option value="-30">-30° (第四象限)</option>
+                        <option value="-45" selected>-45° (第四象限)</option>
+                        <option value="-120">-120° (第三象限)</option>
+                        <option value="-150">-150° (第三象限)</option>
+                        <option value="-225">-225° (第二象限)</option>
+                    </optgroup>
+                </select>
+            </div>
+
+            <div class="progress-bar">
+                <div class="progress-step" id="p1">1. 確認角度</div>
+                <div class="progress-step" id="p2">2. 旋轉範圍</div>
+                <div class="progress-step" id="p3">3. 找點與作圖</div>
+                <div class="progress-step" id="p4">4. 計算比值</div>
+            </div>
+
+            <div class="step-box">
+                <span class="step-title" id="stepTitle">步驟 1</span>
+                <div id="instructionText"></div>
+            </div>
+
+            <div style="margin-top: 20px;">
+                <button id="prevBtn" onclick="prevStep()" disabled>上一步</button>
+                <button id="nextBtn" onclick="nextStep()">下一步</button>
+            </div>
+            
+            <div id="calcArea" style="margin-top: 20px; padding-top:10px; border-top:1px dashed #ccc; display:none;">
+                <strong>最終計算結果：</strong><br>
+                <div id="final formulas" style="line-height: 1.8;"></div>
+            </div>
+        </div>
+
+        <div class="canvas-area">
+            <canvas id="trigCanvas" width="400" height="400"></canvas>
+        </div>
+    </div>
+
+    <script>
+        // Data for special angles
+        const anglesData = {
+            // Positive
+            120: { rad: 120 * Math.PI / 180, ref: 60, xStr: "-1", yStr: "√3", rStr: "2", x: -1, y: Math.sqrt(3), r: 2, q: 2, absX: "1", absY: "√3" },
+            135: { rad: 135 * Math.PI / 180, ref: 45, xStr: "-1", yStr: "1", rStr: "√2", x: -1, y: 1, r: Math.sqrt(2), q: 2, absX: "1", absY: "1" },
+            150: { rad: 150 * Math.PI / 180, ref: 30, xStr: "-√3", yStr: "1", rStr: "2", x: -Math.sqrt(3), y: 1, r: 2, q: 2, absX: "√3", absY: "1" },
+            210: { rad: 210 * Math.PI / 180, ref: 30, xStr: "-√3", yStr: "-1", rStr: "2", x: -Math.sqrt(3), y: -1, r: 2, q: 3, absX: "√3", absY: "1" },
+            225: { rad: 225 * Math.PI / 180, ref: 45, xStr: "-1", yStr: "-1", rStr: "√2", x: -1, y: -1, r: Math.sqrt(2), q: 3, absX: "1", absY: "1" },
+            300: { rad: 300 * Math.PI / 180, ref: 60, xStr: "1", yStr: "-√3", rStr: "2", x: 1, y: -Math.sqrt(3), r: 2, q: 4, absX: "1", absY: "√3" },
+            330: { rad: 330 * Math.PI / 180, ref: 30, xStr: "√3", yStr: "-1", rStr: "2", x: Math.sqrt(3), y: -1, r: 2, q: 4, absX: "√3", absY: "1" },
+            // Negative
+            "-30": { rad: -30 * Math.PI / 180, ref: 30, xStr: "√3", yStr: "-1", rStr: "2", x: Math.sqrt(3), y: -1, r: 2, q: 4, absX: "√3", absY: "1" },
+            "-45": { rad: -45 * Math.PI / 180, ref: 45, xStr: "1", yStr: "-1", rStr: "√2", x: 1, y: -1, r: Math.sqrt(2), q: 4, absX: "1", absY: "1" },
+            "-120": { rad: -120 * Math.PI / 180, ref: 60, xStr: "-1", yStr: "-√3", rStr: "2", x: -1, y: -Math.sqrt(3), r: 2, q: 3, absX: "1", absY: "√3" },
+            "-150": { rad: -150 * Math.PI / 180, ref: 30, xStr: "-√3", yStr: "-1", rStr: "2", x: -Math.sqrt(3), y: -1, r: 2, q: 3, absX: "√3", absY: "1" },
+            "-225": { rad: -225 * Math.PI / 180, ref: 45, xStr: "-1", yStr: "1", rStr: "√2", x: -1, y: 1, r: Math.sqrt(2), q: 2, absX: "1", absY: "1" }
+        };
+
+        let currentStep = 1;
+        let currentAngle = -45;
+        const canvas = document.getElementById('trigCanvas');
+        const ctx = canvas.getContext('2d');
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const scale = 100;
+
+        function resetScenario() {
+            currentAngle = parseInt(document.getElementById('angleSelect').value);
+            currentStep = 1;
+            document.getElementById('calcArea').style.display = 'none';
+            updateUI();
+        }
+
+        function nextStep() { if (currentStep < 4) { currentStep++; updateUI(); } }
+        function prevStep() { if (currentStep > 1) { currentStep--; updateUI(); } }
+
+        function updateUI() {
+            document.getElementById('prevBtn').disabled = (currentStep === 1);
+            document.getElementById('nextBtn').disabled = (currentStep === 4);
+            for(let i=1; i<=4; i++) {
+                const el = document.getElementById(`p${i}`);
+                if (i === currentStep) el.classList.add('active'); else el.classList.remove('active');
+            }
+
+            const data = anglesData[currentAngle];
+            const titleEl = document.getElementById('stepTitle');
+            const textEl = document.getElementById('instructionText');
+            const calcEl = document.getElementById('calcArea');
+            const direction = currentAngle >= 0 ? "逆時針" : "順時針";
+            const signText = currentAngle >= 0 ? "正號" : "負號";
+
+            if (currentStep === 1) {
+                titleEl.textContent = "步驟 1：確認角度";
+                textEl.innerHTML = `目前的角度是 <strong>${currentAngle > 0 ? '+' : ''}${currentAngle}°</strong>。<br>因為是${signText}，代表是<strong>${direction}</strong>旋轉。`;
+                calcEl.style.display = 'none';
+            } else if (currentStep === 2) {
+                titleEl.textContent = "步驟 2：判斷旋轉方向與範圍";
+                textEl.innerHTML = `始邊固定在正 X 軸。<br>${direction}旋轉 <strong>${Math.abs(currentAngle)}°</strong> 後停下，形成<strong>終邊</strong>。<br>這個角度落在了第 <strong>${data.q}</strong> 象限。`;
+                calcEl.style.display = 'none';
+            } else if (currentStep === 3) {
+                titleEl.textContent = "步驟 3：終邊取點 P 與作圖";
+                textEl.innerHTML = `在終邊上任取一點 P。<br>1. 從 P 點對 <strong>X 軸</strong>作垂直線。<br>2. 觀察直角三角形，終邊與 X 軸的夾角（參考角）是 <strong>${data.ref}°</strong>。<br>3. 利用特殊三角形比例推導座標：<br>x = <span class="highlight">${data.xStr}</span>, y = <span class="highlight">${data.yStr}</span>, r = <span class="highlight">${data.rStr}</span>`;
+                calcEl.style.display = 'none';
+            } else if (currentStep === 4) {
+                titleEl.textContent = "步驟 4：計算三角比";
+                textEl.innerHTML = `根據定義：sin(θ) = y/r, cos(θ) = x/r, tan(θ) = y/x。<br>將 P 點座標代入公式即可。`;
+                document.getElementById('final formulas').innerHTML = `sin(${currentAngle}°) = ${data.yStr} / ${data.rStr}<br>cos(${currentAngle}°) = ${data.xStr} / ${data.rStr}<br>tan(${currentAngle}°) = ${data.yStr} / ${data.xStr}`;
+                calcEl.style.display = 'block';
+            }
+            drawCanvas();
+        }
+
+        // --- Helper: Draw Text with White Halo (Background) ---
+        function drawLabel(text, x, y, color = '#27ae60', align = 'center', baseline = 'middle', font = '14px Arial') {
+            ctx.save();
+            ctx.font = font;
+            ctx.textAlign = align;
+            ctx.textBaseline = baseline;
+            
+            // Halo (White Outline)
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+            ctx.strokeText(text, x, y);
+            
+            // Actual Text
+            ctx.fillStyle = color;
+            ctx.fillText(text, x, y);
+            ctx.restore();
+        }
+
+        function drawCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Grid
+            ctx.beginPath(); ctx.strokeStyle = '#ccc'; ctx.lineWidth = 1;
+            ctx.moveTo(0, centerY); ctx.lineTo(canvas.width, centerY);
+            ctx.moveTo(centerX, 0); ctx.lineTo(centerX, canvas.height);
+            ctx.stroke();
+
+            // Axis Labels
+            ctx.fillStyle = '#666'; ctx.font = '12px Arial';
+            ctx.fillText('x', canvas.width - 15, centerY - 5);
+            ctx.fillText('y', centerX + 5, 15);
+
+            const data = anglesData[currentAngle];
+            const canvasAngle = -data.rad; 
+            const length = 1.5 * scale;
+            const pX = centerX + length * Math.cos(canvasAngle);
+            const pY = centerY + length * Math.sin(canvasAngle);
+
+            if (currentStep >= 1) {
+                ctx.beginPath(); ctx.strokeStyle = 'red'; ctx.lineWidth = 3;
+                ctx.moveTo(centerX, centerY); ctx.lineTo(centerX + 150, centerY); ctx.stroke();
+            }
+
+            if (currentStep >= 2) {
+                // Terminal Side
+                ctx.beginPath(); ctx.strokeStyle = '#2c3e50'; ctx.lineWidth = 3;
+                ctx.moveTo(centerX, centerY); ctx.lineTo(pX, pY); ctx.stroke();
+
+                // Rotation Arc
+                const arcRadius = 50;
+                const isCCW = (currentAngle >= 0);
+                ctx.beginPath(); ctx.strokeStyle = 'orange'; ctx.setLineDash([5, 5]);
+                ctx.arc(centerX, centerY, arcRadius, 0, canvasAngle, isCCW);
+                ctx.stroke(); ctx.setLineDash([]);
+
+                // Arrowhead
+                const arrowX = centerX + arcRadius * Math.cos(canvasAngle);
+                const arrowY = centerY + arcRadius * Math.sin(canvasAngle);
+                ctx.save();
+                ctx.translate(arrowX, arrowY);
+                const rotOffset = isCCW ? -Math.PI/2 : Math.PI/2;
+                ctx.rotate(canvasAngle + rotOffset); 
+                ctx.beginPath(); ctx.fillStyle = 'orange';
+                ctx.moveTo(0, 0); ctx.lineTo(-10, -5); ctx.lineTo(-10, 5);
+                ctx.closePath(); ctx.fill();
+                ctx.restore();
+                
+                // Yellow Rotation Label (Pushed OUT)
+                const halfAngle = canvasAngle / 2;
+                const labelR = arcRadius + 30; // Further out
+                const lblX = centerX + labelR * Math.cos(halfAngle);
+                const lblY = centerY + labelR * Math.sin(halfAngle);
+                drawLabel(currentAngle + "°", lblX, lblY, 'orange', 'center', 'middle', 'bold 14px Arial');
+            }
+
+            if (currentStep >= 3) {
+                // Perpendicular line
+                ctx.beginPath(); ctx.strokeStyle = '#27ae60'; ctx.lineWidth = 2; ctx.setLineDash([2, 2]);
+                ctx.moveTo(pX, pY); ctx.lineTo(pX, centerY); ctx.stroke(); ctx.setLineDash([]);
+
+                // Right Angle
+                const rSize = 10;
+                ctx.beginPath(); ctx.strokeStyle = '#27ae60'; ctx.lineWidth = 1.5; ctx.setLineDash([]);
+                const dirX = (centerX > pX) ? 1 : -1;
+                const dirY = (pY > centerY) ? 1 : -1;
+                ctx.moveTo(pX + rSize * dirX, centerY); 
+                ctx.lineTo(pX + rSize * dirX, centerY + rSize * dirY); 
+                ctx.lineTo(pX, centerY + rSize * dirY); 
+                ctx.stroke();
+
+                // Point P
+                ctx.beginPath(); ctx.fillStyle = '#e74c3c'; ctx.arc(pX, pY, 5, 0, 2 * Math.PI); ctx.fill();
+                
+                // P Label (Dynamic Offset)
+                let pLabelX = pX; let pLabelY = pY; let pAlign = 'left'; let pBaseline = 'top';
+                const pDist = 15;
+                if (data.q === 1) { pAlign = 'left'; pBaseline = 'bottom'; pLabelX += pDist; pLabelY -= pDist; }
+                else if (data.q === 2) { pAlign = 'right'; pBaseline = 'bottom'; pLabelX -= pDist; pLabelY -= pDist; }
+                else if (data.q === 3) { pAlign = 'right'; pBaseline = 'top'; pLabelX -= pDist; pLabelY += pDist; }
+                else { pAlign = 'left'; pBaseline = 'top'; pLabelX += pDist; pLabelY += pDist; }
+                drawLabel(`P(${data.xStr}, ${data.yStr})`, pLabelX, pLabelY, '#2c3e50', pAlign, pBaseline, 'bold 15px Arial');
+
+                // Green Reference Angle Area
+                ctx.beginPath(); ctx.fillStyle = 'rgba(39, 174, 96, 0.3)';
+                ctx.moveTo(centerX, centerY);
+                let startAngle, endAngle, counterClockwise;
+                if (data.q === 1) { startAngle = 0; endAngle = canvasAngle; counterClockwise = true; }
+                else if (data.q === 2) { startAngle = Math.PI; endAngle = canvasAngle; counterClockwise = false; }
+                else if (data.q === 3) { startAngle = Math.PI; endAngle = canvasAngle; counterClockwise = true; }
+                else { startAngle = 0; endAngle = canvasAngle; counterClockwise = false; }
+                ctx.arc(centerX, centerY, 35, startAngle, endAngle, counterClockwise);
+                ctx.fill();
+
+                // Green Reference Angle Text (Pushed IN)
+                const refRad = data.ref * Math.PI / 180;
+                let refLabelAngleMath;
+                if (data.q === 1) refLabelAngleMath = refRad / 2;
+                else if (data.q === 2) refLabelAngleMath = Math.PI - refRad/2;
+                else if (data.q === 3) refLabelAngleMath = Math.PI + refRad/2;
+                else refLabelAngleMath = -refRad/2;
+                
+                const labelRadius = 25; // Close to origin, inside green area
+                const refLblX = centerX + labelRadius * Math.cos(refLabelAngleMath);
+                const refLblY = centerY - labelRadius * Math.sin(refLabelAngleMath);
+                drawLabel(data.ref + "°", refLblX, refLblY, '#1e8449', 'center', 'middle', 'bold 12px Arial');
+
+                // --- Side Lengths Labels (Smart Positioning with Halo) ---
+                
+                // 1. |x| Label (Horizontal)
+                // Logic: Midpoint of X segment. Push vertically AWAY from the triangle interior.
+                // Q1/Q2 (Triangle Up): Push Down.
+                // Q3/Q4 (Triangle Down): Push Up.
+                let xLblY = (pY > centerY) ? centerY - 20 : centerY + 20;
+                // If in Q3/Q4, Y is above axis. This might overlap with initial side in Q4. Halo fixes this.
+                drawLabel(data.absX, (centerX + pX)/2, xLblY, '#27ae60', 'center', 'middle');
+
+                // 2. |y| Label (Vertical)
+                // Logic: Midpoint of Y segment. Push horizontally AWAY from vertical line.
+                // Q1/Q4 (Right): Push Right.
+                // Q2/Q3 (Left): Push Left.
+                let yLblX = (pX > centerX) ? pX + 25 : pX - 25;
+                drawLabel(data.absY, yLblX, (centerY + pY)/2, '#27ae60', 'center', 'middle');
+
+                // 3. r Label (Hypotenuse)
+                // Logic: Vector math to push normal to the line
+                let midX = (centerX + pX) / 2;
+                let midY = (centerY + pY) / 2;
+                // Vector from center to P
+                let dx = pX - centerX;
+                let dy = pY - centerY;
+                // Normal vector (rotate 90 deg)
+                // We want to push "out", away from the reference angle (which is near X-axis).
+                // Usually this means pushing "up" for Q1/Q2, "down" for Q3/Q4? No.
+                // It means pushing in the direction of the Y-axis mostly?
+                // Let's use simple heuristic: Push in direction of Y-component of normal.
+                // Or just push "Up/Left" for Q2, "Up/Right" for Q1?
+                // Actually, just pushing "Up" for top quadrants and "Down" for bottom quadrants works well for r.
+                let rLblX = midX;
+                let rLblY = midY;
+                // Slight adjustment based on slope
+                if (data.q === 1) { rLblX -= 10; rLblY -= 15; } // Up-Left
+                else if (data.q === 2) { rLblX += 10; rLblY -= 15; } // Up-Right
+                else if (data.q === 3) { rLblX += 10; rLblY += 15; } // Down-Right
+                else { rLblX -= 10; rLblY += 15; } // Down-Left
+                
+                drawLabel(data.rStr, rLblX, rLblY, '#27ae60', 'center', 'middle');
+            }
+        }
+
+        resetScenario();
+    </script>
+</body>
+</html>

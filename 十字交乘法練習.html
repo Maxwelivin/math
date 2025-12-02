@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>十字交乘法直覺訓練 - Arvin老師設計</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #3498db;
+            --success-color: #27ae60;
+            --error-color: #c0392b;
+            --bg-color: #f5f6fa;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        .controls {
+            margin-bottom: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: transform 0.1s, background-color 0.2s;
+            background-color: #e0e0e0;
+            color: #333;
+        }
+
+        button.active {
+            background-color: var(--accent-color);
+            color: white;
+            font-weight: bold;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        .game-area {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .question-box {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 30px;
+            color: var(--primary-color);
+            font-family: 'Times New Roman', serif;
+            letter-spacing: 1px;
+        }
+
+        /* Cross Method Layout */
+        .cross-container {
+            display: grid;
+            grid-template-columns: 1fr 50px 1fr;
+            gap: 10px;
+            align-items: center;
+            margin: 20px auto;
+            width: 240px;
+            position: relative;
+        }
+
+        .cross-line {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 150px;
+            height: 2px;
+            background-color: #ccc;
+            transform: translate(-50%, -50%) rotate(45deg);
+            z-index: 0;
+        }
+        
+        .cross-line-2 {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 150px;
+            height: 2px;
+            background-color: #ccc;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            z-index: 0;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+            z-index: 1;
+        }
+
+        input[type="number"] {
+            width: 60px;
+            height: 60px;
+            font-size: 24px;
+            text-align: center;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            outline: none;
+        }
+
+        input[type="number"]:focus {
+            border-color: var(--accent-color);
+        }
+
+        .variable-label {
+            font-size: 24px;
+            font-family: 'Times New Roman', serif;
+            color: #7f8c8d;
+            align-self: center;
+        }
+
+        .check-btn {
+            background-color: var(--success-color);
+            color: white;
+            margin-top: 20px;
+            width: 100%;
+        }
+
+        .feedback {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 18px;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .feedback.correct {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .feedback.wrong {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .math-display {
+            font-family: 'Times New Roman', serif;
+            font-style: italic;
+        }
+
+    </style>
+</head>
+<body>
+
+    <h1>十字交乘法直覺訓練</h1>
+    <div style="color: #666; margin-bottom: 15px;">請填入係數，使得交叉相乘的和等於中間項</div>
+
+    <div class="controls">
+        <button id="mode1" class="active" onclick="setMode(1)">Level 1: 係數為1, 常數為正</button>
+        <button id="mode2" onclick="setMode(2)">Level 2: 係數為1, 常數為負</button>
+        <button id="mode3" onclick="setMode(3)">Level 3: 係數不為1</button>
+    </div>
+
+    <div class="game-area">
+        <div class="question-box" id="question">題目載入中...</div>
+
+        <div class="cross-container">
+            <div class="cross-line"></div>
+            <div class="cross-line-2"></div>
+
+            <div class="input-group">
+                <input type="number" id="a1" placeholder="?" inputmode="numeric">
+                <input type="number" id="a2" placeholder="?" inputmode="numeric">
+            </div>
+
+            <div class="input-group" style="gap: 40px; justify-content: center;">
+                <span class="variable-label">x</span>
+                <span class="variable-label">x</span>
+            </div>
+
+            <div class="input-group">
+                <input type="number" id="c1" placeholder="?">
+                <input type="number" id="c2" placeholder="?">
+            </div>
+        </div>
+
+        <button class="check-btn" onclick="checkAnswer()">檢查答案</button>
+        <button onclick="generateQuestion()" style="margin-top: 10px; width: 100%; background-color: #7f8c8d; color: white;">下一題</button>
+
+        <div id="feedback" class="feedback"></div>
+    </div>
+
+    <script>
+        let currentMode = 1;
+        let targetA, targetB, targetC;
+        let correctFactors = {};
+
+        // Initialize
+        window.onload = function() {
+            generateQuestion();
+        };
+
+        function setMode(mode) {
+            currentMode = mode;
+            // Update UI
+            document.querySelectorAll('.controls button').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('mode' + mode).classList.add('active');
+            generateQuestion();
+        }
+
+        function getRandomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        function generateQuestion() {
+            // Clear inputs and feedback
+            document.querySelectorAll('input').forEach(inp => inp.value = '');
+            const fb = document.getElementById('feedback');
+            fb.className = 'feedback';
+            fb.innerHTML = '請輸入數字並點擊檢查';
+
+            let p, q, r, s; 
+            // Form: (px + q)(rx + s)
+            // Expanded: (pr)x^2 + (ps + qr)x + (qs)
+
+            if (currentMode === 1) {
+                // Level 1: x^2 + bx + c (c > 0)
+                // p=1, r=1. q, s same sign (we use positive for simplicity first, or random positive)
+                p = 1;
+                r = 1;
+                q = getRandomInt(1, 8);
+                s = getRandomInt(1, 8); 
+                
+            } else if (currentMode === 2) {
+                // Level 2: x^2 + bx + c (c < 0)
+                // p=1, r=1. q positive, s negative (or vice versa)
+                p = 1;
+                r = 1;
+                q = getRandomInt(1, 9);
+                s = getRandomInt(-9, -1);
+                // Avoid case where b=0 (difference of squares) if desired, though valid.
+                // Ensure q != -s if we want a middle term (optional, but better for practice)
+            } else {
+                // Level 3: ax^2 + bx + c (a != 1)
+                // Keep numbers small to build intuition
+                // p, r are factors of a. Let's pick small primes like 2, 3, 5
+                const primes = [2, 3]; 
+                p = primes[getRandomInt(0, primes.length - 1)];
+                r = 1; // Keep one as 1 usually for easy level 3, or make it random
+                if (Math.random() > 0.5) r = getRandomInt(2, 3);
+
+                q = getRandomInt(-5, 5);
+                s = getRandomInt(-5, 5);
+                if (q === 0) q = 1;
+                if (s === 0) s = 1;
+            }
+
+            // Calculate Target Coefficients
+            targetA = p * r;
+            targetB = (p * s) + (r * q);
+            targetC = q * s;
+
+            // If accidentally Level 2 generated a middle term of 0, regenerate (for better practice)
+            if (targetB === 0 && currentMode !== 3) {
+                generateQuestion();
+                return;
+            }
+            
+            // Format the polynomial string
+            let polyStr = "";
+            
+            // A term
+            if (targetA === 1) polyStr += "x^2";
+            else polyStr += `${targetA}x^2`;
+
+            // B term
+            if (targetB > 0) polyStr += ` + ${targetB}x`;
+            else if (targetB < 0) polyStr += ` - ${Math.abs(targetB)}x`;
+            // if 0, omit
+
+            // C term
+            if (targetC > 0) polyStr += ` + ${targetC}`;
+            else if (targetC < 0) polyStr += ` - ${Math.abs(targetC)}`;
+
+            // Render Question
+            // Convert x^2 to superscript visually if needed, here just using text
+            document.getElementById('question').innerHTML = polyStr.replace(/\^2/g, "<sup>2</sup>");
+
+            // Pre-fill the x coefficients if mode is 1 or 2 (Since a=1, inputs must be 1)
+            // Actually, to test intuition, let them type 1, but we can hint.
+            // For Level 1 & 2, users usually just think about the constant factors.
+            // But for consistency, we leave them open or pre-fill 1 if user struggles.
+            // Let's leave them open but if mode 1/2, maybe user puts 1,1.
+            if (currentMode < 3) {
+                document.getElementById('a1').value = 1;
+                document.getElementById('a2').value = 1;
+                // Optional: Make them readonly if you want to focus ONLY on constants
+                // document.getElementById('a1').readOnly = true;
+                // document.getElementById('a2').readOnly = true;
+            }
+        }
+
+        function checkAnswer() {
+            const a1 = parseInt(document.getElementById('a1').value) || 0;
+            const a2 = parseInt(document.getElementById('a2').value) || 0;
+            const c1 = parseInt(document.getElementById('c1').value) || 0;
+            const c2 = parseInt(document.getElementById('c2').value) || 0;
+
+            // Calculate user's polynomial based on input
+            // (a1*x + c1) * (a2*x + c2)
+            // x^2 coeff = a1*a2
+            // x coeff = a1*c2 + a2*c1 (Cross Product)
+            // const coeff = c1*c2
+
+            const userA = a1 * a2;
+            const userB = (a1 * c2) + (a2 * c1);
+            const userC = c1 * c2;
+
+            const feedbackEl = document.getElementById('feedback');
+
+            let msg = "";
+            let isCorrect = false;
+
+            // Logic Check
+            if (userA === targetA && userB === targetB && userC === targetC) {
+                msg = `<strong>正確！</strong> <br> (${a1}x ${c1 >=0 ? '+ '+c1 : c1}) (${a2}x ${c2 >=0 ? '+ '+c2 : c2})`;
+                feedbackEl.className = "feedback correct";
+                isCorrect = true;
+            } else {
+                feedbackEl.className = "feedback wrong";
+                msg = "<strong>再試試看...</strong><br>";
+                
+                // Detailed Feedback (First Principles: Show the mechanism)
+                if (userA !== targetA) {
+                    msg += `二次項係數不對：你的是 ${userA}x<sup>2</sup> (目標: ${targetA}x<sup>2</sup>)<br>`;
+                }
+                if (userC !== targetC) {
+                    msg += `常數項乘積不對：你的是 ${userC} (目標: ${targetC})<br>`;
+                }
+                // If A and C are right, but B is wrong, that's the core cross-multiplication error
+                if (userA === targetA && userC === targetC && userB !== targetB) {
+                    msg += `十字交乘結果：<br>(${a1} · ${c2}) + (${a2} · ${c1}) = <strong>${userB}x</strong> <br> 但題目中間項是 <strong>${targetB}x</strong>`;
+                }
+            }
+
+            feedbackEl.innerHTML = msg;
+        }
+    </script>
+</body>
+</html>

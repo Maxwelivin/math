@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>物理教學：波的週期定義 v5.0 (完整介質版)</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', 'Microsoft JhengHei', sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            width: 900px;
+            max-width: 95vw;
+            text-align: center;
+        }
+        canvas {
+            background-color: #fff;
+            border: 2px solid #333;
+            border-radius: 8px;
+            width: 100%;
+            height: 360px; /* 稍微加高一點 */
+            image-rendering: -webkit-optimize-contrast;
+        }
+        
+        /* 資訊面板 */
+        .info-panel {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+            justify-content: center;
+        }
+        .info-box {
+            flex: 1;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            background: #fff;
+            color: #000;
+            font-weight: bold;
+            border: 2px solid transparent;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .box-1 { border-color: #E91E63; color: #C2185B; } /* 改為粉紅色對應標記 */
+        .box-2 { border-color: #4CAF50; color: #2E7D32; }
+        .box-3 { border-color: #2196F3; color: #1565C0; }
+
+        /* 控制區 */
+        .controls {
+            margin-top: 20px;
+            padding: 15px;
+            background: #eceff1;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 12px 20px;
+            font-size: 15px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        button:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+        button:active { transform: scale(0.98); }
+
+        .btn-primary { background-color: #2196F3; color: white; }
+        .btn-primary:hover:not(:disabled) { background-color: #1976D2; }
+        
+        .btn-next-step { background-color: #9C27B0; color: white; display: none; }
+        .btn-next-step:hover { background-color: #7B1FA2; }
+
+        .btn-continuous { background-color: #FF9800; color: white; display: none; }
+        .btn-continuous:hover { background-color: #F57C00; }
+
+        .btn-reset { background-color: #607d8b; color: white; }
+        .btn-reset:hover { background-color: #455a64; }
+
+        .slider-container {
+            background: #fff;
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 1px solid #ddd;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        input[type=range] { accent-color: #2196F3; cursor: pointer; }
+        
+        #statusText {
+            font-size: 0.9rem; color: #555; margin-left: 10px; font-weight: bold; min-width: 120px; text-align: left;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2 style="color:#37474f; margin: 10px 0;">⏱️ 波的週期與介質運動 (v5.0)</h2>
+        
+        <canvas id="simCanvas" width="900" height="360"></canvas>
+
+        <div class="info-panel">
+            <div class="info-box box-1" id="info1">
+                🔴 觀點 1 (介質)<br>繩上任意點<br>原地上下震動
+            </div>
+            <div class="info-box box-2" id="info2">
+                🟢 觀點 2 (波源)<br>波源產生<br>完整全波
+            </div>
+            <div class="info-box box-3" id="info3">
+                🔵 觀點 3 (傳遞)<br>波形前進距離<br>($N \times \lambda$)
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="slider-container">
+                <label>週期 T: <span id="valT" style="color:#2196F3; font-weight:bold;">2.0</span>s</label>
+                <input type="range" id="rangeT" min="1.0" max="4.0" step="0.5" value="2.0">
+            </div>
+
+            <button id="btnStart" class="btn-primary">▶ 開始演示 (第一個週期)</button>
+            <button id="btnStep" class="btn-next-step">⏯ 再跑一個週期 (+1T)</button>
+            <button id="btnCont" class="btn-continuous">⏩ 無限傳遞 (不暫停)</button>
+            <button id="btnReset" class="btn-reset">↺ 重置</button>
+            
+            <span id="statusText"></span>
+        </div>
+    </div>
+
+    <script>
+        window.addEventListener('load', function() {
+            const canvas = document.getElementById('simCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // UI 元件
+            const btnStart = document.getElementById('btnStart');
+            const btnStep = document.getElementById('btnStep');
+            const btnCont = document.getElementById('btnCont');
+            const btnReset = document.getElementById('btnReset');
+            const rangeT = document.getElementById('rangeT');
+            const valT = document.getElementById('valT');
+            const statusText = document.getElementById('statusText');
+
+            // 物理參數
+            let T = 2.0;
+            let lambda = 200;
+            let amp = 60; // 稍微加大振幅讓觀察更清楚
+            const markerSpacing = 40; // 介質標記點的間距
+            
+            // 系統狀態
+            let time = 0;
+            let isRunning = false;
+            let animationId;
+            let lastTime = 0;
+            let mode = 'initial'; 
+            let targetTime = T;
+
+            drawScene();
+
+            // --- 事件監聽 ---
+            rangeT.addEventListener('input', function() {
+                T = parseFloat(this.value);
+                valT.textContent = T.toFixed(1);
+                resetSim();
+            });
+            btnStart.addEventListener('click', function() { startSim('step'); });
+            btnStep.addEventListener('click', function() { targetTime += T; startSim('step'); });
+            btnCont.addEventListener('click', function() { targetTime = Infinity; startSim('continuous'); });
+            btnReset.addEventListener('click', resetSim);
+
+            // --- 核心邏輯 ---
+            function startSim(newMode) {
+                if (isRunning && newMode === mode) return;
+                mode = newMode;
+                isRunning = true;
+                lastTime = performance.now();
+                updateButtonsState(true);
+                if (!animationId) loop(lastTime);
+            }
+
+            function resetSim() {
+                isRunning = false;
+                cancelAnimationFrame(animationId);
+                animationId = null;
+                time = 0;
+                targetTime = T;
+                mode = 'initial';
+                updateButtonsState(false);
+                statusText.textContent = "";
+                statusText.style.color = "#555";
+                drawScene();
+            }
+
+            function pauseSim(reason) {
+                isRunning = false;
+                cancelAnimationFrame(animationId);
+                animationId = null;
+                updateButtonsState(false);
+                statusText.textContent = reason;
+                statusText.style.color = "#4CAF50";
+                drawScene();
+            }
+
+            function updateButtonsState(running) {
+                if (running) {
+                    btnStart.disabled = true; btnStep.disabled = true; btnCont.disabled = true;
+                    statusText.textContent = mode === 'step' ? "⏳ 傳遞中 (將自動暫停)..." : "⏩ 連續傳遞中...";
+                } else {
+                    btnStart.style.display = 'none';
+                    btnStep.style.display = 'inline-flex'; btnStep.disabled = false;
+                    btnStep.innerHTML = `⏯ 再跑一個週期 (停在 ${(targetTime/T + 1).toFixed(0)}T)`;
+                    btnCont.style.display = 'inline-flex'; btnCont.disabled = false;
+                }
+                if (time === 0) {
+                    btnStart.style.display = 'inline-flex'; btnStart.disabled = false;
+                    btnStep.style.display = 'none'; btnCont.style.display = 'none';
+                }
+            }
+
+            function loop(now) {
+                if (!isRunning) return;
+                const dt = (now - lastTime) / 1000;
+                lastTime = now;
+                time += dt;
+                if (mode === 'step' && time >= targetTime) {
+                    time = targetTime;
+                    pauseSim(`✅ 已暫停於 ${ (time/T).toFixed(0) } 個週期`);
+                    return;
+                }
+                drawScene();
+                animationId = requestAnimationFrame(loop);
+            }
+
+            function drawScene() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                const centerY = canvas.height / 2;
+                const startX = 50;
+                const width = canvas.width;
+                
+                // 1. 繪製背景格線與平衡位置
+                drawGrid(ctx, width, canvas.height, startX, centerY, lambda);
+
+                // 物理計算
+                const omega = (2 * Math.PI) / T;
+                const k = (2 * Math.PI) / lambda;
+                const v = lambda / T;
+                const frontX = v * time; // 波前位置
+
+                // 2. 繪製整條繩子 (修改點 1：原本就有繩子)
+                ctx.beginPath();
+                ctx.strokeStyle = "#333";
+                ctx.lineWidth = 3;
+                ctx.lineJoin = 'round';
+                
+                // 我們繪製整條繩子直到畫布邊緣
+                for (let x = 0; x < width - startX; x += 2) {
+                    let y = 0; // 預設在平衡位置
+                    // 只有波前到達的地方才計算位移
+                    if (x <= frontX) {
+                        y = amp * Math.sin(omega * time - k * x);
+                    }
+                    if (x === 0) ctx.moveTo(startX + x, centerY - y);
+                    else ctx.lineTo(startX + x, centerY - y);
+                }
+                ctx.stroke();
+
+                // --- 視覺輔助層 ---
+
+                // (A) 介質質點標記 (修改點 2：多點標記與垂直軌跡)
+                ctx.fillStyle = "#E91E63"; // 粉紅色
+                
+                // 遍歷整條繩子，每隔 markerSpacing 畫一個點
+                for (let mx = 0; mx < width - startX; mx += markerSpacing) {
+                    let my = 0;
+                    // 計算該點目前的位移
+                    if (mx <= frontX) {
+                        my = amp * Math.sin(omega * time - k * mx);
+                    }
+
+                    // 畫垂直限制軌跡 (淡淡的粉紅虛線)
+                    ctx.beginPath();
+                    ctx.setLineDash([2, 3]);
+                    ctx.strokeStyle = "rgba(233, 30, 99, 0.3)";
+                    ctx.moveTo(startX + mx, centerY - amp);
+                    ctx.lineTo(startX + mx, centerY + amp);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+
+                    // 畫質點
+                    ctx.beginPath();
+                    ctx.arc(startX + mx, centerY - my, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // 只在源頭的點顯示震動次數文字，避免畫面太亂
+                    if (mx === 0) {
+                        let cycles = (time / T).toFixed(1);
+                        ctx.fillStyle = "#333";
+                        ctx.font = "12px Arial";
+                        ctx.fillText(`震動: ${cycles} 次`, startX - 35, centerY - amp - 15);
+                        ctx.fillStyle = "#E91E63"; // 改回粉紅色畫下一個點
+                    }
+                }
+
+                // (B) 綠色全波標示 (僅標示已產生的波部分)
+                if (time > 0) {
+                    ctx.beginPath();
+                    ctx.strokeStyle = "rgba(76, 175, 80, 0.4)";
+                    ctx.lineWidth = 8;
+                    let drawEnd = Math.min(frontX, width - startX);
+                    for (let x = 0; x <= drawEnd; x+=4) {
+                        let y = amp * Math.sin(omega * time - k * x);
+                        if (x===0) ctx.moveTo(startX + x, centerY - y);
+                        else ctx.lineTo(startX + x, centerY - y);
+                    }
+                    ctx.stroke();
+                }
+
+                // (C) 藍色傳遞距離標示
+                if (frontX > 10) {
+                    let currentFront = startX + frontX;
+                    let arrowEnd = Math.min(currentFront, width - 10);
+                    drawArrow(ctx, startX, centerY - amp - 40, arrowEnd, centerY - amp - 40, "#2196F3");
+                    if (currentFront < width) {
+                        ctx.beginPath(); ctx.setLineDash([5, 5]); ctx.strokeStyle = "#2196F3";
+                        ctx.moveTo(currentFront, centerY - amp - 40); ctx.lineTo(currentFront, centerY + amp); ctx.stroke(); ctx.setLineDash([]);
+                    }
+                    let distLambda = (frontX / lambda).toFixed(1);
+                    ctx.fillStyle = "#1976D2"; ctx.font = "bold 14px Arial";
+                    let textPos = (startX + arrowEnd) / 2;
+                    ctx.fillText(`距離: ${distLambda}λ`, textPos - 30, centerY - amp - 50);
+                }
+            }
+
+            function drawGrid(ctx, w, h, startX, centerY, lambda) {
+                // 繪製平衡位置基準線 (強化顯示)
+                ctx.beginPath();
+                ctx.moveTo(0, centerY);
+                ctx.lineTo(w, centerY);
+                ctx.strokeStyle = "#bbb";
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // 垂直刻度
+                ctx.lineWidth = 1;
+                let maxLambda = Math.ceil((w - startX) / lambda);
+                for(let i=0; i<=maxLambda; i++) {
+                    let x = startX + i * lambda;
+                    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h);
+                    ctx.strokeStyle = (i===0) ? "#999" : "#e0e0e0"; ctx.stroke();
+                    ctx.fillStyle = "#999"; ctx.font = "12px Arial"; ctx.fillText(i + "λ", x + 5, h - 10);
+                }
+            }
+
+            function drawArrow(ctx, fromX, fromY, toX, toY, color) {
+                const headlen = 10; const angle = Math.atan2(toY - fromY, toX - fromX);
+                ctx.beginPath(); ctx.moveTo(fromX, fromY); ctx.lineTo(toX, toY);
+                ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(toX, toY);
+                ctx.lineTo(toX - headlen * Math.cos(angle - Math.PI / 6), toY - headlen * Math.sin(angle - Math.PI / 6));
+                ctx.lineTo(toX - headlen * Math.cos(angle + Math.PI / 6), toY - headlen * Math.sin(angle + Math.PI / 6));
+                ctx.fillStyle = color; ctx.fill();
+            }
+        });
+    </script>
+</body>
+</html>

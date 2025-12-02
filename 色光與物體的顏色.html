@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>光學互動實驗室：光束質感優化版</title>
+    <style>
+        :root {
+            --bg-color: #1a1a1a;
+            --panel-bg: #2d2d2d;
+            --accent: #4CAF50;
+            --text-color: #e0e0e0;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        h1 { font-size: 1.2rem; margin: 10px 0; text-align: center; }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 15px;
+            z-index: 100;
+        }
+        .tab-btn {
+            padding: 8px 12px;
+            background: var(--panel-bg);
+            border: 1px solid #555;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+        .tab-btn.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            font-weight: bold;
+        }
+
+        /* Stage Wrapper */
+        #stage-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            height: 500px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .experiment-canvas {
+            position: absolute;
+            width: 800px;
+            height: 500px;
+            top: 0;
+            left: 50%;
+            margin-left: -400px;
+            transform-origin: top center;
+            background: #000;
+            border: 2px solid #444;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            display: none;
+        }
+        .experiment-canvas.active { display: block; }
+
+        /* Controls */
+        .controls {
+            width: 95%;
+            max-width: 600px;
+            padding: 15px;
+            background: var(--panel-bg);
+            border-radius: 8px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+        }
+        label { display: flex; align-items: center; gap: 5px; cursor: pointer; font-size: 0.9rem; }
+        select { padding: 8px; border-radius: 4px; font-size: 1rem; background: #eee; border: none;}
+
+        /* === Exp 1: Mixing === */
+        .beam {
+            position: absolute; top: 0; width: 200px; height: 500px;
+            mix-blend-mode: screen; opacity: 0; transition: opacity 0.5s;
+        }
+        #beam-r { background: red; left: 150px; transform: rotate(-20deg); transform-origin: top center; }
+        #beam-g { background: lime; left: 300px; }
+        #beam-b { background: blue; left: 450px; transform: rotate(20deg); transform-origin: top center; }
+        .screen {
+            position: absolute; bottom: 50px; left: 100px; width: 600px; height: 100px;
+            background: #333; text-align: center; line-height: 100px; color: #888; border-top: 2px solid #666;
+        }
+
+        /* === Exp 2: Reflection (修正光束質感) === */
+        .lamp {
+            position: absolute; top: 20px; left: 350px; width: 100px; height: 60px;
+            background: #555; border-radius: 0 0 20px 20px; z-index: 5;
+            text-align: center; line-height: 60px; color: #fff;
+        }
+        
+        /* 這裡使用了 clip-path 和 gradient 來製作真正的「光束」效果 */
+        .light-beam-area {
+            position: absolute;
+            top: 70px; 
+            left: 300px;
+            width: 200px; 
+            height: 280px;
+            /* 形狀：梯形 */
+            clip-path: polygon(25% 0%, 75% 0%, 100% 100%, 0% 100%);
+            /* 初始顏色：白光漸層 */
+            background: linear-gradient(to bottom, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 100%);
+            pointer-events: none;
+            z-index: 1; /* 在物體後面，但在背景前面 */
+            transition: background 0.3s;
+        }
+
+        .object-stage {
+            position: absolute; top: 330px; left: 350px; width: 100px; height: 100px;
+            border-radius: 50%; background: #222; z-index: 5;
+            display: flex; justify-content: center; align-items: center;
+            text-align: center; font-size: 12px;
+            box-shadow: inset -10px -10px 20px rgba(0,0,0,0.5);
+        }
+        .eye-observer {
+            position: absolute; top: 120px; right: 80px; width: 60px; height: 60px;
+            background: white; border-radius: 50%; border: 4px solid #888; z-index: 5;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .pupil { width: 20px; height: 20px; background: black; border-radius: 50%; }
+
+        /* SVG Arrows */
+        .ray-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 6; pointer-events: none; /* 確保箭頭在最上層 */
+        }
+
+        /* === Exp 3: Filter === */
+        .filter-slot {
+            position: absolute; top: 150px; width: 100px; height: 150px;
+            border: 4px dashed #555; display: flex; justify-content: center; align-items: center; color: #555;
+        }
+        #slot1 { left: 250px; }
+        #slot2 { left: 450px; }
+        .eye-sensor {
+            position: absolute; right: 50px; top: 190px; width: 60px; height: 60px;
+            background: white; border-radius: 50%; border: 5px solid #888;
+        }
+
+        .explainer {
+            position: absolute; bottom: 0; left: 0; width: 100%;
+            text-align: center; font-size: 1.2rem; padding: 15px 0;
+            background: rgba(0,0,0,0.85); color: #fff; z-index: 10;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>光學互動實驗室</h1>
+    
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab(1)">1. 光的組成</button>
+        <button class="tab-btn" onclick="switchTab(2)">2. 反射原理</button>
+        <button class="tab-btn" onclick="switchTab(3)">3. 濾鏡原理</button>
+    </div>
+
+    <div id="stage-wrapper">
+        
+        <div id="exp1" class="experiment-canvas active">
+            <div id="beam-r" class="beam"></div>
+            <div id="beam-g" class="beam"></div>
+            <div id="beam-b" class="beam"></div>
+            <div class="screen">投影屏幕</div>
+            <div class="explainer" id="text-exp1">請開啟開關，觀察光線疊加。</div>
+        </div>
+
+        <div id="exp2" class="experiment-canvas">
+            <div class="lamp">光源</div>
+            <div class="light-beam-area" id="beam-exp2"></div>
+            
+            <svg class="ray-layer" viewBox="0 0 800 500">
+                <defs>
+                    <marker id="arrow-head" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+                        <path d="M0,0 L0,6 L9,3 z" fill="white" />
+                    </marker>
+                </defs>
+                <line id="line-incident" x1="400" y1="80" x2="400" y2="330" stroke="white" stroke-width="6" marker-end="url(#arrow-head)" />
+                <line id="line-reflected" x1="400" y1="330" x2="720" y2="150" stroke="white" stroke-width="6" marker-end="url(#arrow-head)" opacity="0" />
+            </svg>
+
+            <div class="object-stage" id="obj-exp2">物體</div>
+            <div class="eye-observer"><div class="pupil"></div></div>
+            <div class="explainer" id="text-exp2"></div>
+        </div>
+
+        <div id="exp3" class="experiment-canvas">
+            <div style="position:absolute; top:200px; left:20px; color:white; font-size:1.5em;">光源 ➔</div>
+            <svg class="ray-layer" viewBox="0 0 800 500">
+                <line id="line-t1" x1="80" y1="225" x2="250" y2="225" stroke="white" stroke-width="10" />
+                <line id="line-t2" x1="350" y1="225" x2="450" y2="225" stroke="white" stroke-width="10" />
+                <line id="line-t3" x1="550" y1="225" x2="750" y2="225" stroke="white" stroke-width="10" />
+            </svg>
+            <div id="slot1" class="filter-slot">濾鏡 1</div>
+            <div id="slot2" class="filter-slot">濾鏡 2</div>
+            <div class="eye-sensor" id="eye-exp3"></div>
+            <div class="explainer" id="text-exp3"></div>
+        </div>
+
+    </div>
+
+    <div id="ctrl1" class="controls">
+        <label><input type="checkbox" id="chk-r" onchange="updateExp1()"> 紅光 (R)</label>
+        <label><input type="checkbox" id="chk-g" onchange="updateExp1()"> 綠光 (G)</label>
+        <label><input type="checkbox" id="chk-b" onchange="updateExp1()"> 藍光 (B)</label>
+    </div>
+
+    <div id="ctrl2" class="controls" style="display:none;">
+        <label>光源：
+            <select id="sel-light-exp2" onchange="updateExp2()">
+                <option value="white">白光</option>
+                <option value="red">紅光</option>
+                <option value="green">綠光</option>
+                <option value="blue">藍光</option>
+            </select>
+        </label>
+        <label>物體：
+            <select id="sel-obj-exp2" onchange="updateExp2()">
+                <option value="white">白球</option>
+                <option value="red">紅蘋果</option>
+                <option value="green">綠葉</option>
+                <option value="blue">藍球</option>
+                <option value="black">黑炭</option>
+            </select>
+        </label>
+    </div>
+
+    <div id="ctrl3" class="controls" style="display:none;">
+        <label>濾鏡1：
+            <select id="sel-fil1-exp3" onchange="updateExp3()">
+                <option value="none">無</option>
+                <option value="red">紅</option>
+                <option value="green">綠</option>
+                <option value="blue">藍</option>
+            </select>
+        </label>
+        <label>濾鏡2：
+            <select id="sel-fil2-exp3" onchange="updateExp3()">
+                <option value="none">無</option>
+                <option value="red">紅</option>
+                <option value="green">綠</option>
+                <option value="blue">藍</option>
+            </select>
+        </label>
+    </div>
+
+    <script>
+        // Fit Screen
+        function fitScreen() {
+            const wrapper = document.getElementById('stage-wrapper');
+            const canons = document.querySelectorAll('.experiment-canvas');
+            const screenW = window.innerWidth - 20; 
+            const baseW = 800;
+            let scale = screenW / baseW;
+            if (scale > 1) scale = 1; 
+            canons.forEach(el => { el.style.transform = `scale(${scale})`; });
+            wrapper.style.height = `${500 * scale}px`;
+        }
+        window.addEventListener('resize', fitScreen);
+        window.onload = () => { fitScreen(); updateExp2(); updateExp3(); };
+
+        // Physics Logic
+        const COLORS = {
+            white: {r:1, g:1, b:1, css:'white', beam:'rgba(255,255,255,0.4)'},
+            red:   {r:1, g:0, b:0, css:'#ff3333', beam:'rgba(255,50,50,0.4)'},
+            green: {r:0, g:1, b:0, css:'#33ff33', beam:'rgba(50,255,50,0.4)'},
+            blue:  {r:0, g:0, b:1, css:'#3333ff', beam:'rgba(50,50,255,0.4)'},
+            black: {r:0, g:0, b:0, css:'#111'},
+            none:  {r:1, g:1, b:1, css:'rgba(255,255,255,0.1)'}
+        };
+
+        function switchTab(id) {
+            document.querySelectorAll('.experiment-canvas').forEach(e => e.classList.remove('active'));
+            document.querySelectorAll('.controls').forEach(e => e.style.display = 'none');
+            document.querySelectorAll('.tab-btn').forEach(e => e.classList.remove('active'));
+            document.getElementById('exp'+id).classList.add('active');
+            document.getElementById('ctrl'+id).style.display = 'flex';
+            document.querySelectorAll('.tab-btn')[id-1].classList.add('active');
+            fitScreen();
+        }
+
+        function updateExp1() {
+            const r = document.getElementById('chk-r').checked;
+            const g = document.getElementById('chk-g').checked;
+            const b = document.getElementById('chk-b').checked;
+            document.getElementById('beam-r').style.opacity = r ? 0.8 : 0;
+            document.getElementById('beam-g').style.opacity = g ? 0.8 : 0;
+            document.getElementById('beam-b').style.opacity = b ? 0.8 : 0;
+            let t = "";
+            if(r && g && b) t = "三原色光疊加 ➔ 白色";
+            else if(!r && !g && !b) t = "無光";
+            else t = "混色中...";
+            document.getElementById('text-exp1').innerText = t;
+        }
+
+        function updateExp2() {
+            const lKey = document.getElementById('sel-light-exp2').value;
+            const oKey = document.getElementById('sel-obj-exp2').value;
+            const lCol = COLORS[lKey];
+            const oCol = COLORS[oKey];
+
+            const rRef = lCol.r * oCol.r;
+            const gRef = lCol.g * oCol.g;
+            const bRef = lCol.b * oCol.b;
+
+            let css = '#111';
+            if(rRef && gRef && bRef) css = 'white';
+            else if(rRef) css = '#ff3333';
+            else if(gRef) css = '#33ff33';
+            else if(bRef) css = '#3333ff';
+            
+            // 這裡修正光束顏色：使用 linear-gradient 模擬漸層消失
+            // 從有顏色的半透明 -> 完全透明
+            const beamColor = lCol.beam;
+            document.getElementById('beam-exp2').style.background = 
+                `linear-gradient(to bottom, ${beamColor} 0%, rgba(0,0,0,0) 100%)`;
+
+            document.getElementById('obj-exp2').style.background = css;
+            document.getElementById('obj-exp2').style.boxShadow = `inset -10px -10px 20px rgba(0,0,0,0.8), 0 0 20px ${css==='#111'?'transparent':css}`;
+
+            const lineIn = document.getElementById('line-incident');
+            const lineOut = document.getElementById('line-reflected');
+            lineIn.setAttribute('stroke', COLORS[lKey].css);
+            lineOut.style.opacity = (rRef||gRef||bRef) ? 1 : 0;
+            lineOut.setAttribute('stroke', css);
+
+            let msg = (css === '#111') ? "物體吸收了光線 ➔ 眼睛看到黑色" : "物體反射了光線 ➔ 眼睛看到顏色";
+            document.getElementById('text-exp2').innerText = msg;
+        }
+
+        function updateExp3() {
+            const f1Key = document.getElementById('sel-fil1-exp3').value;
+            const f2Key = document.getElementById('sel-fil2-exp3').value;
+            let c = {r:1, g:1, b:1};
+
+            const f1 = COLORS[f1Key];
+            if(f1Key!=='none') { c.r*=f1.r; c.g*=f1.g; c.b*=f1.b; }
+            const css1 = getCss(c);
+
+            const f2 = COLORS[f2Key];
+            if(f2Key!=='none') { c.r*=f2.r; c.g*=f2.g; c.b*=f2.b; }
+            const css2 = getCss(c);
+
+            document.getElementById('slot1').style.backgroundColor = f1Key==='none'?'rgba(255,255,255,0.1)':COLORS[f1Key].css;
+            document.getElementById('slot2').style.backgroundColor = f2Key==='none'?'rgba(255,255,255,0.1)':COLORS[f2Key].css;
+            
+            document.getElementById('line-t1').setAttribute('stroke', 'white');
+            document.getElementById('line-t2').setAttribute('stroke', css1);
+            document.getElementById('line-t3').setAttribute('stroke', css2);
+            document.getElementById('eye-exp3').style.backgroundColor = css2;
+            
+            document.getElementById('text-exp3').innerText = "最終看到："+ (css2==='#111'?'無光(黑)': '色光');
+        }
+
+        function getCss(c) {
+            if(c.r && c.g && c.b) return 'white';
+            if(c.r) return '#ff3333';
+            if(c.g) return '#33ff33';
+            if(c.b) return '#3333ff';
+            return '#111';
+        }
+    </script>
+</body>
+</html>

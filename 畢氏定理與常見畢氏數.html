@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>畢氏數直覺與運算 - Arvin老師設計</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #e67e22; /* Orange for the missing variable */
+            --success-color: #27ae60;
+            --error-color: #c0392b;
+            --bg-color: #fdfbf7;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+            position: relative;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .mode-btn {
+            padding: 8px 16px;
+            border: 1px solid #bdc3c7;
+            background: white;
+            color: #7f8c8d;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .mode-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+            font-weight: bold;
+        }
+
+        /* Visualization Area */
+        .visual-area {
+            height: 220px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        /* Number Cards Mode (Old) */
+        .numbers-display {
+            display: none; /* Hidden by default */
+            align-items: flex-end;
+        }
+        .numbers-display.active { display: flex; }
+
+        .number-card {
+            font-size: 42px;
+            font-weight: bold;
+            color: #34495e;
+            margin: 0 8px;
+            font-family: 'Times New Roman', serif;
+        }
+
+        /* SVG Triangle Mode (New) */
+        .triangle-svg {
+            display: none;
+            max-width: 100%;
+            height: 100%;
+        }
+        .triangle-svg.active { display: block; }
+
+        text {
+            font-family: 'Times New Roman', serif;
+            font-size: 24px;
+            font-weight: bold;
+            fill: #2c3e50;
+        }
+        
+        .missing-text {
+            fill: var(--accent-color);
+            font-size: 28px;
+        }
+
+        /* Input Area */
+        .input-area {
+            display: none;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+        .input-area.active { display: flex; }
+
+        input[type="number"] {
+            width: 80px;
+            height: 50px;
+            font-size: 24px;
+            text-align: center;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            outline: none;
+        }
+        input[type="number"]:focus { border-color: var(--accent-color); }
+
+        /* Buttons */
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .btn-group.hidden { display: none; }
+
+        .action-btn {
+            padding: 12px 30px;
+            font-size: 18px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            color: white;
+            min-width: 100px;
+            transition: transform 0.1s;
+        }
+        .action-btn:active { transform: scale(0.95); }
+        .btn-yes { background-color: var(--success-color); }
+        .btn-no { background-color: var(--error-color); }
+        .btn-submit { background-color: var(--accent-color); }
+        .btn-next { background-color: #7f8c8d; width: 100%; margin-top: 15px; display: none; }
+
+        /* Feedback */
+        .feedback {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: left;
+            display: none;
+            background-color: #f8f9fa;
+            border-left: 5px solid #ccc;
+        }
+        .feedback.correct { border-left-color: var(--success-color); background-color: #eafaf1; }
+        .feedback.wrong { border-left-color: var(--error-color); background-color: #fdedec; }
+
+        .math-step {
+            font-family: 'Times New Roman', serif;
+            font-size: 18px;
+            margin-top: 5px;
+            color: #555;
+        }
+        
+        .tag {
+            display: inline-block;
+            background: #e1bee7;
+            color: #4a148c;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <h1>畢氏數直覺與運算</h1>
+    
+    <div class="controls">
+        <button class="mode-btn active" onclick="setMode(1)">L1: 基礎判斷</button>
+        <button class="mode-btn" onclick="setMode(2)">L2: 2倍放大判斷</button>
+        <button class="mode-btn" onclick="setMode(3)">L3: 求第三邊</button>
+    </div>
+
+    <div class="container">
+        <div id="instruction-text" style="margin-bottom:15px; color:#666;">題目載入中...</div>
+
+        <div class="visual-area">
+            <div class="numbers-display" id="nums-display">
+                <div class="number-card" id="n1">3</div>
+                <div class="number-card">,</div>
+                <div class="number-card" id="n2">4</div>
+                <div class="number-card">,</div>
+                <div class="number-card" id="n3">5</div>
+            </div>
+
+            <svg class="triangle-svg" id="tri-svg" viewBox="0 0 200 150">
+                <path d="M40 130 L160 130 L40 20 Z" fill="none" stroke="#2c3e50" stroke-width="3" stroke-linejoin="round"/>
+                <rect x="40" y="110" width="20" height="20" fill="none" stroke="#2c3e50" stroke-width="1"/>
+                
+                <text x="90" y="148" text-anchor="middle" id="label-bottom">4</text>
+                <text x="20" y="80" text-anchor="middle" id="label-left">3</text>
+                <text x="110" y="70" text-anchor="middle" id="label-hypo">5</text>
+            </svg>
+        </div>
+
+        <div class="btn-group" id="btn-group-check">
+            <button class="action-btn btn-yes" onclick="checkAnswer(true)">是</button>
+            <button class="action-btn btn-no" onclick="checkAnswer(false)">否</button>
+        </div>
+
+        <div class="input-area" id="input-group-solve">
+            <input type="number" id="user-input" placeholder="?" onkeydown="if(event.key==='Enter') solveAnswer()">
+            <button class="action-btn btn-submit" onclick="solveAnswer()">送出</button>
+        </div>
+
+        <div id="feedback" class="feedback"></div>
+        <button class="action-btn btn-next" id="next-btn" onclick="generateQuestion()">下一題</button>
+    </div>
+
+    <script>
+        // --- Data ---
+        const primitives = [
+            [3, 4, 5],
+            [5, 12, 13],
+            [8, 15, 17],
+            [7, 24, 25],
+            [20, 21, 29],
+            [9, 40, 41]
+        ];
+
+        // --- State ---
+        let currentMode = 1; // 1: Basic Check, 2: Scaled Check, 3: Solve
+        let currentQ = {};
+        let isAnswered = false;
+
+        function setMode(m) {
+            currentMode = m;
+            document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.mode-btn')[m-1].classList.add('active');
+            generateQuestion();
+        }
+
+        function getRandomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        function generateQuestion() {
+            isAnswered = false;
+            document.getElementById('feedback').style.display = 'none';
+            document.getElementById('next-btn').style.display = 'none';
+            document.getElementById('user-input').value = '';
+
+            // Pick a base primitive
+            // For L1/L2, limit pool to first 4 mostly. For L3, can be broader but stick to simple ones.
+            const pool = primitives.slice(0, 4); 
+            const base = pool[getRandomInt(0, pool.length - 1)];
+            
+            // Scale Logic
+            let scale = 1;
+            if (currentMode === 2) scale = 2; // Strictly 2x
+            else if (currentMode === 3) scale = Math.random() > 0.6 ? 2 : 1; // Mix 1x and 2x for solving
+
+            let [a, b, c] = base.map(n => n * scale);
+            currentQ = { a, b, c, base, scale, mode: currentMode };
+
+            if (currentMode === 1 || currentMode === 2) {
+                setupCheckMode(a, b, c);
+            } else {
+                setupSolveMode(a, b, c);
+            }
+        }
+
+        // --- Logic for Mode 1 & 2 (Check) ---
+        function setupCheckMode(a, b, c) {
+            // UI Toggle
+            document.getElementById('instruction-text').textContent = "這三邊長能構成直角三角形嗎？";
+            document.getElementById('nums-display').classList.add('active');
+            document.getElementById('tri-svg').classList.remove('active');
+            document.getElementById('btn-group-check').classList.remove('hidden');
+            document.getElementById('input-group-solve').classList.remove('active');
+
+            // Generate Logic (Valid or Invalid)
+            const isValid = Math.random() > 0.5;
+            currentQ.isValid = isValid;
+
+            let nums = [a, b, c];
+
+            if (!isValid) {
+                // Make a fake one (Trap)
+                const trapType = getRandomInt(0, 2);
+                if (trapType === 0) nums[0] += 1; // Change a leg
+                else if (trapType === 1) nums[1] -= 1;
+                else nums[2] += 1; // Change hypotenuse
+                
+                // Sort ensuring no negative or zero (unlikely with these inputs but safe check)
+                nums.sort((x,y) => x-y);
+            } else {
+                // Shuffle for check mode? Or keep sorted? 
+                // Conventionally sorted for checking triples.
+                nums.sort((x,y) => x-y);
+            }
+
+            currentQ.displayNums = nums;
+            document.getElementById('n1').textContent = nums[0];
+            document.getElementById('n2').textContent = nums[1];
+            document.getElementById('n3').textContent = nums[2];
+        }
+
+        // --- Logic for Mode 3 (Solve) ---
+        function setupSolveMode(a, b, c) {
+            // UI Toggle
+            document.getElementById('instruction-text').textContent = "請計算圖中問號邊的長度：";
+            document.getElementById('nums-display').classList.remove('active');
+            document.getElementById('tri-svg').classList.add('active');
+            document.getElementById('btn-group-check').classList.add('hidden');
+            document.getElementById('input-group-solve').classList.add('active');
+            
+            // Decide which side to hide: 0=leg(a), 1=leg(b), 2=hypo(c)
+            const hideIdx = getRandomInt(0, 2);
+            currentQ.hiddenIndex = hideIdx;
+            currentQ.answer = (hideIdx === 0) ? a : (hideIdx === 1) ? b : c;
+
+            // Update SVG Text
+            const lblLeft = document.getElementById('label-left');
+            const lblBottom = document.getElementById('label-bottom');
+            const lblHypo = document.getElementById('label-hypo');
+
+            // Randomize which leg is bottom/left for variety
+            let leg1 = a, leg2 = b;
+            if (Math.random() > 0.5) [leg1, leg2] = [leg2, leg1];
+
+            // Map logic to visual labels
+            // Visual: Left=Leg, Bottom=Leg, Long=Hypo
+            
+            // Reset styles
+            [lblLeft, lblBottom, lblHypo].forEach(el => el.classList.remove('missing-text'));
+
+            // Case: Hide Hypotenuse
+            if (hideIdx === 2) {
+                lblLeft.textContent = leg1;
+                lblBottom.textContent = leg2;
+                lblHypo.textContent = "?";
+                lblHypo.classList.add('missing-text');
+                currentQ.type = 'find_hypo';
+            } 
+            // Case: Hide Leg
+            else {
+                // One leg is hidden. 
+                // We need to know if the hidden one is leg1 or leg2 in our visual assignment.
+                // Let's simplify: The answer is one of the legs.
+                // We show the Hypotenuse (c) and the OTHER leg.
+                
+                const knownLeg = (hideIdx === 0) ? b : a; // If we hide a, known is b
+                
+                lblHypo.textContent = c;
+                
+                // Randomly assign the known leg to left or bottom
+                if (Math.random() > 0.5) {
+                    lblLeft.textContent = knownLeg;
+                    lblBottom.textContent = "?";
+                    lblBottom.classList.add('missing-text');
+                } else {
+                    lblBottom.textContent = knownLeg;
+                    lblLeft.textContent = "?";
+                    lblLeft.classList.add('missing-text');
+                }
+                currentQ.type = 'find_leg';
+            }
+            
+            document.getElementById('user-input').focus();
+        }
+
+        function checkAnswer(userYes) {
+            if (isAnswered) return;
+            isAnswered = true;
+            
+            const isCorrect = (userYes === currentQ.isValid);
+            showFeedback(isCorrect, currentMode);
+            document.getElementById('btn-group-check').classList.add('hidden');
+            document.getElementById('next-btn').style.display = 'inline-block';
+        }
+
+        function solveAnswer() {
+            if (isAnswered) return;
+            
+            const inputVal = parseInt(document.getElementById('user-input').value);
+            if (isNaN(inputVal)) return;
+            
+            isAnswered = true;
+            const isCorrect = (inputVal === currentQ.answer);
+            showFeedback(isCorrect, 3);
+            document.getElementById('input-group-solve').classList.remove('active');
+            document.getElementById('next-btn').style.display = 'inline-block';
+        }
+
+        function showFeedback(isCorrect, mode) {
+            const fb = document.getElementById('feedback');
+            fb.style.display = 'block';
+            
+            if (isCorrect) {
+                fb.className = 'feedback correct';
+                fb.innerHTML = `<strong>答對了！</strong>`;
+            } else {
+                fb.className = 'feedback wrong';
+                fb.innerHTML = `<strong>答錯了...</strong>`;
+            }
+
+            // Detailed Analysis
+            let html = `<div class="math-step">`;
+
+            if (mode === 1 || mode === 2) {
+                const { displayNums, base, scale, isValid } = currentQ;
+                if (isValid) {
+                    html += `這是直角三角形。<br>驗證：${displayNums[0]}² + ${displayNums[1]}² = ${displayNums[2]}²`;
+                    if (scale > 1) html += `<br><span class="tag">模式</span> 它是 (${base.join(',')}) 的 <b>${scale}倍</b>`;
+                    else html += `<br><span class="tag">基礎</span> 它是常見的畢氏數。`;
+                } else {
+                    html += `這不是直角三角形。<br>${displayNums[0]}² + ${displayNums[1]}² = ${displayNums[0]**2 + displayNums[1]**2} <br>但 ${displayNums[2]}² = ${displayNums[2]**2}`;
+                }
+            } 
+            else if (mode === 3) {
+                const { a, b, c, type, answer } = currentQ;
+                html += `正確答案是：<b>${answer}</b><br>`;
+                
+                if (type === 'find_hypo') {
+                    html += `<span class="tag">求斜邊</span> 兩股平方相加開根號<br>`;
+                    html += `$\\sqrt{${a}^2 + ${b}^2} = \\sqrt{${a**2 + b**2}} = ${c}$`;
+                } else {
+                    // Find leg
+                    const knownLeg = (answer === a) ? b : a;
+                    html += `<span class="tag">求股</span> 斜邊平方減去股平方開根號<br>`;
+                    html += `$\\sqrt{${c}^2 - ${knownLeg}^2} = \\sqrt{${c**2 - knownLeg**2}} = ${answer}$`;
+                }
+                
+                // Render simple LaTeX simulation
+                html = html.replace(/\$\$/g, '').replace(/\\sqrt/g, '√').replace(/\{/g,'').replace(/\}/g,'');
+            }
+
+            html += `</div>`;
+            fb.innerHTML += html;
+        }
+
+        // Init
+        window.onload = function() {
+            setMode(1);
+        };
+
+    </script>
+</body>
+</html>

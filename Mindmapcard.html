@@ -173,7 +173,6 @@
 
         // --- 核心：數學 Prompt Engineering ---
         async function expandNode(term, parentId, isRoot) {
-            // 這個 Prompt 是實現「先備知識整合」的關鍵
             const prompt = `
                 你是一位專業數學老師。我想學習概念："${term}"。
                 請依照 First Principles (第一性原理) 進行拆解。
@@ -197,23 +196,13 @@
 
                 createMathCard(term, data);
 
-                // 生成先備知識節點
                 if (data.prerequisites) {
                     data.prerequisites.forEach((kw, i) => {
-                        // 檢查是否已存在
                         let exists = nodes.get({ filter: item => item.label === kw });
                         let id = exists.length ? exists[0].id : `n_${Date.now()}_${i}`;
-                        
-                        if (!exists.length) {
-                            nodes.add({ id: id, label: kw });
-                        }
-                        
-                        // 建立連線：箭頭從「先備知識」指向「當前概念」，表示支撐
-                        // 避免重複連線
+                        if (!exists.length) nodes.add({ id: id, label: kw });
                         let edgeId = `${id}-${parentId}`;
-                        if(!edges.get(edgeId)) {
-                            edges.add({ id: edgeId, from: id, to: parentId }); 
-                        }
+                        if(!edges.get(edgeId)) edges.add({ id: edgeId, from: id, to: parentId }); 
                     });
                 }
             } catch(e) {
@@ -226,7 +215,6 @@
             const btn = event.target;
             btn.textContent = "挖掘中..."; btn.style.opacity = 0.7;
             
-            // 尋找或建立節點
             let nodeId;
             const exist = nodes.get({ filter: i => i.label === keyword });
             if (exist.length) nodeId = exist[0].id;
@@ -235,7 +223,6 @@
                 nodes.add({ id: nodeId, label: keyword });
             }
 
-            // 遞歸查詢
             await expandNode(keyword, nodeId, false);
             
             network.focus(nodeId, { animation: true, scale: 1.2 });
@@ -246,28 +233,19 @@
         function createMathCard(title, data) {
             const div = document.createElement('div');
             div.className = 'card';
-            
-            // 構建先備知識按鈕
             let tags = data.prerequisites ? data.prerequisites.map(k => 
                 `<span class="keyword-tag" onclick="drillDown('${k}')">${k}</span>`
             ).join('') : '';
 
             div.innerHTML = `
                 <h3>${title}</h3>
-                
                 <div class="section-title">定義 (Definition)</div>
                 <div class="content-text">${data.definition}</div>
-                
                 <div class="section-title">觀念整合 (Synthesis)</div>
-                <div class="synthesis-box">
-                    💡 ${data.synthesis}
-                </div>
-
+                <div class="synthesis-box">💡 ${data.synthesis}</div>
                 <div class="section-title">先備知識 (Foundations)</div>
-                <div style="font-size:0.8rem; color:#666; margin-bottom:5px;">點擊下方按鈕以挖掘更底層的知識：</div>
                 <div>${tags}</div>
             `;
-            
             const container = document.getElementById('cards-container');
             container.insertBefore(div, container.firstChild);
         }

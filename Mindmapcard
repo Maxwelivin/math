@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CogniMap V6 - Math Scaffolding</title>
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        :root { --primary: #0f766e; --secondary: #14b8a6; --bg: #f0fdfa; --text: #134e4a; }
+        * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            font-family: "PingFang TC", "Microsoft JhengHei", -apple-system, sans-serif;
+            margin: 0; display: flex; height: 100dvh; background: var(--bg); flex-direction: column; overflow: hidden;
+        }
+
+        /* 佈局 */
+        #network-container { width: 100%; height: 45%; background: #fff; border-bottom: 1px solid #ccfbf1; }
+        #sidebar { width: 100%; height: 55%; background: #f0fdfa; display: flex; flex-direction: column; padding: 12px; }
+
+        @media (min-width: 900px) {
+            body { flex-direction: row; }
+            #network-container { width: 60%; height: 100%; border-right: 1px solid #ccfbf1; border-bottom: none; }
+            #sidebar { width: 40%; height: 100%; background: #fff; }
+        }
+
+        /* UI 元件 */
+        .status-bar {
+            font-size: 12px; padding: 8px; border-radius: 6px; margin-bottom: 10px;
+            display: flex; align-items: center; justify-content: space-between;
+            background: #ccfbf1; color: #0f766e;
+        }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #ccc; margin-right: 6px; display: inline-block; }
+        .status-dot.ok { background: #10b981; }
+
+        input, textarea {
+            width: 100%; padding: 10px; border: 1px solid #99f6e4; border-radius: 6px;
+            font-size: 15px; margin-bottom: 8px; background: #fff;
+        }
+        textarea { height: 50px; resize: none; }
+
+        button {
+            width: 100%; padding: 12px; background: var(--primary); color: white;
+            border: none; border-radius: 6px; font-weight: 600; font-size: 1rem;
+            cursor: pointer; box-shadow: 0 2px 4px rgba(15, 118, 110, 0.2);
+        }
+        button:disabled { background: #94a3b8; }
+
+        #cards-container { flex: 1; overflow-y: auto; margin-top: 10px; }
+
+        /* 數學卡片專用樣式 */
+        .card {
+            background: #fff; border-radius: 8px; padding: 16px; margin-bottom: 12px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 1px solid #ccfbf1;
+            animation: slideIn 0.3s ease-out;
+        }
+        .card h3 { margin: 0 0 10px 0; font-size: 1.2rem; color: var(--primary); border-bottom: 2px solid #f0fdfa; padding-bottom: 5px; }
+        
+        /* 定義區塊 */
+        .section-title { font-size: 0.85rem; font-weight: bold; color: #9ca3af; margin-top: 10px; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 1px; }
+        .content-text { font-size: 0.95rem; line-height: 1.6; color: #374151; margin-bottom: 10px; }
+        
+        /* 整合區塊 (Highlight) */
+        .synthesis-box {
+            background: #f0fdfa; border-left: 4px solid var(--primary);
+            padding: 10px; margin: 10px 0; font-size: 0.95rem; line-height: 1.6; color: #134e4a;
+        }
+
+        .keyword-tag {
+            display: inline-block; background: #ccfbf1; color: var(--primary);
+            padding: 5px 10px; margin: 5px 5px 0 0; border-radius: 20px;
+            font-size: 0.85rem; font-weight: 600; cursor: pointer; border: 1px solid #99f6e4; transition: all 0.2s;
+        }
+        .keyword-tag:hover { background: var(--primary); color: white; }
+        .keyword-tag::before { content: "⚡ "; } /* 表示先備知識 */
+
+        @keyframes slideIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <div id="network-container"></div>
+
+    <div id="sidebar">
+        <div class="status-bar"><span id="status-text">等待連線...</span><span class="status-dot" id="status-dot"></span></div>
+        
+        <div id="setup-area">
+            <input type="password" id="apiKeyInput" placeholder="貼上 Google API Key" onchange="autoConnect()">
+        </div>
+
+        <div id="work-area" style="display:none; flex-direction:column; flex:1;">
+            <textarea id="userInput" placeholder="輸入數學概念 (例：一元二次方程式)..."></textarea>
+            <button id="actionBtn" onclick="startMapping()">解構數學概念</button>
+            <div id="cards-container">
+                <div style="text-align:center; color:#94a3b8; margin-top:30px;">
+                    請輸入數學名詞<br>AI 將為您建立觀念鷹架
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let nodes = new vis.DataSet([]);
+        let edges = new vis.DataSet([]);
+        let network = null;
+        let CURRENT_MODEL = "";
+        let API_KEY = "";
+
+        function initNetwork() {
+            const container = document.getElementById('network-container');
+            const data = { nodes: nodes, edges: edges };
+            const options = {
+                nodes: { shape: 'box', margin: 10, font: { size: 16 }, color: { background: '#fff', border: '#0f766e', highlight: { border: '#14b8a6', background: '#f0fdfa' } } },
+                edges: { color: '#cbd5e1', arrows: 'from', label: '基礎', font: {align: 'middle', size: 10} }, // 箭頭反向：先備知識 -> 指向目標
+                physics: { stabilization: false, barnesHut: { gravitationalConstant: -4000, springConstant: 0.04 } }
+            };
+            network = new vis.Network(container, data, options);
+            network.on("click", p => p.nodes.length && network.focus(p.nodes[0], { animation: true, scale: 1.2 }));
+            network.on("resize", () => network.fit());
+        }
+
+        async function autoConnect() {
+            const key = document.getElementById('apiKeyInput').value.trim();
+            if(!key) return;
+            API_KEY = key; localStorage.setItem("gemini_math_key", key);
+            
+            try {
+                document.getElementById('status-text').textContent = "偵測模型中...";
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
+                const data = await res.json();
+                if(data.error) throw new Error("Key 無效");
+                
+                const model = data.models.find(m => m.name.includes("flash")) || data.models[0];
+                CURRENT_MODEL = model.name.replace("models/", "");
+                
+                document.getElementById('status-dot').className = "status-dot ok";
+                document.getElementById('status-text').textContent = `已連線: ${CURRENT_MODEL}`;
+                document.getElementById('setup-area').style.display = 'none';
+                document.getElementById('work-area').style.display = 'flex';
+            } catch(e) {
+                alert("連線失敗: " + e.message);
+            }
+        }
+
+        async function callGemini(prompt) {
+            try {
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${CURRENT_MODEL}:generateContent?key=${API_KEY}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                });
+                const data = await res.json();
+                return data.candidates[0].content.parts[0].text;
+            } catch(e) { console.error(e); return null; }
+        }
+
+        async function startMapping() {
+            const input = document.getElementById('userInput').value;
+            if(!input) return;
+            setLoading(true);
+            nodes.clear(); edges.clear();
+            document.getElementById('cards-container').innerHTML = '';
+            
+            // 建立核心節點
+            const rootId = 'root';
+            nodes.add({ id: rootId, label: input, color: { background: '#0f766e', border: '#134e4a' }, font: { color: 'white', size: 20 } });
+            initNetwork();
+
+            await expandNode(input, rootId, true);
+            setLoading(false);
+        }
+
+        // --- 核心：數學 Prompt Engineering ---
+        async function expandNode(term, parentId, isRoot) {
+            // 這個 Prompt 是實現「先備知識整合」的關鍵
+            const prompt = `
+                你是一位專業數學老師。我想學習概念："${term}"。
+                請依照 First Principles (第一性原理) 進行拆解。
+
+                請回傳嚴格的 JSON 格式 (不要 Markdown):
+                {
+                    "definition": "用簡單、直觀的中文定義這個數學概念 (約50字)。",
+                    "prerequisites": ["先備知識1", "先備知識2", "先備知識3"],
+                    "synthesis": "這一段最重要。請用一段話解釋『如何使用上述的先備知識來構建或解釋 ${term}』。例如：${term} 其實就是將【先備知識1】加上【先備知識2】的運算結果。"
+                }
+                
+                注意：prerequisites 必須是 2-4 個理解 ${term} 絕對必要的基礎數學名詞。
+            `;
+
+            const text = await callGemini(prompt);
+            if(!text) return;
+
+            try {
+                const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
+                const data = JSON.parse(jsonStr);
+
+                createMathCard(term, data);
+
+                // 生成先備知識節點
+                if (data.prerequisites) {
+                    data.prerequisites.forEach((kw, i) => {
+                        // 檢查是否已存在
+                        let exists = nodes.get({ filter: item => item.label === kw });
+                        let id = exists.length ? exists[0].id : `n_${Date.now()}_${i}`;
+                        
+                        if (!exists.length) {
+                            nodes.add({ id: id, label: kw });
+                        }
+                        
+                        // 建立連線：箭頭從「先備知識」指向「當前概念」，表示支撐
+                        // 避免重複連線
+                        let edgeId = `${id}-${parentId}`;
+                        if(!edges.get(edgeId)) {
+                            edges.add({ id: edgeId, from: id, to: parentId }); 
+                        }
+                    });
+                }
+            } catch(e) {
+                console.error(e);
+                createMathCard("解析錯誤", { definition: "AI 回傳格式有誤", synthesis: "請重試", prerequisites: [] });
+            }
+        }
+
+        window.drillDown = async function(keyword) {
+            const btn = event.target;
+            btn.textContent = "挖掘中..."; btn.style.opacity = 0.7;
+            
+            // 尋找或建立節點
+            let nodeId;
+            const exist = nodes.get({ filter: i => i.label === keyword });
+            if (exist.length) nodeId = exist[0].id;
+            else {
+                nodeId = `n_${Date.now()}`;
+                nodes.add({ id: nodeId, label: keyword });
+            }
+
+            // 遞歸查詢
+            await expandNode(keyword, nodeId, false);
+            
+            network.focus(nodeId, { animation: true, scale: 1.2 });
+            network.selectNodes([nodeId]);
+            btn.textContent = keyword; btn.style.opacity = 1;
+        };
+
+        function createMathCard(title, data) {
+            const div = document.createElement('div');
+            div.className = 'card';
+            
+            // 構建先備知識按鈕
+            let tags = data.prerequisites ? data.prerequisites.map(k => 
+                `<span class="keyword-tag" onclick="drillDown('${k}')">${k}</span>`
+            ).join('') : '';
+
+            div.innerHTML = `
+                <h3>${title}</h3>
+                
+                <div class="section-title">定義 (Definition)</div>
+                <div class="content-text">${data.definition}</div>
+                
+                <div class="section-title">觀念整合 (Synthesis)</div>
+                <div class="synthesis-box">
+                    💡 ${data.synthesis}
+                </div>
+
+                <div class="section-title">先備知識 (Foundations)</div>
+                <div style="font-size:0.8rem; color:#666; margin-bottom:5px;">點擊下方按鈕以挖掘更底層的知識：</div>
+                <div>${tags}</div>
+            `;
+            
+            const container = document.getElementById('cards-container');
+            container.insertBefore(div, container.firstChild);
+        }
+
+        function setLoading(force) {
+            const btn = document.getElementById('actionBtn');
+            btn.disabled = force;
+            btn.textContent = force ? "正在解構數學概念..." : "解構數學概念";
+        }
+
+        window.onload = function() {
+            initNetwork();
+            const k = localStorage.getItem("gemini_math_key");
+            if(k) { document.getElementById('apiKeyInput').value = k; autoConnect(); }
+        };
+    </script>
+</body>
+</html>

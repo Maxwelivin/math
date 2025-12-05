@@ -3,115 +3,239 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Maxwelivin 的數位實驗室</title>
+    <title>Arvin's Interactive Learning Lab</title>
     <style>
-        body { font-family: "Helvetica Neue", Arial, sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 40px 20px; }
-        .container { max-width: 800px; width: 100%; }
-        h1 { color: #333; text-align: center; margin-bottom: 10px; }
-        .subtitle { text-align: center; color: #666; font-size: 0.9em; margin-bottom: 40px; }
-        
-        /* 分區標題樣式 */
-        h2 { 
-            color: #444; 
-            border-left: 5px solid #4285F4; 
-            padding-left: 15px; 
-            margin-top: 50px; 
-            margin-bottom: 20px; 
-            font-size: 1.2em;
+        :root {
+            --primary: #2563eb;
+            --secondary: #475569;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --hover: #eff6ff;
         }
-        
-        /* 網格佈局 */
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; }
-        
-        .card { 
-            background: white; 
-            padding: 20px; 
-            border-radius: 12px; 
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05); 
-            transition: 0.2s;
-            cursor: pointer;
-            text-decoration: none;
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--bg);
+            color: #1e293b;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 40px 0;
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+            color: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 { margin: 0; font-size: 2.5rem; letter-spacing: -0.5px; }
+        p.subtitle { margin-top: 10px; opacity: 0.9; font-size: 1.1rem; }
+
+        .category-title {
             display: flex;
             align-items: center;
-            color: #333;
-            border: 1px solid transparent;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--secondary);
+            margin: 40px 0 20px 0;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e2e8f0;
         }
-        .card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-color: #4285F4; }
-        .icon { font-size: 28px; margin-right: 15px; width: 40px; text-align: center; }
-        .info { overflow: hidden; }
-        .info .title { font-size: 16px; font-weight: bold; margin-bottom: 4px; }
-        .info .desc { color: #888; font-size: 12px; }
+
+        .category-title span { margin-right: 10px; }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            border-color: var(--primary);
+            background-color: var(--hover);
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        .card-desc {
+            font-size: 0.9rem;
+            color: #64748b;
+        }
+
+        .tag {
+            display: inline-block;
+            font-size: 0.75rem;
+            padding: 4px 8px;
+            border-radius: 9999px;
+            margin-top: 10px;
+            background-color: #e2e8f0;
+            color: #475569;
+            align-self: flex-start;
+        }
+        
+        .tag.new { background-color: #dcfce7; color: #166534; font-weight: bold; }
+
+        footer {
+            text-align: center;
+            margin-top: 60px;
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>🚀 Maxwelivin 的學習實驗室</h1>
-    <div class="subtitle">數學．物理．思考工具</div>
+    <header>
+        <h1>互動式科學與數學實驗室</h1>
+        <p class="subtitle">Interactive Learning Tools by Arvin</p>
+    </header>
 
-    <h2>🧠 思考與學習工具</h2>
+    <div class="category-title"><span>📐</span> 數學 Math</div>
+    <div class="grid">
+        <a href="向量練習.html" class="card">
+            <div>
+                <div class="card-title">向量反射特訓</div>
+                <div class="card-desc">建立向量運算、分量與幾何意義的直覺反射。</div>
+            </div>
+            <span class="tag new">NEW</span>
+        </a>
+
+        <a href="十字交乘法練習.html" class="card">
+            <div>
+                <div class="card-title">十字交乘法練習</div>
+                <div class="card-desc">因式分解的基礎訓練工具。</div>
+            </div>
+            <span class="tag">代數</span>
+        </a>
+
+        <a href="方程式解.html" class="card">
+            <div>
+                <div class="card-title">方程式求解器</div>
+                <div class="card-desc">視覺化方程式的解與過程。</div>
+            </div>
+            <span class="tag">代數</span>
+        </a>
+        
+        <a href="解2.html" class="card">
+            <div>
+                <div class="card-title">二元一次聯立方程式</div>
+                <div class="card-desc">解題練習與視覺化。</div>
+            </div>
+            <span class="tag">代數</span>
+        </a>
+
+        <a href="畢氏定理與常見畢氏數.html" class="card">
+            <div>
+                <div class="card-title">畢氏定理與畢氏數</div>
+                <div class="card-desc">直角三角形邊長關係的探索。</div>
+            </div>
+            <span class="tag">幾何</span>
+        </a>
+
+        <a href="廣義角三角比V6.html" class="card">
+            <div>
+                <div class="card-title">廣義角三角比 V6</div>
+                <div class="card-desc">單位圓與三角函數值的動態演示。</div>
+            </div>
+            <span class="tag">三角函數</span>
+        </a>
+    </div>
+
+    <div class="category-title"><span>🔭</span> 物理 Physics (光學/波動)</div>
+    <div class="grid">
+        <a href="幾何光學模擬器.html" class="card">
+            <div>
+                <div class="card-title">幾何光學模擬器</div>
+                <div class="card-desc">光線追蹤與成像原理的綜合模擬。</div>
+            </div>
+            <span class="tag">光學</span>
+        </a>
+
+        <a href="凸透鏡多點成像.html" class="card">
+            <div>
+                <div class="card-title">凸透鏡多點成像</div>
+                <div class="card-desc">理解實像與虛像的形成過程。</div>
+            </div>
+            <span class="tag">光學</span>
+        </a>
+
+        <a href="Lens11.html" class="card">
+            <div>
+                <div class="card-title">透鏡成像實驗 (Lens11)</div>
+                <div class="card-desc">進階的透鏡參數調整與觀察。</div>
+            </div>
+            <span class="tag">光學</span>
+        </a>
+
+        <a href="針孔成像.html" class="card">
+            <div>
+                <div class="card-title">針孔成像</div>
+                <div class="card-desc">光沿直線傳播的經典實驗模擬。</div>
+            </div>
+            <span class="tag">光學</span>
+        </a>
+
+        <a href="色光與物體的顏色.html" class="card">
+            <div>
+                <div class="card-title">色光與物體的顏色</div>
+                <div class="card-desc">三原色光混合與物體反射光原理。</div>
+            </div>
+            <span class="tag">光學</span>
+        </a>
+
+        <a href="週期波模擬器.html" class="card">
+            <div>
+                <div class="card-title">週期波模擬器</div>
+                <div class="card-desc">觀察波的傳遞、頻率與波長關係。</div>
+            </div>
+            <span class="tag">波動</span>
+        </a>
+    </div>
+
+    <div class="category-title"><span>🛠️</span> 工具 Tools</div>
     <div class="grid">
         <a href="Mindmapcard.html" class="card">
-            <span class="icon">💡</span>
-            <div class="info"><div class="title">心智圖卡片</div><div class="desc">視覺化思考與筆記工具</div></div>
-        </a>
-        </div>
-
-    <h2>📐 數學互動教具</h2>
-    <div class="grid">
-        <a href="十字交乘法練習.html" class="card">
-            <span class="icon">✖️</span>
-            <div class="info"><div class="title">十字交乘法練習</div><div class="desc">因式分解練習工具</div></div>
-        </a>
-        <a href="廣義角三角比V6.html" class="card">
-            <span class="icon">📐</span>
-            <div class="info"><div class="title">廣義角三角比 V6</div><div class="desc">三角函數互動模擬</div></div>
-        </a>
-        <a href="方程式解.html" class="card">
-            <span class="icon">🧮</span>
-            <div class="info"><div class="title">方程式解</div><div class="desc">代數求解工具</div></div>
-        </a>
-        <a href="畢氏定理與常見畢氏數.html" class="card">
-            <span class="icon">🔺</span>
-            <div class="info"><div class="title">畢氏定理</div><div class="desc">常見畢氏數列表</div></div>
-        </a>
-        <a href="解2.html" class="card">
-            <span class="icon">✏️</span>
-            <div class="info"><div class="title">解一元二次方程式</div><div class="desc">進階求解練習</div></div>
+            <div>
+                <div class="card-title">Mindmap Card</div>
+                <div class="card-desc">心智圖卡片工具。</div>
+            </div>
+            <span class="tag">生產力</span>
         </a>
     </div>
 
-    <h2>⚛️ 物理模擬實驗</h2>
-    <div class="grid">
-        <a href="Lens11.html" class="card">
-            <span class="icon">🔍</span>
-            <div class="info"><div class="title">透鏡實驗 (Lens11)</div><div class="desc">光學透鏡基礎模擬</div></div>
-        </a>
-        <a href="幾何光學模擬器.html" class="card">
-            <span class="icon">🔦</span>
-            <div class="info"><div class="title">幾何光學模擬器</div><div class="desc">光線路徑追蹤</div></div>
-        </a>
-        <a href="凸透鏡多點成像.html" class="card">
-            <span class="icon">🕯️</span>
-            <div class="info"><div class="title">凸透鏡多點成像</div><div class="desc">成像原理演示</div></div>
-        </a>
-        <a href="針孔成像.html" class="card">
-            <span class="icon">🕳️</span>
-            <div class="info"><div class="title">針孔成像</div><div class="desc">光線直線傳播實驗</div></div>
-        </a>
-        <a href="色光與物體的顏色.html" class="card">
-            <span class="icon">🌈</span>
-            <div class="info"><div class="title">色光與物體顏色</div><div class="desc">光學色彩混合原理</div></div>
-        </a>
-        <a href="週期波模擬器.html" class="card">
-            <span class="icon">🌊</span>
-            <div class="info"><div class="title">週期波模擬器</div><div class="desc">波動力學動態演示</div></div>
-        </a>
-    </div>
-
-    <div style="text-align: center; margin-top: 50px; color: #ccc; font-size: 12px;">
-        Designed by Arvin
-    </div>
+    <footer>
+        &copy; 2025 Arvin's Education Lab. All rights reserved.
+    </footer>
 </div>
 
 </body>

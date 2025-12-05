@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>向量反射特訓 (選擇題版)</title>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --bg: #f1f5f9;
+            --card: #ffffff;
+            --correct: #22c55e;
+            --wrong: #ef4444;
+            --text: #1e293b;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header-panel {
+            background: var(--primary);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            text-align: center;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--card);
+            padding: 15px 20px;
+            border-radius: 10px;
+            position: sticky;
+            top: 10px;
+            z-index: 100;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+
+        .score {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        button.refresh-btn {
+            background: var(--text);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+
+        button.refresh-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .question-card {
+            background: var(--card);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border-left: 5px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .question-card.answered-correct { border-left-color: var(--correct); }
+        .question-card.answered-wrong { border-left-color: var(--wrong); }
+
+        .q-title {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px;
+        }
+
+        .option-btn {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            text-align: center;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .option-btn:hover:not(.disabled) {
+            border-color: var(--primary);
+            background: #eff6ff;
+        }
+
+        /* 狀態樣式 */
+        .option-btn.correct {
+            background-color: #dcfce7 !important;
+            border-color: var(--correct) !important;
+            color: #14532d;
+            font-weight: bold;
+        }
+
+        .option-btn.wrong {
+            background-color: #fee2e2 !important;
+            border-color: var(--wrong) !important;
+            color: #7f1d1d;
+            opacity: 0.7;
+        }
+
+        .option-btn.disabled {
+            cursor: default;
+            pointer-events: none;
+        }
+
+        .section-title {
+            margin: 30px 0 15px 0;
+            font-size: 1.3rem;
+            color: var(--text);
+            border-bottom: 2px solid #cbd5e1;
+            padding-bottom: 5px;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header-panel">
+        <h1 style="margin:0">向量反射特訓 (選擇題版)</h1>
+        <p style="margin:5px 0 0 0; opacity:0.9">50 題極速反應訓練</p>
+    </div>
+
+    <div class="controls">
+        <div class="score">得分: <span id="currentScore">0</span> / 50題</div>
+        <button class="refresh-btn" onclick="generateExam()">🔄 重新出題</button>
+    </div>
+
+    <div id="quiz-area"></div>
+</div>
+
+<script>
+    // 工具函式
+    const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+    
+    // 畢氏數生成器 (確保長度是整數)
+    const triples = [[3,4,5], [5,12,13], [8,15,17], [7,24,25], [20,21,29]];
+    const getPythagoreanVector = () => {
+        const t = triples[rand(0, triples.length - 1)];
+        let a = t[0], b = t[1];
+        if(Math.random() > 0.5) [a, b] = [b, a]; // 交換 xy
+        a *= (Math.random() > 0.5 ? 1 : -1);     // 隨機正負
+        b *= (Math.random() > 0.5 ? 1 : -1);
+        return {x: a, y: b, len: t[2]};
+    };
+
+    let questions = [];
+    let totalScore = 0;
+
+    // 生成題目
+    function generateExam() {
+        const container = document.getElementById('quiz-area');
+        container.innerHTML = '<div style="text-align:center; padding:20px">題目生成中...</div>';
+        questions = [];
+        totalScore = 0;
+        document.getElementById('currentScore').innerText = 0;
+
+        // --- 題庫生成邏輯 (與之前相同，但適配選擇題) ---
+        
+        // 1. 座標表示法
+        for(let i=0; i<5; i++) {
+            const x = rand(-9, 9), y = rand(-9, 9);
+            addQ("一、向量座標表示法", 
+                 `向量 \\(\\vec{v}\\) 始點為 (0,0)，終點為 (${x}, ${y})，求 \\(\\vec{v}\\)`, 
+                 [x, y]);
+        }
+        addQ("一、向量座標表示法", `向量 \\(\\vec{a}\\) 將原點平移至 P(-3, 5)，求 \\(\\vec{a}\\)`, [-3, 5]);
+
+        // 2. 分量判斷
+        for(let i=0; i<6; i++) {
+            const x = rand(-9, 9), y = rand(-9, 9);
+            const isX = Math.random() > 0.5;
+            addQ("二、分量判斷", 
+                 `向量 (${x}, ${y}) 的 ${isX ? 'x (水平)' : 'y (鉛直)'} 分量為何？`, 
+                 isX ? x : y, 'scalar');
+        }
+
+        // 3. 長度計算
+        for(let i=0; i<6; i++) {
+            if(Math.random() > 0.4) {
+                const v = getPythagoreanVector();
+                addQ("三、向量大小 (長度)", `求向量 (${v.x}, ${v.y}) 的長度`, v.len, 'scalar');
+            } else {
+                const val = rand(2, 8);
+                const isX = Math.random() > 0.5;
+                addQ("三、向量大小 (長度)", `求向量 (${isX ? val : 0}, ${isX ? 0 : val}) 的長度`, val, 'scalar');
+            }
+        }
+
+        // 4. 反向量
+        for(let i=0; i<6; i++) {
+            const x = rand(-9, 9), y = rand(-9, 9);
+            addQ("四、反向量", `\\(\\vec{u} = (${x}, ${y})\\)，求 \\(-\\vec{u}\\)`, [-x, -y]);
+        }
+
+        // 5. 係數積
+        for(let i=0; i<6; i++) {
+            const x = rand(-5, 5), y = rand(-5, 5);
+            const k = randSign() * rand(2, 4);
+            addQ("五、係數積", `\\(\\vec{a} = (${x}, ${y})\\)，求 \\(${k}\\vec{a}\\)`, [k*x, k*y]);
+        }
+
+        // 6. 兩點求向量
+        for(let i=0; i<8; i++) {
+            const x1 = rand(-5, 5), y1 = rand(-5, 5);
+            const x2 = rand(-5, 5), y2 = rand(-5, 5);
+            addQ("六、兩點求向量 (終-始)", `A(${x1}, ${y1}), B(${x2}, ${y2})，求 \\(\\vec{AB}\\)`, [x2-x1, y2-y1]);
+        }
+
+        // 7. 加法
+        for(let i=0; i<6; i++) {
+            const x1 = rand(-5, 5), y1 = rand(-5, 5);
+            const x2 = rand(-5, 5), y2 = rand(-5, 5);
+            addQ("七、向量相加", `(${x1}, ${y1}) + (${x2}, ${y2}) = ?`, [x1+x2, y1+y2]);
+        }
+
+        // 8. 減法
+        for(let i=0; i<6; i++) {
+            const x1 = rand(-5, 5), y1 = rand(-5, 5);
+            const x2 = rand(-5, 5), y2 = rand(-5, 5);
+            addQ("八、向量相減", `(${x1}, ${y1}) - (${x2}, ${y2}) = ?`, [x1-x2, y1-y2]);
+        }
+
+        renderExam();
+    }
+
+    // 輔助：隨機正負
+    function randSign() { return Math.random() < 0.5 ? -1 : 1; }
+
+    // 加入題目 (自動生成選項)
+    function addQ(section, text, correctVal, type = 'vector') {
+        const opts = generateOptions(correctVal, type);
+        questions.push({
+            id: questions.length,
+            section,
+            text,
+            correct: formatVal(correctVal, type),
+            options: opts,
+            answered: false
+        });
+    }
+
+    // 生成誘答選項 (Distractors)
+    function generateOptions(correct, type) {
+        let set = new Set();
+        const correctStr = formatVal(correct, type);
+        set.add(correctStr);
+
+        let attempts = 0;
+        while(set.size < 4 && attempts < 50) {
+            let wrong;
+            if (type === 'vector') {
+                const [cx, cy] = correct;
+                // 生成錯誤邏輯：變號、XY互換、單邊變號、加減1
+                const r = Math.random();
+                if(r < 0.2) wrong = [cy, cx]; // XY 互換
+                else if(r < 0.4) wrong = [-cx, -cy]; // 全變號
+                else if(r < 0.6) wrong = [cx, -cy]; // Y變號
+                else if(r < 0.8) wrong = [-cx, cy]; // X變號
+                else wrong = [cx + randSign(), cy + randSign()]; // 數值微調
+                set.add(formatVal(wrong, 'vector'));
+            } else {
+                // 純量錯誤：加減、變號
+                const v = correct;
+                const r = Math.random();
+                if(r < 0.3) set.add(formatVal(-v, 'scalar'));
+                else set.add(formatVal(v + randSign() * rand(1, 3), 'scalar'));
+            }
+            attempts++;
+        }
+        
+        // 如果生不出足夠的錯誤選項（例如答案是0），補隨機數
+        while(set.size < 4) {
+             if(type === 'vector') set.add(`(${rand(-10,10)}, ${rand(-10,10)})`);
+             else set.add(`${rand(-10,10)}`);
+        }
+
+        return Array.from(set).sort(() => Math.random() - 0.5); // 打亂順序
+    }
+
+    function formatVal(val, type) {
+        if(type === 'vector') return `(${val[0]}, ${val[1]})`;
+        return `${val}`;
+    }
+
+    // 渲染 HTML
+    function renderExam() {
+        const container = document.getElementById('quiz-area');
+        container.innerHTML = '';
+        
+        let currentSection = '';
+
+        questions.forEach((q, index) => {
+            if(q.section !== currentSection) {
+                const h = document.createElement('h2');
+                h.className = 'section-title';
+                h.textContent = q.section;
+                container.appendChild(h);
+                currentSection = q.section;
+            }
+
+            const card = document.createElement('div');
+            card.className = 'question-card';
+            card.id = `q-card-${index}`;
+
+            const title = document.createElement('div');
+            title.className = 'q-title';
+            title.innerHTML = `${index+1}. ${q.text}`;
+
+            const grid = document.createElement('div');
+            grid.className = 'options-grid';
+
+            q.options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.textContent = opt;
+                btn.onclick = () => checkAnswer(index, opt, btn);
+                grid.appendChild(btn);
+            });
+
+            card.appendChild(title);
+            card.appendChild(grid);
+            container.appendChild(card);
+        });
+
+        // 重要：通知 MathJax 重新渲染數學符號
+        if(window.MathJax) {
+            MathJax.typeset();
+        }
+    }
+
+    // 檢查答案
+    function checkAnswer(qIdx, selectedVal, btnElem) {
+        const q = questions[qIdx];
+        if(q.answered) return; // 防止重複作答
+
+        q.answered = true;
+        const card = document.getElementById(`q-card-${qIdx}`);
+        const allBtns = card.querySelectorAll('.option-btn');
+
+        // 鎖定所有按鈕
+        allBtns.forEach(b => b.classList.add('disabled'));
+
+        if(selectedVal === q.correct) {
+            btnElem.classList.add('correct');
+            card.classList.add('answered-correct');
+            totalScore++;
+            updateScore();
+        } else {
+            btnElem.classList.add('wrong');
+            card.classList.add('answered-wrong');
+            // 標示正確答案
+            allBtns.forEach(b => {
+                if(b.textContent === q.correct) b.classList.add('correct');
+            });
+        }
+    }
+
+    function updateScore() {
+        const el = document.getElementById('currentScore');
+        el.innerText = totalScore;
+        el.style.transform = "scale(1.2)";
+        setTimeout(() => el.style.transform = "scale(1)", 200);
+    }
+
+    // 初始化
+    window.onload = generateExam;
+
+</script>
+</body>
+</html>

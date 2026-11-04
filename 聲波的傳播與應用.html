@@ -359,19 +359,31 @@ function update1(){
   if(!anim1){drawScene1(null);drawTimeline(null);}
 }
 $('dist').addEventListener('input',e=>{D=+e.target.value;update1();});
-$('mode1').addEventListener('click',e=>{thunder=!thunder;e.currentTarget.setAttribute('aria-pressed',thunder);$('dist').disabled=thunder;
+/* 雷聲：先一聲尖銳的霹靂，再接低沉的隆隆聲；遠處山壁、雲層的回聲是較小、較悶的隆隆聲 */
+function rumbleAt(t,gain,dur,crack){
+  const a=ac(),sr=a.sampleRate,n=Math.floor(sr*dur),buf=a.createBuffer(1,n,sr),d=buf.getChannelData(0);
+  let last=0;
+  for(let i=0;i<n;i++){const w=Math.random()*2-1;last=(last+0.02*w)/1.02;// 棕色噪音（低頻）
+    const x=i/sr,env=Math.min(1,x/0.03)*Math.exp(-x/(dur*0.38));
+    const roll=0.6+0.4*Math.sin(x*9+Math.sin(x*3.1)*2);// 隆隆起伏
+    d[i]=last*3.5*env*roll+(crack&&x<0.12?w*Math.exp(-x/0.025)*0.9:0);}
+  const s=a.createBufferSource();s.buffer=buf;const f=a.createBiquadFilter();f.type='lowpass';f.frequency.value=crack?1200:420;
+  const g=a.createGain();g.gain.value=gain;s.connect(f).connect(g).connect(a.destination);s.start(a.currentTime+t);
+}
+function thunderSound(){rumbleAt(0,1,2.4,true);thunderEchoes.forEach(e=>rumbleAt(e.t,e.g*0.9,1.6,false));}
+$('mode1').addEventListener('click',e=>{thunder=!thunder;e.currentTarget.setAttribute('aria-pressed',thunder);$('dist').disabled=thunder;$('clap').textContent=thunder?'⚡ 打雷（同步動畫）':'👏 拍手（慢動作）';
   if(thunder){thunderEchoes=[];for(let i=0;i<26;i++){const t=0.12+Math.pow(Math.random(),0.8)*2.3;thunderEchoes.push({t,g:0.75*Math.exp(-t*0.8)*(0.5+Math.random()*0.5)});}}
   anim1=null;update1();});
-$('clapReal').addEventListener('click',()=>{if(thunder){clapAt(0,0.9,0.25);thunderEchoes.forEach(e=>clapAt(e.t,e.g*0.9,0.25));}else{clapAt(0,0.9);clapAt(2*D/V_AIR,0.45);}});
+$('clapReal').addEventListener('click',()=>{if(thunder){thunderSound();}else{clapAt(0,0.9);clapAt(2*D/V_AIR,0.45);}});
 $('clap').addEventListener('click',()=>{
   if(thunder){
     // rumble: noisy burst + many echoes
-    clapAt(0,0.9,0.25);thunderEchoes.forEach(e=>clapAt(e.t,e.g*0.9,0.25));
+    thunderSound();
   }
   const real=thunder?2.6:Math.max(2*D/V_AIR*1.25,0.12);
   const visual=2.6;
   if(!thunder){const te=2*D/V_AIR;clapAt(0,0.9);clapAt(te/real*visual,0.45);} const t0=performance.now(); const id={};anim1=id;
-  (function step(now){if(anim1!==id)return;const f=(now-t0)/1000/visual;const tSim=f*real;
+  (function step(now){if(anim1!==id)return;const f=Math.max(0,(now-t0)/1000/visual);const tSim=f*real;
     drawScene1(thunder?f*2.6:tSim);drawTimeline(tSim);
     if(f<1)requestAnimationFrame(step);else{anim1=null;drawTimeline(null);}})(t0);
 });

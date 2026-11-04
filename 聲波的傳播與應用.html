@@ -133,7 +133,7 @@ th:first-child,td:first-child{text-align:left}
   <section class="page" id="p2" hidden>
     <div class="card">
       <h2>不同表面的反射與吸收</h2>
-      <p class="lead">光滑、堅硬的表面容易反射聲音；粗糙、柔軟的表面容易吸收聲音；凹凸不平的紋路會把聲音打散到各方向。點牆面就能更換材質，按「發聲」觀察聲音怎麼傳到後排。聲音是以後排聽眾的位置來播放：聲波抵達時才聽得到，每一波反射聲抵達都會再響一聲。</p>
+      <p class="lead">光滑、堅硬的表面容易反射聲音；粗糙、柔軟的表面容易吸收聲音；凹凸不平的紋路會把聲音打散到各方向。點牆面就能更換材質，按「發聲」觀察聲波怎麼傳到黃色的聽者。藍色圓圈是直達聲，橘色圓圈是牆反射回來的聲波；每一圈碰到聽者時才會響一聲，反射越強聲音越大，凹凸紋路的反射聲則較模糊。</p>
     </div>
     <div class="row">
       <button class="big" id="emit">🔊 發聲</button>
@@ -171,6 +171,7 @@ th:first-child,td:first-child{text-align:left}
     <div class="row">
       <button class="btn" id="tubeOff" aria-pressed="true">沒有管子</button>
       <button class="btn" id="tubeOn" aria-pressed="false">聲音在管內傳遞</button>
+      <button class="big" id="tubePlay">🔊 發聲</button>
       <span class="chip" id="tubeStat"></span>
     </div>
     <div class="scene"><canvas id="c2b" width="1600" height="400"></canvas></div>
@@ -196,13 +197,16 @@ th:first-child,td:first-child{text-align:left}
 
     <div class="card">
       <h2>聲納測量海底深度</h2>
-      <p class="lead">船上的聲納發出超聲波，聲波碰到海底或魚群反射回來。測出回聲時間，就能算出深度：深度 = 水中聲速 × 時間 ÷ 2。拖動船隻、多測幾個點，畫出海底地形。</p>
+      <p class="lead">船上的聲納發出超聲波，聲波碰到海底或魚群反射回來。測出回聲時間，就能算出深度：深度 = 水中聲速 × 時間 ÷ 2。用滑桿、◀▶ 按鈕或直接拖動船隻改變位置，多測幾個點，畫出海底地形。</p>
     </div>
     <div class="row">
       <button class="big" id="ping">📡 發射超聲波</button>
+      <button class="btn" id="shipL" aria-label="船往左">◀</button>
+      <div class="slider" style="flex:1 1 260px"><label for="shipPos">船的位置 <output id="shipOut"></output></label><input type="range" id="shipPos" min="100" max="1500" step="5" value="420"></div>
+      <button class="btn" id="shipR" aria-label="船往右">▶</button>
       <button class="btn" id="showFloor" aria-pressed="false">顯示真實海底</button>
       <button class="btn" id="clearPts">清除測量點</button>
-      <span class="note">水中聲速 1500 m/s</span>
+      <span class="note">水中聲速 1500 m/s。真正的超聲波人耳聽不到，這裡用「嗡嗡嗡」代表。</span>
     </div>
     <div class="scene"><canvas id="c3b" width="1600" height="700"></canvas></div>
     <div class="two">
@@ -382,16 +386,16 @@ const MAT={reflect:{name:'光滑硬牆（反射）',col:'#c8553d',keep:0.92},abs
 const WALLS=[['top','天花板方向（上牆）'],['bottom','下牆'],['left','舞台後方（左牆）'],['right','觀眾席後方（右牆）']];
 let walls={top:'reflect',bottom:'reflect',left:'reflect',right:'reflect'};
 const SRC={x:220,y:380},ZONE={x0:1180,y0:200,x1:1470,y1:560};
-let parts=[],acc={dir:0,ref:0},emitT=null,anim2=null;
+let acc={dir:0,ref:0},emitT=null,anim2=null;
 const ws=$('wallSel');
 WALLS.forEach(([k,n])=>{const l=document.createElement('label');l.innerHTML=`${n}<select id="w_${k}">${Object.entries(MAT).map(([m,o])=>`<option value="${m}">${o.name}</option>`).join('')}</select>`;ws.appendChild(l);
-  l.querySelector('select').addEventListener('change',e=>{walls[k]=e.target.value;draw2();});});
+  l.querySelector('select').addEventListener('change',e=>{walls[k]=e.target.value;resetRoom();draw2();show2(true);});});
 function syncSel(){WALLS.forEach(([k])=>$('w_'+k).value=walls[k]);}
 const PRESET={classroom:{top:'reflect',bottom:'reflect',left:'reflect',right:'reflect'},studio:{top:'absorb',bottom:'absorb',left:'absorb',right:'absorb'},hall:{top:'diffuse',bottom:'diffuse',left:'reflect',right:'absorb'}};
-document.querySelectorAll('[data-preset]').forEach(b=>b.addEventListener('click',()=>{walls={...PRESET[b.dataset.preset]};syncSel();parts=[];acc={dir:0,ref:0};draw2();show2(true);}));
+document.querySelectorAll('[data-preset]').forEach(b=>b.addEventListener('click',()=>{walls={...PRESET[b.dataset.preset]};syncSel();resetRoom();draw2();show2(true);}));
 c2.addEventListener('pointerdown',e=>{const p=canvasPt(c2,e),t=36;let k=null;
   if(Math.abs(p.y-ROOM.y0)<t)k='top';else if(Math.abs(p.y-ROOM.y1)<t)k='bottom';else if(Math.abs(p.x-ROOM.x0)<t)k='left';else if(Math.abs(p.x-ROOM.x1)<t)k='right';
-  if(k){const order=['reflect','absorb','diffuse'];walls[k]=order[(order.indexOf(walls[k])+1)%3];syncSel();draw2();}});
+  if(k){const order=['reflect','absorb','diffuse'];walls[k]=order[(order.indexOf(walls[k])+1)%3];syncSel();resetRoom();draw2();show2(true);}});
 function wallPath(c,k){const{x0,y0,x1,y1}=ROOM;c.beginPath();
   if(k==='top'){c.moveTo(x0,y0);c.lineTo(x1,y0);}if(k==='bottom'){c.moveTo(x0,y1);c.lineTo(x1,y1);}
   if(k==='left'){c.moveTo(x0,y0);c.lineTo(x0,y1);}if(k==='right'){c.moveTo(x1,y0);c.lineTo(x1,y1);}}
@@ -415,31 +419,63 @@ function draw2(){
   // source
   c.fillStyle='#ffe066';c.beginPath();c.arc(SRC.x,SRC.y,18,0,7);c.fill();c.fillStyle='#e7eef2';c.fillText('舞台聲源',SRC.x,SRC.y+50);
   c.fillStyle='rgba(207,219,225,.6)';c.fillText('點牆面可更換材質',800,ROOM.y0+40);
-  // particles
-  for(const p of parts){if(p.e<0.02)continue;const col=p.b===0?'76,195,210':'255,138,76';
-    c.strokeStyle=`rgba(${col},${Math.min(1,p.e)})`;c.lineWidth=4;c.beginPath();c.moveTo(p.x-p.vx*0.05,p.y-p.vy*0.05);c.lineTo(p.x,p.y);c.stroke();}
+  // listener
+  c.fillStyle='#ffd166';c.beginPath();c.arc(LIS.x,LIS.y,16,0,7);c.fill();
+  c.fillStyle='#ffd166';c.font='bold 22px "Noto Sans TC",sans-serif';c.fillText('你在這裡聽',LIS.x,LIS.y-30);
+  if(ringT!=null)drawRings(c,ringT);
+}
+/* ---- 聲波以圓形波前擴散；反射波 = 從牆後「鏡像聲源」發出的圓（只畫在房間內） ---- */
+const LIS={x:1320,y:290},VPX=420; // 動畫中聲波速度（像素/秒）
+let ringT=null,events=[];
+function images(){
+  const {x0,x1,y0,y1}=ROOM,S=SRC;
+  const xs=[{v:S.x,w:[]},{v:2*x0-S.x,w:['left']},{v:2*x1-S.x,w:['right']},{v:2*x1-(2*x0-S.x),w:['left','right']},{v:2*x0-(2*x1-S.x),w:['right','left']}];
+  const ys=[{v:S.y,w:[]},{v:2*y0-S.y,w:['top']},{v:2*y1-S.y,w:['bottom']},{v:2*y1-(2*y0-S.y),w:['top','bottom']},{v:2*y0-(2*y1-S.y),w:['bottom','top']}];
+  const out=[];
+  for(const a of xs)for(const b of ys){const w=[...a.w,...b.w];if(w.length>2)continue;
+    const g=w.reduce((s,k)=>s*MAT[walls[k]].keep,1),dif=w.some(k=>walls[k]==='diffuse');
+    const d=Math.hypot(a.v-LIS.x,b.v-LIS.y);out.push({x:a.v,y:b.v,w,g,dif,d,t:d/VPX});}
+  const d0=out[0].d;out.forEach(o=>o.amp=o.g*Math.min(1,d0/o.d));
+  return out.sort((a,b)=>a.t-b.t);
+}
+function drawRings(c,t){
+  const r=VPX*t;c.save();c.beginPath();c.rect(ROOM.x0,ROOM.y0,ROOM.x1-ROOM.x0,ROOM.y1-ROOM.y0);c.clip();
+  for(const e of events){if(e.g<0.02)continue;const fade=Math.max(0,1-r/3200);
+    const a=(e.w.length?0.15+0.85*e.g:1)*fade;if(a<0.03)continue;
+    c.strokeStyle=e.w.length?`rgba(255,138,76,${a})`:`rgba(76,195,210,${a})`;c.lineWidth=e.w.length?4:6;
+    c.setLineDash(e.dif?[6,14]:[]);c.beginPath();c.arc(e.x,e.y,r,0,7);c.stroke();}
+  c.setLineDash([]);c.restore();
+  // 聲波抵達聽者時閃一下
+  for(const e of events){const dt=t-e.t;if(dt>=0&&dt<0.35&&e.amp>0.03){c.strokeStyle=`rgba(255,209,102,${(1-dt/0.35)})`;c.lineWidth=5;c.beginPath();c.arc(LIS.x,LIS.y,18+dt*160,0,7);c.stroke();}}
+  const heard=events.filter(e=>e.t<=t&&e.amp>0.03);
+  c.fillStyle='#e7eef2';c.font='bold 26px "Noto Sans TC",sans-serif';c.textAlign='left';
+  c.fillText(heard.length?`聽到第 ${heard.length} 聲${heard.length===1?'（直達聲）':'（回聲）'}`:'聲波傳播中…',ROOM.x0+24,ROOM.y1-24);c.textAlign='center';
+}
+let NOTES=[];
+function stopNotes(){NOTES.forEach(o=>{try{o.stop();}catch(e){}});NOTES=[];}
+function note(t,gain,soft){const a=ac(),T=a.currentTime+t;
+  [[523.25,1],[1046.5,0.3]].forEach(([f,k])=>{const o=a.createOscillator(),g=a.createGain(),fl=a.createBiquadFilter();o.type='sine';o.frequency.value=f;
+    fl.type='lowpass';fl.frequency.value=soft?900:6000;g.gain.setValueAtTime(0.0001,T);g.gain.exponentialRampToValueAtTime(Math.max(0.0002,gain*k*0.5),T+0.012);g.gain.exponentialRampToValueAtTime(0.0001,T+(soft?0.5:0.4));
+    o.connect(fl).connect(g).connect(a.destination);o.start(T);o.stop(T+0.6);NOTES.push(o);});}
+function simulate(w){
+  const ps=[],N=260,sp=520,A={dir:0,ref:0};for(let i=0;i<N;i++){const a=i/N*Math.PI*2;ps.push({x:SRC.x,y:SRC.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,e:1,b:0});}
+  for(let s=0;s<540;s++){const dt=1/60;for(const p of ps){if(p.e<0.02)continue;p.x+=p.vx*dt;p.y+=p.vy*dt;let hit=null;
+    if(p.x<ROOM.x0){p.x=ROOM.x0;hit='left';}else if(p.x>ROOM.x1){p.x=ROOM.x1;hit='right';}
+    if(p.y<ROOM.y0){p.y=ROOM.y0;hit='top';}else if(p.y>ROOM.y1){p.y=ROOM.y1;hit='bottom';}
+    if(hit){const m=w[hit];p.e*=MAT[m].keep;p.b++;const nx=hit==='left'?1:hit==='right'?-1:0,ny=hit==='top'?1:hit==='bottom'?-1:0,v=Math.hypot(p.vx,p.vy);
+      if(m==='diffuse'){const a=Math.atan2(ny,nx)+(Math.random()-0.5)*Math.PI*0.95;p.vx=Math.cos(a)*v;p.vy=Math.sin(a)*v;}else{if(nx)p.vx=-p.vx;if(ny)p.vy=-p.vy;}}
+    if(p.x>ZONE.x0&&p.x<ZONE.x1&&p.y>ZONE.y0&&p.y<ZONE.y1){if(p.b===0)A.dir+=p.e*dt;else A.ref+=p.e*dt;}}}
+  return A;
 }
 function emit(){
-  parts=[];acc={dir:0,ref:0};const N=260,sp=520;
-  for(let i=0;i<N;i++){const a=i/N*Math.PI*2;parts.push({x:SRC.x,y:SRC.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,e:1,b:0});}
-  emitT=performance.now();const id={};anim2=id;let last=emitT;
-  let binE=0,binT=emitT,refE=0;
-  (function step(now){if(anim2!==id)return;const dt=Math.min(0.033,(now-last)/1000);last=now;
-    for(const p of parts){if(p.e<0.02)continue;p.x+=p.vx*dt;p.y+=p.vy*dt;
-      let hit=null;
-      if(p.x<ROOM.x0){p.x=ROOM.x0;hit='left';}else if(p.x>ROOM.x1){p.x=ROOM.x1;hit='right';}
-      if(p.y<ROOM.y0){p.y=ROOM.y0;hit='top';}else if(p.y>ROOM.y1){p.y=ROOM.y1;hit='bottom';}
-      if(hit){const m=walls[hit];p.e*=MAT[m].keep;p.b++;
-        const nx=hit==='left'?1:hit==='right'?-1:0,ny=hit==='top'?1:hit==='bottom'?-1:0,sp=Math.hypot(p.vx,p.vy);
-        if(m==='diffuse'){const base=Math.atan2(ny,nx),a=base+(Math.random()-0.5)*Math.PI*0.95;p.vx=Math.cos(a)*sp;p.vy=Math.sin(a)*sp;}
-        else{if(nx)p.vx=-p.vx;if(ny)p.vy=-p.vy;}}
-      const inz=p.x>ZONE.x0&&p.x<ZONE.x1&&p.y>ZONE.y0&&p.y<ZONE.y1;
-      if(inz){if(p.b===0)acc.dir+=p.e*dt;else acc.ref+=p.e*dt;if(!p.z)binE+=p.e;}
-      p.z=inz;}
-    // 聲波抵達後排聽眾時才發出聲音：每 0.15 秒統計一次新抵達的聲波能量
-    if(now-binT>=150){if(binE>0){if(!refE)refE=binE;if(binE>=0.12*refE)clapAt(0,0.9*Math.min(1,binE/refE));}binE=0;binT=now;}
-    draw2();show2(false);
-    if((now-emitT)<9000)requestAnimationFrame(step);else{anim2=null;show2(true);}})(emitT);
+  stopNotes();events=images();const result=simulate({...walls});acc={dir:0,ref:0};show2(false);
+  // 每個波前抵達聽者的時刻，正好排一個音
+  events.forEach(e=>{if(e.amp<0.03)return;
+    if(e.dif){[-0.07,0,0.08].forEach(o=>note(Math.max(0,e.t+o),e.amp*0.6,true));}else note(e.t,e.amp,false);});
+  const end=Math.max(...events.filter(e=>e.amp>=0.03).map(e=>e.t))+0.8;
+  emitT=performance.now();const id={};anim2=id;
+  (function step(now){if(anim2!==id)return;ringT=Math.max(0,(now-emitT)/1000);draw2();
+    if(ringT<end)requestAnimationFrame(step);else{anim2=null;acc=result;show2(true);}})(emitT);
 }
 function show2(final){
   const s=x=>Math.min(100,x/40*100);
@@ -454,28 +490,53 @@ function show2(final){
   else{v.className='verdict ok';v.textContent=prefix+'幾乎只有直達聲：很安靜、沒有回聲，但後排聽到的音量較小。';}
 }
 $('emit').addEventListener('click',()=>{ac();emit();});
+function resetRoom(){stopNotes();anim2=null;ringT=null;acc={dir:0,ref:0};}
 draw2();show2(true);
 
-/* ---- 管內反射 ---- */
-const c2b=$('c2b'),xb=c2b.getContext('2d');let tube=false;
-function drawTube(){
-  const c=xb,W=1600,H=400,cy=200,h=32,sx=150,ex=1450;c.fillStyle='#0b1418';c.fillRect(0,0,W,H);
-  let hits=0;const N=41;
-  for(let i=0;i<N;i++){const a=(-55+110*i/(N-1))*Math.PI/180;let x=sx,y=cy,vx=Math.cos(a),vy=Math.sin(a);
-    c.beginPath();c.moveTo(x,y);let ok=false;
+/* ---- 管內反射（含發聲動畫） ---- */
+const c2b=$('c2b'),xb=c2b.getContext('2d');let tube=false,tubeAnim=null;
+const TB={cy:200,h:32,sx:150,ex:1450,N:41,V:700};
+function tracePaths(){const {cy,h,sx,ex,N}=TB,H=400,out=[];
+  for(let i=0;i<N;i++){const a=(-55+110*i/(N-1))*Math.PI/180;let x=sx,y=cy,vx=Math.cos(a),vy=Math.sin(a);const pts=[[x,y]];let ok=false;
     for(let s=0;s<4000;s++){x+=vx*2;y+=vy*2;
-      if(tube&&x<ex){if(y<cy-h){y=2*(cy-h)-y;vy=-vy;c.lineTo(x,cy-h);}else if(y>cy+h){y=2*(cy+h)-y;vy=-vy;c.lineTo(x,cy+h);}}
+      if(tube&&x<ex){if(y<cy-h){y=2*(cy-h)-y;vy=-vy;pts.push([x,cy-h]);}else if(y>cy+h){y=2*(cy+h)-y;vy=-vy;pts.push([x,cy+h]);}}
       if(x>=ex){ok=Math.abs(y-cy)<=h;break;}if(x<0||y<0||y>H)break;}
-    c.lineTo(x,y);c.strokeStyle=ok?'rgba(255,138,76,.9)':'rgba(120,145,160,.45)';c.lineWidth=ok?3:2;c.stroke();if(ok)hits++;}
+    pts.push([x,y]);let L=0;const cum=[0];for(let k=1;k<pts.length;k++){L+=Math.hypot(pts[k][0]-pts[k-1][0],pts[k][1]-pts[k-1][1]);cum.push(L);}
+    out.push({pts,cum,L,ok});}
+  return out;}
+function posAt(p,s){if(s>=p.L)return null;let k=1;while(k<p.cum.length&&p.cum[k]<s)k++;const f=(s-p.cum[k-1])/(p.cum[k]-p.cum[k-1]||1);
+  return[p.pts[k-1][0]+(p.pts[k][0]-p.pts[k-1][0])*f,p.pts[k-1][1]+(p.pts[k][1]-p.pts[k-1][1])*f];}
+function drawTube(t){
+  const c=xb,W=1600,H=400,{cy,h,sx,ex,N,V}=TB;c.fillStyle='#0b1418';c.fillRect(0,0,W,H);
+  const paths=tracePaths();const hits=paths.filter(p=>p.ok).length;
+  paths.forEach(p=>{c.beginPath();p.pts.forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y));c.strokeStyle=p.ok?'rgba(255,138,76,.35)':'rgba(120,145,160,.18)';c.lineWidth=2;c.stroke();});
   if(tube){c.strokeStyle='#cfdbe1';c.lineWidth=6;c.beginPath();c.moveTo(sx-20,cy-h-3);c.lineTo(ex,cy-h-3);c.moveTo(sx-20,cy+h+3);c.lineTo(ex,cy+h+3);c.stroke();}
+  let arrived=0;
+  if(t!=null){const s=V*t;
+    if(!tube){// 沒有管子：圓形波前往四面八方擴散，越遠越淡
+      c.strokeStyle=`rgba(76,195,210,${Math.max(0.05,Math.min(1,120/Math.max(s,1)))})`;c.lineWidth=5;c.beginPath();c.arc(sx,cy,s,0,7);c.stroke();}
+    else{// 有管子：聲波被限制在管內，集中往前
+      const x=Math.min(ex,sx+s*0.93);c.fillStyle='rgba(76,195,210,.55)';c.fillRect(Math.max(sx,x-24),cy-h,24,2*h);}
+    paths.forEach(p=>{const q=posAt(p,s);if(q){c.fillStyle=p.ok?'#ff8a4c':'#9fb3bf';c.beginPath();c.arc(q[0],q[1],5,0,7);c.fill();}else if(p.ok)arrived++;});}
   c.fillStyle='#ffe066';c.beginPath();c.arc(sx,cy,14,0,7);c.fill();
-  c.fillStyle='#4cc3d2';c.fillRect(ex,cy-h,26,2*h);
+  const glow=arrived/N;c.fillStyle=`rgba(76,195,210,${0.4+0.6*glow})`;c.fillRect(ex,cy-h,26,2*h);
+  if(glow>0){c.strokeStyle=`rgba(255,209,102,${glow})`;c.lineWidth=4;c.beginPath();c.arc(ex+13,cy,40+glow*40,0,7);c.stroke();}
   c.fillStyle='#e7eef2';c.font='24px "Noto Sans TC",sans-serif';c.textAlign='center';c.fillText('聲源（心音）',sx,cy+80);c.fillText('耳朵',ex+13,cy+80);
-  $('tubeStat').textContent=`到達耳朵的聲線：${hits} / ${N} 條`;
+  c.textAlign='left';c.font='bold 26px "Noto Sans TC",sans-serif';
+  if(t!=null)c.fillText(tube?'聲波在管內反射，集中往耳朵前進':'聲波往四面八方散開，越遠越弱',40,50);
+  $('tubeStat').textContent=`到達耳朵的聲線：${t!=null?arrived:hits} / ${N} 條`;
+  return hits;
 }
-$('tubeOff').addEventListener('click',()=>{tube=false;$('tubeOff').setAttribute('aria-pressed',true);$('tubeOn').setAttribute('aria-pressed',false);drawTube();});
-$('tubeOn').addEventListener('click',()=>{tube=true;$('tubeOn').setAttribute('aria-pressed',true);$('tubeOff').setAttribute('aria-pressed',false);drawTube();});
-drawTube();
+function playTube(){stopNotes();const hits=drawTube(null),t=(TB.ex-TB.sx)/TB.V;
+  note(0,0.5,false);note(t,Math.max(0.03,hits/TB.N),false);
+  const t0=performance.now(),end=t+1.6,id={};tubeAnim=id;
+  (function step(now){if(tubeAnim!==id)return;const tt=Math.max(0,(now-t0)/1000);drawTube(tt);if(tt<end)requestAnimationFrame(step);else tubeAnim=null;})(t0);}
+function setTube(v){stopNotes();tube=v;tubeAnim=null;$('tubeOff').setAttribute('aria-pressed',!v);$('tubeOn').setAttribute('aria-pressed',v);drawTube(null);}
+$('tubeOff').addEventListener('click',()=>setTube(false));
+$('tubeOn').addEventListener('click',()=>setTube(true));
+$('tubePlay').addEventListener('click',()=>{ac();playTube();});
+drawTube(null);
+
 
 /* =========================================================
    3a. 可聽頻率
@@ -570,15 +631,22 @@ function finishPing(){const p=ping;ping=null;pts.push({x:p.x,d:p.d,t:p.T,what:p.
   const tb=$('sonarRows');tb.innerHTML=pts.map((q,i)=>`<tr><td>${i+1}</td><td>${Math.round(q.x/16)} 號</td><td>${q.t.toFixed(3)}</td><td>${q.d.toFixed(0)}</td><td>${q.what}</td></tr>`).reverse().join('');}
 $('ping').addEventListener('click',()=>{if(ping)return;const tg=target(shipX);const d=Math.round(tg.d);const T=2*d/V_WATER;
   ping={x:shipX,d,T,what:tg.what,t0:performance.now(),vis:2.2};
-  // 回聲音效（放慢）
-  const a=ac(),o=a.createOscillator(),g=a.createGain();o.frequency.value=1400;g.gain.setValueAtTime(0.12,a.currentTime);g.gain.exponentialRampToValueAtTime(0.001,a.currentTime+0.25);o.connect(g).connect(a.destination);o.start();o.stop(a.currentTime+0.3);
-  const o2=a.createOscillator(),g2=a.createGain();o2.frequency.value=1400;g2.gain.setValueAtTime(0.0001,a.currentTime);g2.gain.setValueAtTime(0.06,a.currentTime+2.2);g2.gain.exponentialRampToValueAtTime(0.001,a.currentTime+2.45);o2.connect(g2).connect(a.destination);o2.start();o2.stop(a.currentTime+2.5);
+  hum(0,0.35);hum(2.2,0.14); // 發射：嗡嗡嗡；回聲回到船上：較小聲的嗡嗡嗡
 });
+function hum(t,gain){const a=ac();for(let i=0;i<3;i++){const T=a.currentTime+t+i*0.24;const o=a.createOscillator(),o2=a.createOscillator(),f=a.createBiquadFilter(),g=a.createGain();
+  o.type='sawtooth';o.frequency.value=130;o2.type='sawtooth';o2.frequency.value=133;f.type='lowpass';f.frequency.value=700;
+  g.gain.setValueAtTime(0.0001,T);g.gain.exponentialRampToValueAtTime(gain,T+0.03);g.gain.setValueAtTime(gain,T+0.13);g.gain.exponentialRampToValueAtTime(0.0001,T+0.19);
+  o.connect(f);o2.connect(f);f.connect(g).connect(a.destination);o.start(T);o2.start(T);o.stop(T+0.22);o2.stop(T+0.22);}}
+function setShip(x){if(ping)return;shipX=Math.max(100,Math.min(1500,x));$('shipPos').value=shipX;$('shipOut').textContent=Math.round(shipX/16)+' 號位置';}
+$('shipPos').addEventListener('input',e=>setShip(+e.target.value));
+$('shipL').addEventListener('click',()=>setShip(shipX-50));
+$('shipR').addEventListener('click',()=>setShip(shipX+50));
+setShip(shipX);
 $('showFloor').addEventListener('click',e=>{showFloor=!showFloor;e.currentTarget.setAttribute('aria-pressed',showFloor);});
 $('clearPts').addEventListener('click',()=>{pts=[];$('sonarRows').innerHTML='';$('sonarT').textContent='—';$('sonarF').textContent='按下「發射超聲波」';newFish();});
 let drag=false;
 c4.addEventListener('pointerdown',e=>{const p=canvasPt(c4,e);if(p.y<SEA+40&&Math.abs(p.x-shipX)<130&&!ping){drag=true;c4.setPointerCapture(e.pointerId);}});
-c4.addEventListener('pointermove',e=>{if(!drag)return;shipX=Math.max(100,Math.min(1500,canvasPt(c4,e).x));});
+c4.addEventListener('pointermove',e=>{if(!drag)return;setShip(canvasPt(c4,e).x);});
 c4.addEventListener('pointerup',()=>drag=false);
 requestAnimationFrame(sonarLoop);
 

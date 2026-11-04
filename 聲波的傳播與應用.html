@@ -284,24 +284,13 @@ function drawScene1(tSim){
   const c=x1,W=1600,H=500;c.clearRect(0,0,W,H);
   c.fillStyle='#0b1418';c.fillRect(0,0,W,H);
   c.fillStyle='#16242b';c.fillRect(0,GROUND,W,H-GROUND);
+  if(thunder){c.fillStyle='#7d93a0';c.font='22px "Noto Sans TC",sans-serif';c.textAlign='center';for(let m=0;m<=1400;m+=200){const x=P0+m/MPX;c.fillRect(x-1,GROUND+8,2,14);c.fillText(m+' m',x,GROUND+50);}drawThunder(c,tSim);return;}
   // distance ruler
   c.fillStyle='#7d93a0';c.font='22px "Noto Sans TC",sans-serif';c.textAlign='center';
   for(let m=0;m<=100;m+=10){const x=P0+m*K1;c.fillRect(x-1,GROUND+8,2,m%50===0?18:10);c.fillText(m+' m',x,GROUND+50);}
   // 17 m marker
   const x17=P0+17*K1;c.strokeStyle='#ffb35c';c.setLineDash([8,8]);c.lineWidth=2;c.beginPath();c.moveTo(x17,60);c.lineTo(x17,GROUND);c.stroke();c.setLineDash([]);
   c.fillStyle='#ffb35c';c.fillText('17 m',x17,52);
-  if(thunder){
-    // thunder: cloud + mountains
-    c.fillStyle='#55636b';[[1050,90,70],[1130,80,80],[1210,95,60]].forEach(([x,y,r])=>{c.beginPath();c.arc(x,y,r,0,7);c.fill();});
-    c.strokeStyle='#ffe066';c.lineWidth=6;c.beginPath();c.moveTo(1130,150);c.lineTo(1100,230);c.lineTo(1140,230);c.lineTo(1105,330);c.stroke();
-    c.fillStyle='#24363e';[[700,260],[920,300],[1350,240],[1520,290]].forEach(([x,h])=>{c.beginPath();c.moveTo(x-160,GROUND);c.lineTo(x,GROUND-h);c.lineTo(x+160,GROUND);c.fill();});
-    c.fillStyle='#e7eef2';c.textAlign='left';c.font='24px "Noto Sans TC",sans-serif';
-    c.fillText('雷聲傳到你耳中，也從遠近不同的山、雲層、建築反射過來',P0+70,130);
-    c.fillText('許多回聲陸續抵達，連成「轟隆隆」的長聲',P0+70,166);
-    drawPerson(P0,c);
-    if(tSim!=null){c.strokeStyle='rgba(255,224,102,.6)';c.lineWidth=4;const r=Math.min(1,tSim/2.2)*1500;c.beginPath();c.arc(1130,200,r,0,7);c.stroke();}
-    return;
-  }
   const wx=wallX();
   // wall bricks
   for(let y=110;y<GROUND;y+=26){for(let i=0;i<2;i++){c.fillStyle=((y/26)|0)%2?'#b5523b':'#c8604a';c.fillRect(wx+i*20+(((y/26)|0)%2?-10:0),y,19,24);}}
@@ -326,32 +315,76 @@ function drawScene1(tSim){
     if(r>=2*path){c.fillStyle='#ffe066';c.font='bold 30px "Noto Sans TC",sans-serif';c.fillText('聽到回聲！',P0-60,HEAD-110);}
   }
 }
+/* ---- 雷聲：閃電在雲中，聲波從雷擊點擴散；山壁、雲層、身後山崖的反射波＝從「鏡像雷擊點」發出的圓 ---- */
+const TL={x:560,y:120},EAR={x:P0,y:HEAD-58},MPX=1; // 1 像素 = 1 公尺，動畫為真實速度
+const MTS=[760,950,1150],CLOUD=40,CLIFF=40;
+function buildThunder(){
+  const L=TL,list=[];const add=(x,y,clip,g,label)=>{const d=Math.hypot(x-EAR.x,y-EAR.y);list.push({x,y,clip,g,label,d,t:d*MPX/V_AIR});};
+  const all={x0:0,x1:1600,y0:0,y1:GROUND};
+  add(L.x,L.y,all,1,'直達雷聲');
+  add(L.x,2*CLOUD-L.y,{...all,y0:CLOUD},0.55,'雲層反射');
+  add(2*CLIFF-L.x,L.y,{...all,x0:CLIFF},0.6,'身後山崖反射');
+  MTS.forEach((X,k)=>{add(2*X-L.x,L.y,{...all,x1:X},0.7,`第 ${k+1} 座山反射`);
+    add(2*X-L.x,2*CLOUD-L.y,{...all,x1:X,y0:CLOUD},0.35,`第 ${k+1} 座山＋雲層反射`);});
+  const d0=list[0].d;list.forEach(e=>e.amp=e.g*Math.min(1,d0/e.d)*(e===list[0]?1:1.2));
+  return list.sort((a,b)=>a.t-b.t);
+}
+function drawThunder(c,t){
+  const W=1600;
+  // 雲層與雷雨雲
+  c.fillStyle='#3a474f';c.fillRect(0,0,W,CLOUD);
+  c.fillStyle='#55636b';[[470,80,70],[560,60,85],[650,80,70],[720,60,55]].forEach(([x,y,r])=>{c.beginPath();c.arc(x,y,r,0,7);c.fill();});
+  c.fillStyle='#cfdbe1';c.font='20px "Noto Sans TC",sans-serif';c.textAlign='right';c.fillText('雲層',W-16,28);
+  // 山（左側為陡峭山壁＝反射面）
+  MTS.forEach((X,k)=>{c.fillStyle=['#2a3f48','#24363e','#1e2e35'][k];c.beginPath();c.moveTo(X,GROUND);c.lineTo(X+15,GROUND-230-k*25);c.lineTo(X+120,GROUND-290-k*25);c.lineTo(X+330,GROUND);c.fill();
+    c.fillStyle='#cfdbe1';c.textAlign='center';c.fillText(`山 ${k+1}`,X+150,GROUND-24);});
+  c.fillStyle='#2a3f48';c.fillRect(0,120,CLIFF,GROUND-120);c.fillStyle='#93a6b0';c.textAlign='left';c.fillText('山崖',4,112);
+  // 閃電（光幾乎瞬間到達）
+  if(t!=null&&t<0.35){c.fillStyle=`rgba(255,255,220,${0.35*(1-t/0.35)})`;c.fillRect(0,0,W,GROUND);}
+  if(t==null||t<0.6){c.strokeStyle='#ffe066';c.lineWidth=7;c.beginPath();c.moveTo(TL.x,TL.y);c.lineTo(TL.x-30,TL.y+90);c.lineTo(TL.x+10,TL.y+90);c.lineTo(TL.x-25,GROUND-40);c.stroke();}
+  drawPerson(P0,c);
+  c.fillStyle='#e7eef2';c.textAlign='left';c.font='22px "Noto Sans TC",sans-serif';
+  c.fillText('閃電的光幾乎立刻看到，雷聲要等聲波傳過來才聽到',820,80);
+  c.fillText('雷聲也從山、雲層、山崖反射，陸續抵達 → 轟隆隆',820,112);
+  if(t==null)return;
+  const r=V_AIR*t/MPX;
+  thunderEchoes.forEach((e,i)=>{if(r<=0)return;const direct=e.label==='直達雷聲';const fade=Math.max(0,1-r/2600);const a=(direct?1:0.25+0.75*e.g)*fade;if(a<0.03)return;
+    c.save();c.beginPath();c.rect(e.clip.x0,e.clip.y0,e.clip.x1-e.clip.x0,e.clip.y1-e.clip.y0);c.clip();
+    c.strokeStyle=direct?`rgba(255,224,102,${a})`:`rgba(255,138,76,${a})`;c.lineWidth=direct?6:4;c.setLineDash(direct?[]:[14,10]);
+    c.beginPath();c.arc(e.x,e.y,r,0,7);c.stroke();c.restore();});
+  c.setLineDash([]);
+  const heard=thunderEchoes.filter(e=>e.t<=t);
+  thunderEchoes.forEach(e=>{const dt=t-e.t;if(dt>=0&&dt<0.4){c.strokeStyle=`rgba(255,209,102,${1-dt/0.4})`;c.lineWidth=5;c.beginPath();c.arc(EAR.x,EAR.y,30+dt*200,0,7);c.stroke();}});
+  c.fillStyle='#ffe066';c.font='bold 26px "Noto Sans TC",sans-serif';c.textAlign='left';
+  c.fillText(heard.length?`聽到：${heard[heard.length-1].label}（第 ${heard.length} 聲）`:`看到閃電了！雷聲還在路上… ${t.toFixed(1)} s`,P0+60,GROUND-20);
+}
 function drawTimeline(play){
   const c=xt,W=1600,H=240,L=70,R=W-40,base=130;
-  const tMax=thunder?2.6:0.7, X=t=>L+(R-L)*t/tMax;
+  const tMax=thunder?Math.ceil(thunderEchoes[thunderEchoes.length-1].t+0.6):0.7, X=t=>L+(R-L)*t/tMax;
   c.fillStyle='#0b1418';c.fillRect(0,0,W,H);
   // 0.1 s zone
-  c.fillStyle='rgba(255,107,107,.16)';c.fillRect(X(0),20,X(0.1)-X(0),base+60-20);
-  c.fillStyle='#ff9b9b';c.font='20px "Noto Sans TC",sans-serif';c.textAlign='left';c.fillText('0.1 秒內分辨不出',X(0)+6,42);
+  c.font='20px "Noto Sans TC",sans-serif';c.textAlign='left';
+  if(!thunder){c.fillStyle='rgba(255,107,107,.16)';c.fillRect(X(0),20,X(0.1)-X(0),base+60-20);c.fillStyle='#ff9b9b';c.fillText('0.1 秒內分辨不出',X(0)+6,42);}
   // axis
   c.strokeStyle='#4a5d67';c.lineWidth=2;c.beginPath();c.moveTo(L,base);c.lineTo(R,base);c.stroke();
   c.fillStyle='#93a6b0';c.textAlign='center';
-  const step=thunder?0.2:0.1;
+  const step=thunder?0.5:0.1;
   for(let t=0;t<=tMax+1e-9;t+=step){c.fillRect(X(t)-1,base+60,2,8);c.fillText(t.toFixed(1)+' s',X(t),base+92);}
   c.textAlign='left';c.fillText('時間',L-60,base+92);
   function pulse(t0,amp,col){c.strokeStyle=col;c.lineWidth=3;c.beginPath();
     for(let i=0;i<=120;i++){const dt=i/120*0.06;const x=X(t0+dt);const y=base-amp*Math.exp(-dt*60)*Math.sin(dt*700);i?c.lineTo(x,y):c.moveTo(x,y);}c.stroke();}
-  pulse(0,90,'#4cc3d2');
-  if(thunder){thunderEchoes.forEach(e=>{if(play==null||e.t<=play)pulse(e.t,90*e.g,'#ff8a4c');});}
+  if(!thunder)pulse(0,90,'#4cc3d2');
+  if(thunder){c.fillStyle='#ffe066';c.fillRect(X(0)-2,20,4,base-20);c.fillText('⚡ 閃電',X(0)+8,40);
+    thunderEchoes.forEach((e,i)=>{if(play==null||e.t<=play)pulse(e.t,90*Math.min(1,e.amp),i===0?'#ffe066':'#ff8a4c');});}
   else{const te=2*D/V_AIR;if(play==null||te<=play){pulse(te,55,'#ff8a4c');c.fillStyle='#ff8a4c';c.textAlign='center';c.fillText('回聲 '+te.toFixed(3)+' s',Math.min(R-60,X(te)+40),36+ (te<0.1?24:0));}}
-  c.fillStyle='#4cc3d2';c.textAlign='left';c.fillText('原聲',X(0)+6,base-100+ (thunder?0:0));
+  if(!thunder){c.fillStyle='#4cc3d2';c.textAlign='left';c.fillText('原聲',X(0)+6,base-100);}
   if(play!=null){c.strokeStyle='#ffe066';c.lineWidth=2;c.beginPath();c.moveTo(X(Math.min(play,tMax)),14);c.lineTo(X(Math.min(play,tMax)),base+60);c.stroke();}
 }
 function update1(){
   $('distOut').textContent=D+' m';
   const te=2*D/V_AIR;
-  $('echoT').textContent=thunder?'很多次':te.toFixed(3)+' 秒';
-  $('echoF').textContent=thunder?'不同距離的反射面，回聲時間各不相同':`2 × ${D} ÷ 340 = ${te.toFixed(3)} s`;
+  $('echoT').textContent=thunder?`${thunderEchoes.length} 聲`:te.toFixed(3)+' 秒';
+  $('echoF').textContent=thunder?'閃電後 '+thunderEchoes.map(e=>e.t.toFixed(1)).join('、')+' 秒抵達':`2 × ${D} ÷ 340 = ${te.toFixed(3)} s`;
   const v=$('verdict1');
   if(thunder){v.className='verdict ok';v.textContent='許多回聲接連抵達、混在一起，雷聲就變成轟隆隆的連續聲。';}
   else if(te<0.1){v.className='verdict no';v.textContent=`回聲只比原聲晚 ${te.toFixed(3)} 秒（小於 0.1 秒），兩者混在一起，聽不出回聲。牆要在約 17 m 以外才行。`;}
@@ -370,9 +403,9 @@ function rumbleAt(t,gain,dur,crack){
   const s=a.createBufferSource();s.buffer=buf;const f=a.createBiquadFilter();f.type='lowpass';f.frequency.value=crack?1200:420;
   const g=a.createGain();g.gain.value=gain;s.connect(f).connect(g).connect(a.destination);s.start(a.currentTime+t);
 }
-function thunderSound(){rumbleAt(0,1,2.4,true);thunderEchoes.forEach(e=>rumbleAt(e.t,e.g*0.9,1.6,false));}
+function thunderSound(){thunderEchoes.forEach((e,i)=>rumbleAt(e.t,i===0?1:Math.min(0.9,e.amp*0.9),i===0?2.4:1.6,i===0));}
 $('mode1').addEventListener('click',e=>{thunder=!thunder;e.currentTarget.setAttribute('aria-pressed',thunder);$('dist').disabled=thunder;$('clap').textContent=thunder?'⚡ 打雷（同步動畫）':'👏 拍手（慢動作）';
-  if(thunder){thunderEchoes=[];for(let i=0;i<26;i++){const t=0.12+Math.pow(Math.random(),0.8)*2.3;thunderEchoes.push({t,g:0.75*Math.exp(-t*0.8)*(0.5+Math.random()*0.5)});}}
+  if(thunder)thunderEchoes=buildThunder();
   anim1=null;update1();});
 $('clapReal').addEventListener('click',()=>{if(thunder){thunderSound();}else{clapAt(0,0.9);clapAt(2*D/V_AIR,0.45);}});
 $('clap').addEventListener('click',()=>{
@@ -380,11 +413,11 @@ $('clap').addEventListener('click',()=>{
     // rumble: noisy burst + many echoes
     thunderSound();
   }
-  const real=thunder?2.6:Math.max(2*D/V_AIR*1.25,0.12);
-  const visual=2.6;
+  const real=thunder?thunderEchoes[thunderEchoes.length-1].t+1.5:Math.max(2*D/V_AIR*1.25,0.12);
+  const visual=thunder?real:2.6;
   if(!thunder){const te=2*D/V_AIR;clapAt(0,0.9);clapAt(te/real*visual,0.45);} const t0=performance.now(); const id={};anim1=id;
   (function step(now){if(anim1!==id)return;const f=Math.max(0,(now-t0)/1000/visual);const tSim=f*real;
-    drawScene1(thunder?f*2.6:tSim);drawTimeline(tSim);
+    drawScene1(tSim);drawTimeline(tSim);
     if(f<1)requestAnimationFrame(step);else{anim1=null;drawTimeline(null);}})(t0);
 });
 update1();

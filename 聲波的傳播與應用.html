@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>聲波實驗室</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&display=swap">
+<style>
+/* Layout: 標題 → 大分頁列 → 每頁「場景畫布 + 控制列 + 讀數」→ 說明；為電子白板放大字級與按鈕 */
+:root{
+  --bg:#eef3f6; --surface:#ffffff; --fg:#14232e; --muted:#566874; --line:#d3dde3;
+  --accent:#0f7c8c; --accent-soft:#dff1f3; --warm:#d9480f; --good:#15803d; --bad:#c92a2a;
+  --display:"Noto Serif TC","Songti TC",serif; --body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f171c; --surface:#18232a; --fg:#e4edf1; --muted:#93a6b0; --line:#2a3a43;
+  --accent:#4cc3d2; --accent-soft:#163a40; --warm:#ff8a4c; --good:#4ade80; --bad:#ff6b6b; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f171c; --surface:#18232a; --fg:#e4edf1; --muted:#93a6b0; --line:#2a3a43;
+  --accent:#4cc3d2; --accent-soft:#163a40; --warm:#ff8a4c; --good:#4ade80; --bad:#ff6b6b; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:17px;line-height:1.7}
+.wrap{max-width:1400px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:18px}
+header{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.unit{font-family:var(--display);font-weight:900;font-size:2.4rem;color:var(--accent);line-height:1}
+h1{font-family:var(--display);font-weight:900;font-size:2.1rem;margin:0;line-height:1.2}
+.home{margin-left:auto;color:var(--accent);font-weight:700;text-decoration:none}
+nav.tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+@media (max-width:700px){nav.tabs{grid-template-columns:repeat(2,minmax(0,1fr))}}
+nav.tabs button{font:inherit;font-size:1.1rem;font-weight:700;padding:14px 10px;border-radius:10px;border:2px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer;line-height:1.3}
+nav.tabs button small{display:block;font-weight:400;font-size:.85rem;color:var(--muted)}
+nav.tabs button[aria-selected="true"]{border-color:var(--accent);background:var(--accent);color:#fff}
+nav.tabs button[aria-selected="true"] small{color:#e6f7f9}
+section.page{display:grid;gap:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+h2{font-family:var(--display);font-size:1.45rem;margin:0 0 6px}
+h3{font-size:1.15rem;margin:0 0 8px}
+.lead{margin:0;color:var(--muted);max-width:70ch}
+.scene{background:#0b1418;border-radius:10px;overflow:hidden;position:relative;touch-action:none}
+.scene canvas{display:block;width:100%;height:auto}
+.row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.big{font:inherit;font-size:1.15rem;font-weight:700;padding:12px 22px;border-radius:10px;border:0;background:var(--warm);color:#fff;cursor:pointer;min-height:52px}
+.btn{font:inherit;font-size:1rem;padding:10px 16px;border-radius:10px;border:2px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer;min-height:48px}
+.btn[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);font-weight:700}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.slider{flex:1 1 320px;display:grid;gap:2px}
+.slider label{display:flex;justify-content:space-between;font-weight:700}
+.slider output{color:var(--accent);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;height:36px;accent-color:var(--accent)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+.stat span{font-size:.9rem;color:var(--muted)}
+.stat b{display:block;font-size:1.6rem;font-variant-numeric:tabular-nums;line-height:1.3}
+.verdict{border-radius:12px;padding:12px 16px;font-weight:700;font-size:1.15rem}
+.verdict.ok{background:color-mix(in srgb,var(--good) 15%,transparent);color:var(--good)}
+.verdict.no{background:color-mix(in srgb,var(--bad) 13%,transparent);color:var(--bad)}
+.formula{font-variant-numeric:tabular-nums;font-size:1.1rem}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+@media (max-width:900px){.two{grid-template-columns:minmax(0,1fr)}}
+.walls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (max-width:700px){.walls{grid-template-columns:minmax(0,1fr)}}
+.walls label{display:grid;gap:4px;font-weight:700}
+select{font:inherit;padding:10px;border-radius:10px;border:2px solid var(--line);background:var(--surface);color:var(--fg);min-height:48px}
+.bar{height:22px;border-radius:6px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:.95rem;color:var(--muted)}
+.legend i{display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:-2px;margin-right:4px}
+.chip{display:inline-block;padding:4px 14px;border-radius:999px;font-weight:700;background:var(--accent-soft);color:var(--accent)}
+.note{font-size:.95rem;color:var(--muted)}
+.prob{font-size:1.25rem;font-weight:500;margin:6px 0 12px;max-width:60ch}
+.ans{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.ans input{font:inherit;font-size:1.3rem;width:9em;padding:8px 12px;border-radius:10px;border:2px solid var(--line);background:var(--bg);color:var(--fg)}
+.sol{margin-top:10px;font-size:1.05rem;min-height:1.5em}
+.q{border-top:1px solid var(--line);padding-top:12px;margin-top:12px}
+.q:first-of-type{border:0;margin:0;padding:0}
+.q p{margin:0 0 8px;font-weight:500}
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.opts button{font:inherit;border:2px solid var(--line);background:var(--bg);color:var(--fg);border-radius:8px;padding:8px 14px;cursor:pointer}
+.opts button.ok{border-color:var(--good);color:var(--good);font-weight:700}
+.opts button.no{border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.fb{font-size:.95rem;margin-top:6px;min-height:1.3em}
+.check label{display:flex;gap:10px;align-items:center;padding:6px 0;font-size:1.05rem}
+.check input{width:24px;height:24px;accent-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+td,th{padding:6px 10px;border-bottom:1px solid var(--line);text-align:right}
+th:first-child,td:first-child{text-align:left}
+.tablebox{overflow-x:auto;max-height:220px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="unit">3-4</span><h1>聲波實驗室</h1>
+    <a class="home" href="index.html">← 回首頁</a>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" data-p="p1" aria-selected="true">① 回聲測距<small>原聲與回聲的時間差</small></button>
+    <button role="tab" data-p="p2" aria-selected="false">② 反射與吸收<small>牆面材質・音樂廳・聽診器</small></button>
+    <button role="tab" data-p="p3" aria-selected="false">③ 超聲波<small>可聽範圍・聲納</small></button>
+    <button role="tab" data-p="p4" aria-selected="false">④ 練習與測驗<small>計算・觀念・學習 Check</small></button>
+  </nav>
+
+  <!-- ============ 1 回聲 ============ -->
+  <section class="page" id="p1">
+    <div class="card">
+      <h2>聲波反射與回聲</h2>
+      <p class="lead">聲波遇到障礙物會反射，反射回來的聲波稱為回聲。原聲和回聲要相隔約 0.1 秒以上，人耳才分辨得出來。拖動牆的距離，按「拍手」看看並聽聽回聲。</p>
+    </div>
+    <div class="scene"><canvas id="c1" width="1600" height="500"></canvas></div>
+    <div class="row">
+      <button class="big" id="clap">👏 拍手</button>
+      <div class="slider">
+        <label for="dist">人與牆的距離 <output id="distOut"></output></label>
+        <input type="range" id="dist" min="2" max="100" step="1" value="34">
+      </div>
+      <button class="btn" id="mode1" aria-pressed="false">⛈ 雷聲為何轟隆隆？</button>
+    </div>
+    <div class="scene"><canvas id="c1t" width="1600" height="240"></canvas></div>
+    <div class="stats">
+      <div class="stat"><span>聲速（空氣）</span><b>340 m/s</b></div>
+      <div class="stat"><span>回聲時間 = 2 × 距離 ÷ 聲速</span><b id="echoT"></b><span class="formula" id="echoF"></span></div>
+    </div>
+    <div class="verdict" id="verdict1"></div>
+    <p class="note">動畫已放慢，聲音則是真實的時間差。用喇叭播放時，0.1 秒前後的差別最明顯。</p>
+  </section>
+
+  <!-- ============ 2 材質 ============ -->
+  <section class="page" id="p2" hidden>
+    <div class="card">
+      <h2>不同表面的反射與吸收</h2>
+      <p class="lead">光滑、堅硬的表面容易反射聲音；粗糙、柔軟的表面容易吸收聲音；凹凸不平的紋路會把聲音打散到各方向。點牆面就能更換材質，按「發聲」觀察聲音怎麼傳到後排。</p>
+    </div>
+    <div class="row">
+      <button class="big" id="emit">🔊 發聲</button>
+      <button class="btn" data-preset="classroom">空教室（磚牆）</button>
+      <button class="btn" data-preset="studio">錄音室（吸音海綿）</button>
+      <button class="btn" data-preset="hall">音樂廳（衛武營式設計）</button>
+    </div>
+    <div class="scene"><canvas id="c2" width="1600" height="760"></canvas></div>
+    <div class="walls" id="wallSel"></div>
+    <div class="legend"><span><i style="background:#c8553d"></i>光滑硬牆：反射</span><span><i style="background:#3d4a52"></i>吸音海綿／布幔：吸收</span><span><i style="background:#c9a96e"></i>凹凸紋路：擴散</span></div>
+    <div class="two">
+      <div class="card">
+        <h3>後排聽眾收到的聲音</h3>
+        <div style="display:grid;gap:8px">
+          <div>直達聲 <b id="dirV"></b><div class="bar"><i id="dirB" style="background:var(--accent)"></i></div></div>
+          <div>反射聲（回聲） <b id="refV"></b><div class="bar"><i id="refB" style="background:var(--warm)"></i></div></div>
+        </div>
+        <p class="verdict" id="verdict2" style="margin:12px 0 0"></p>
+      </div>
+      <div class="card">
+        <h3>音樂廳的設計重點（圖 3-26）</h3>
+        <p style="margin:0">音樂廳要降低回聲的干擾，同時要讓聲音傳到遠方的觀眾席：</p>
+        <ul style="margin:6px 0 0;padding-left:1.2em">
+          <li><b>減少回聲</b>：凹凸不平的紋路，把回聲打散。</li>
+          <li><b>吸收聲音</b>：布幔或吸音板，減少反射的干擾。</li>
+          <li><b>反射聲音</b>：舞台後方平滑的曲面反射牆，把音樂集中送往觀眾。</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>傳聲筒與聽診器</h2>
+      <p class="lead">聽診器不會放大聲音，而是讓聲波在管內不斷反射，不向四周散開，所以耳朵能收到較大的音量。比較有管子和沒有管子時，有多少聲線到達耳朵。</p>
+    </div>
+    <div class="row">
+      <button class="btn" id="tubeOff" aria-pressed="true">沒有管子</button>
+      <button class="btn" id="tubeOn" aria-pressed="false">聲音在管內傳遞</button>
+      <span class="chip" id="tubeStat"></span>
+    </div>
+    <div class="scene"><canvas id="c2b" width="1600" height="400"></canvas></div>
+  </section>
+
+  <!-- ============ 3 超聲波 ============ -->
+  <section class="page" id="p3" hidden>
+    <div class="card">
+      <h2>人與動物可聽到的頻率</h2>
+      <p class="lead">人能聽到的聲音頻率約為 20～20000 Hz。高於 20000 Hz 稱為超聲波（超音波），低於 20 Hz 稱為次聲波。不論頻率高低，在相同介質中聲速都一樣。</p>
+    </div>
+    <div class="row">
+      <div class="slider">
+        <label for="freq">頻率 <output id="freqOut"></output></label>
+        <input type="range" id="freq" min="0" max="1000" step="1" value="430">
+      </div>
+      <span class="chip" id="freqCat"></span>
+      <button class="big" id="tone">▶ 播放這個頻率</button>
+    </div>
+    <div class="scene"><canvas id="c3" width="1600" height="470"></canvas></div>
+    <p class="note" id="hearList"></p>
+    <p class="note">播放前請先把音量調小。高於約 15000 Hz 時，很多喇叭本身就播不出來，而且年紀越大，能聽到的上限越低。</p>
+
+    <div class="card">
+      <h2>聲納測量海底深度</h2>
+      <p class="lead">船上的聲納發出超聲波，聲波碰到海底或魚群反射回來。測出回聲時間，就能算出深度：深度 = 水中聲速 × 時間 ÷ 2。拖動船隻、多測幾個點，畫出海底地形。</p>
+    </div>
+    <div class="row">
+      <button class="big" id="ping">📡 發射超聲波</button>
+      <button class="btn" id="showFloor" aria-pressed="false">顯示真實海底</button>
+      <button class="btn" id="clearPts">清除測量點</button>
+      <span class="note">水中聲速 1500 m/s</span>
+    </div>
+    <div class="scene"><canvas id="c3b" width="1600" height="700"></canvas></div>
+    <div class="two">
+      <div class="stat"><span>這次測量</span><b id="sonarT">—</b><span class="formula" id="sonarF">按下「發射超聲波」</span></div>
+      <div class="card"><h3>測量紀錄</h3><div class="tablebox"><table><thead><tr><th>#</th><th>位置</th><th>回聲時間 (s)</th><th>深度 (m)</th><th>反射物</th></tr></thead><tbody id="sonarRows"></tbody></table></div></div>
+    </div>
+  </section>
+
+  <!-- ============ 4 練習 ============ -->
+  <section class="page" id="p4" hidden>
+    <div class="card">
+      <h2>計算練習</h2>
+      <p class="note" style="margin:0">空氣中聲速 340 m/s，水中聲速 1500 m/s。答對 <b id="score">0</b> 題／作答 <b id="tries">0</b> 題</p>
+      <p class="prob" id="prob"></p>
+      <form class="ans" id="ansForm">
+        <input id="ansIn" inputmode="decimal" autocomplete="off" aria-label="你的答案">
+        <span id="unit"></span>
+        <button class="big" type="submit">對答案</button>
+        <button class="btn" type="button" id="nextP">下一題 →</button>
+      </form>
+      <div class="sol" id="sol"></div>
+    </div>
+    <div class="two">
+      <div class="card" id="quiz"><h2>觀念測驗</h2></div>
+      <div class="card check">
+        <h2>學習 Check</h2>
+        <label><input type="checkbox" id="ck1"> 我能說出聲波反射的意義</label>
+        <label><input type="checkbox" id="ck2"> 我能說出回聲對生活的影響</label>
+        <label><input type="checkbox" id="ck3"> 我能說出超聲波的定義以及應用</label>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+const V_AIR=340,V_WATER=1500;
+
+/* ---------- tabs ---------- */
+let active='p1';
+document.querySelectorAll('nav.tabs button').forEach(b=>b.addEventListener('click',()=>{
+  active=b.dataset.p;
+  document.querySelectorAll('nav.tabs button').forEach(x=>x.setAttribute('aria-selected',x===b));
+  document.querySelectorAll('section.page').forEach(s=>s.hidden=s.id!==active);
+  stopTone();
+}));
+function canvasPt(cv,e){const r=cv.getBoundingClientRect();return{x:(e.clientX-r.left)*cv.width/r.width,y:(e.clientY-r.top)*cv.height/r.height};}
+
+/* ---------- audio ---------- */
+let AC=null;
+function ac(){if(!AC){AC=new (window.AudioContext||window.webkitAudioContext)();}if(AC.state==='suspended')AC.resume();return AC;}
+function clapAt(t,gain,dur=0.06){
+  const a=ac(),n=Math.floor(a.sampleRate*dur),buf=a.createBuffer(1,n,a.sampleRate),d=buf.getChannelData(0);
+  for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*Math.exp(-i/(n/6));
+  const s=a.createBufferSource();s.buffer=buf;const g=a.createGain();g.gain.value=gain;
+  const f=a.createBiquadFilter();f.type='bandpass';f.frequency.value=1800;f.Q.value=0.7;
+  s.connect(f).connect(g).connect(a.destination);s.start(a.currentTime+t);
+}
+
+/* =========================================================
+   1. 回聲測距
+   ========================================================= */
+const c1=$('c1'),x1=c1.getContext('2d'),c1t=$('c1t'),xt=c1t.getContext('2d');
+let D=34,thunder=false,anim1=null,thunderEchoes=[];
+const P0=150,K1=(1600-P0-140)/100,GROUND=430,HEAD=300;
+function wallX(){return P0+D*K1;}
+function drawPerson(x,c,X){
+  c.strokeStyle=X||'#e7eef2';c.fillStyle=X||'#e7eef2';c.lineWidth=7;c.lineCap='round';
+  c.beginPath();c.arc(x,HEAD-58,26,0,7);c.fill();
+  c.beginPath();c.moveTo(x,HEAD-30);c.lineTo(x,HEAD+50);c.moveTo(x,HEAD+50);c.lineTo(x-26,GROUND);c.moveTo(x,HEAD+50);c.lineTo(x+26,GROUND);
+  c.moveTo(x,HEAD-10);c.lineTo(x+40,HEAD-30);c.moveTo(x,HEAD-10);c.lineTo(x+36,HEAD+4);c.stroke();
+}
+function drawScene1(tSim){
+  const c=x1,W=1600,H=500;c.clearRect(0,0,W,H);
+  c.fillStyle='#0b1418';c.fillRect(0,0,W,H);
+  c.fillStyle='#16242b';c.fillRect(0,GROUND,W,H-GROUND);
+  // distance ruler
+  c.fillStyle='#7d93a0';c.font='22px "Noto Sans TC",sans-serif';c.textAlign='center';
+  for(let m=0;m<=100;m+=10){const x=P0+m*K1;c.fillRect(x-1,GROUND+8,2,m%50===0?18:10);c.fillText(m+' m',x,GROUND+50);}
+  // 17 m marker
+  const x17=P0+17*K1;c.strokeStyle='#ffb35c';c.setLineDash([8,8]);c.lineWidth=2;c.beginPath();c.moveTo(x17,60);c.lineTo(x17,GROUND);c.stroke();c.setLineDash([]);
+  c.fillStyle='#ffb35c';c.fillText('17 m',x17,52);
+  if(thunder){
+    // thunder: cloud + mountains
+    c.fillStyle='#55636b';[[1050,90,70],[1130,80,80],[1210,95,60]].forEach(([x,y,r])=>{c.beginPath();c.arc(x,y,r,0,7);c.fill();});
+    c.strokeStyle='#ffe066';c.lineWidth=6;c.beginPath();c.moveTo(1130,150);c.lineTo(1100,230);c.lineTo(1140,230);c.lineTo(1105,330);c.stroke();
+    c.fillStyle='#24363e';[[700,260],[920,300],[1350,240],[1520,290]].forEach(([x,h])=>{c.beginPath();c.moveTo(x-160,GROUND);c.lineTo(x,GROUND-h);c.lineTo(x+160,GROUND);c.fill();});
+    c.fillStyle='#e7eef2';c.textAlign='left';c.font='24px "Noto Sans TC",sans-serif';
+    c.fillText('雷聲傳到你耳中，也從遠近不同的山、雲層、建築反射過來',P0+70,130);
+    c.fillText('許多回聲陸續抵達，連成「轟隆隆」的長聲',P0+70,166);
+    drawPerson(P0,c);
+    if(tSim!=null){c.strokeStyle='rgba(255,224,102,.6)';c.lineWidth=4;const r=Math.min(1,tSim/2.2)*1500;c.beginPath();c.arc(1130,200,r,0,7);c.stroke();}
+    return;
+  }
+  const wx=wallX();
+  // wall bricks
+  for(let y=110;y<GROUND;y+=26){for(let i=0;i<2;i++){c.fillStyle=((y/26)|0)%2?'#b5523b':'#c8604a';c.fillRect(wx+i*20+(((y/26)|0)%2?-10:0),y,19,24);}}
+  c.fillStyle='#c8604a';c.fillRect(wx,110,40,GROUND-110);
+  c.strokeStyle='#8a3a2a';c.lineWidth=2;for(let y=110;y<GROUND;y+=26){c.beginPath();c.moveTo(wx,y);c.lineTo(wx+40,y);c.stroke();}
+  drawPerson(P0,c);
+  // distance label
+  c.strokeStyle='#e7eef2';c.lineWidth=2;c.beginPath();c.moveTo(P0,90);c.lineTo(wx,90);c.stroke();
+  c.fillStyle='#e7eef2';c.font='bold 28px "Noto Sans TC",sans-serif';c.textAlign='center';c.fillText(D+' m',(P0+wx)/2,80);
+  if(tSim!=null){
+    const r=V_AIR*tSim*K1, path=wx-P0;
+    c.save();c.beginPath();c.rect(0,0,wx,GROUND);c.clip();
+    // outgoing wave (original sound)
+    if(r>0){c.strokeStyle='rgba(76,195,210,.9)';c.lineWidth=6;for(let k=0;k<3;k++){const rr=r-k*18;if(rr>0){c.globalAlpha=1-k*0.3;c.beginPath();c.arc(P0+40,HEAD-30,rr,-1.2,1.2);c.stroke();}}c.globalAlpha=1;}
+    // reflected wave: circle around mirror source
+    if(r>path){const mx=2*wx-(P0+40);c.strokeStyle='rgba(255,138,76,.95)';c.lineWidth=6;c.setLineDash([16,10]);
+      for(let k=0;k<3;k++){const rr=r-k*18;if(rr>path){c.globalAlpha=1-k*0.3;c.beginPath();c.arc(mx,HEAD-30,rr,Math.PI-1.2,Math.PI+1.2);c.stroke();}}
+      c.setLineDash([]);c.globalAlpha=1;}
+    c.restore();
+    c.font='24px "Noto Sans TC",sans-serif';c.textAlign='left';
+    c.fillStyle='#4cc3d2';c.fillText('━ 原聲',P0+80,150);c.fillStyle='#ff8a4c';c.fillText('╍ 回聲',P0+80,186);
+    if(r>=2*path){c.fillStyle='#ffe066';c.font='bold 30px "Noto Sans TC",sans-serif';c.fillText('聽到回聲！',P0-60,HEAD-110);}
+  }
+}
+function drawTimeline(play){
+  const c=xt,W=1600,H=240,L=70,R=W-40,base=130;
+  const tMax=thunder?2.6:0.7, X=t=>L+(R-L)*t/tMax;
+  c.fillStyle='#0b1418';c.fillRect(0,0,W,H);
+  // 0.1 s zone
+  c.fillStyle='rgba(255,107,107,.16)';c.fillRect(X(0),20,X(0.1)-X(0),base+60-20);
+  c.fillStyle='#ff9b9b';c.font='20px "Noto Sans TC",sans-serif';c.textAlign='left';c.fillText('0.1 秒內分辨不出',X(0)+6,42);
+  // axis
+  c.strokeStyle='#4a5d67';c.lineWidth=2;c.beginPath();c.moveTo(L,base);c.lineTo(R,base);c.stroke();
+  c.fillStyle='#93a6b0';c.textAlign='center';
+  const step=thunder?0.2:0.1;
+  for(let t=0;t<=tMax+1e-9;t+=step){c.fillRect(X(t)-1,base+60,2,8);c.fillText(t.toFixed(1)+' s',X(t),base+92);}
+  c.textAlign='left';c.fillText('時間',L-60,base+92);
+  function pulse(t0,amp,col){c.strokeStyle=col;c.lineWidth=3;c.beginPath();
+    for(let i=0;i<=120;i++){const dt=i/120*0.06;const x=X(t0+dt);const y=base-amp*Math.exp(-dt*60)*Math.sin(dt*700);i?c.lineTo(x,y):c.moveTo(x,y);}c.stroke();}
+  pulse(0,90,'#4cc3d2');
+  if(thunder){thunderEchoes.forEach(e=>{if(play==null||e.t<=play)pulse(e.t,90*e.g,'#ff8a4c');});}
+  else{const te=2*D/V_AIR;if(play==null||te<=play){pulse(te,55,'#ff8a4c');c.fillStyle='#ff8a4c';c.textAlign='center';c.fillText('回聲 '+te.toFixed(3)+' s',Math.min(R-60,X(te)+40),36+ (te<0.1?24:0));}}
+  c.fillStyle='#4cc3d2';c.textAlign='left';c.fillText('原聲',X(0)+6,base-100+ (thunder?0:0));
+  if(play!=null){c.strokeStyle='#ffe066';c.lineWidth=2;c.beginPath();c.moveTo(X(Math.min(play,tMax)),14);c.lineTo(X(Math.min(play,tMax)),base+60);c.stroke();}
+}
+function update1(){
+  $('distOut').textContent=D+' m';
+  const te=2*D/V_AIR;
+  $('echoT').textContent=thunder?'很多次':te.toFixed(3)+' 秒';
+  $('echoF').textContent=thunder?'不同距離的反射面，回聲時間各不相同':`2 × ${D} ÷ 340 = ${te.toFixed(3)} s`;
+  const v=$('verdict1');
+  if(thunder){v.className='verdict ok';v.textContent='許多回聲接連抵達、混在一起，雷聲就變成轟隆隆的連續聲。';}
+  else if(te<0.1){v.className='verdict no';v.textContent=`回聲只比原聲晚 ${te.toFixed(3)} 秒（小於 0.1 秒），兩者混在一起，聽不出回聲。牆要在約 17 m 以外才行。`;}
+  else{v.className='verdict ok';v.textContent=`回聲比原聲晚 ${te.toFixed(3)} 秒（大於 0.1 秒），聽得出回聲！`;}
+  if(!anim1){drawScene1(null);drawTimeline(null);}
+}
+$('dist').addEventListener('input',e=>{D=+e.target.value;update1();});
+$('mode1').addEventListener('click',e=>{thunder=!thunder;e.currentTarget.setAttribute('aria-pressed',thunder);$('dist').disabled=thunder;
+  if(thunder){thunderEchoes=[];for(let i=0;i<26;i++){const t=0.12+Math.pow(Math.random(),0.8)*2.3;thunderEchoes.push({t,g:0.75*Math.exp(-t*0.8)*(0.5+Math.random()*0.5)});}}
+  anim1=null;update1();});
+$('clap').addEventListener('click',()=>{
+  if(thunder){
+    // rumble: noisy burst + many echoes
+    clapAt(0,0.9,0.25);thunderEchoes.forEach(e=>clapAt(e.t,e.g*0.9,0.25));
+  }else{const te=2*D/V_AIR;clapAt(0,0.9);clapAt(te,0.45);}
+  const real=thunder?2.6:Math.max(2*D/V_AIR*1.25,0.12);
+  const visual=thunder?2.6:2.6; const t0=performance.now(); const id={};anim1=id;
+  (function step(now){if(anim1!==id)return;const f=(now-t0)/1000/visual;const tSim=f*real;
+    drawScene1(thunder?f*2.6:tSim);drawTimeline(tSim);
+    if(f<1)requestAnimationFrame(step);else{anim1=null;drawTimeline(null);}})(t0);
+});
+update1();
+
+/* =========================================================
+   2. 牆面材質（俯視房間）
+   ========================================================= */
+const c2=$('c2'),x2=c2.getContext('2d');
+const ROOM={x0:70,y0:60,x1:1530,y1:700};
+const MAT={reflect:{name:'光滑硬牆（反射）',col:'#c8553d',keep:0.92},absorb:{name:'吸音海綿／布幔（吸收）',col:'#3d4a52',keep:0.12},diffuse:{name:'凹凸紋路（擴散）',col:'#c9a96e',keep:0.45}};
+const WALLS=[['top','天花板方向（上牆）'],['bottom','下牆'],['left','舞台後方（左牆）'],['right','觀眾席後方（右牆）']];
+let walls={top:'reflect',bottom:'reflect',left:'reflect',right:'reflect'};
+const SRC={x:220,y:380},ZONE={x0:1180,y0:200,x1:1470,y1:560};
+let parts=[],acc={dir:0,ref:0},emitT=null,anim2=null;
+const ws=$('wallSel');
+WALLS.forEach(([k,n])=>{const l=document.createElement('label');l.innerHTML=`${n}<select id="w_${k}">${Object.entries(MAT).map(([m,o])=>`<option value="${m}">${o.name}</option>`).join('')}</select>`;ws.appendChild(l);
+  l.querySelector('select').addEventListener('change',e=>{walls[k]=e.target.value;draw2();});});
+function syncSel(){WALLS.forEach(([k])=>$('w_'+k).value=walls[k]);}
+const PRESET={classroom:{top:'reflect',bottom:'reflect',left:'reflect',right:'reflect'},studio:{top:'absorb',bottom:'absorb',left:'absorb',right:'absorb'},hall:{top:'diffuse',bottom:'diffuse',left:'reflect',right:'absorb'}};
+document.querySelectorAll('[data-preset]').forEach(b=>b.addEventListener('click',()=>{walls={...PRESET[b.dataset.preset]};syncSel();parts=[];acc={dir:0,ref:0};draw2();show2(true);}));
+c2.addEventListener('pointerdown',e=>{const p=canvasPt(c2,e),t=36;let k=null;
+  if(Math.abs(p.y-ROOM.y0)<t)k='top';else if(Math.abs(p.y-ROOM.y1)<t)k='bottom';else if(Math.abs(p.x-ROOM.x0)<t)k='left';else if(Math.abs(p.x-ROOM.x1)<t)k='right';
+  if(k){const order=['reflect','absorb','diffuse'];walls[k]=order[(order.indexOf(walls[k])+1)%3];syncSel();draw2();}});
+function wallPath(c,k){const{x0,y0,x1,y1}=ROOM;c.beginPath();
+  if(k==='top'){c.moveTo(x0,y0);c.lineTo(x1,y0);}if(k==='bottom'){c.moveTo(x0,y1);c.lineTo(x1,y1);}
+  if(k==='left'){c.moveTo(x0,y0);c.lineTo(x0,y1);}if(k==='right'){c.moveTo(x1,y0);c.lineTo(x1,y1);}}
+function draw2(){
+  const c=x2;c.fillStyle='#0b1418';c.fillRect(0,0,1600,760);
+  c.fillStyle='#121f25';c.fillRect(ROOM.x0,ROOM.y0,ROOM.x1-ROOM.x0,ROOM.y1-ROOM.y0);
+  // audience zone
+  c.fillStyle='rgba(76,195,210,.10)';c.fillRect(ZONE.x0,ZONE.y0,ZONE.x1-ZONE.x0,ZONE.y1-ZONE.y0);
+  c.fillStyle='#4cc3d2';for(let y=ZONE.y0+30;y<ZONE.y1;y+=50)for(let x=ZONE.x0+30;x<ZONE.x1;x+=55){c.beginPath();c.arc(x,y,10,0,7);c.fill();}
+  c.font='24px "Noto Sans TC",sans-serif';c.textAlign='center';c.fillText('後排聽眾',(ZONE.x0+ZONE.x1)/2,ZONE.y1+34);
+  // walls
+  WALLS.forEach(([k])=>{const m=walls[k];c.lineWidth=22;c.strokeStyle=MAT[m].col;wallPath(c,k);c.stroke();
+    if(m==='diffuse'){c.strokeStyle='#8a6d3b';c.lineWidth=4;c.setLineDash([10,10]);wallPath(c,k);c.stroke();c.setLineDash([]);}
+    if(m==='absorb'){c.strokeStyle='#6b7a83';c.lineWidth=3;c.setLineDash([3,7]);wallPath(c,k);c.stroke();c.setLineDash([]);}});
+  // labels
+  c.fillStyle='#cfdbe1';c.font='20px "Noto Sans TC",sans-serif';
+  const lab=k=>MAT[walls[k]].name.split('（')[1].replace('）','');
+  c.fillText(lab('top'),800,ROOM.y0-18);c.fillText(lab('bottom'),800,ROOM.y1+40);
+  c.save();c.translate(ROOM.x0-24,380);c.rotate(-Math.PI/2);c.fillText(lab('left'),0,0);c.restore();
+  c.save();c.translate(ROOM.x1+30,380);c.rotate(Math.PI/2);c.fillText(lab('right'),0,0);c.restore();
+  // source
+  c.fillStyle='#ffe066';c.beginPath();c.arc(SRC.x,SRC.y,18,0,7);c.fill();c.fillStyle='#e7eef2';c.fillText('舞台聲源',SRC.x,SRC.y+50);
+  c.fillStyle='rgba(207,219,225,.6)';c.fillText('點牆面可更換材質',800,ROOM.y0+40);
+  // particles
+  for(const p of parts){if(p.e<0.02)continue;const col=p.b===0?'76,195,210':'255,138,76';
+    c.strokeStyle=`rgba(${col},${Math.min(1,p.e)})`;c.lineWidth=4;c.beginPath();c.moveTo(p.x-p.vx*0.05,p.y-p.vy*0.05);c.lineTo(p.x,p.y);c.stroke();}
+}
+function emit(){
+  parts=[];acc={dir:0,ref:0};const N=260,sp=520;
+  for(let i=0;i<N;i++){const a=i/N*Math.PI*2;parts.push({x:SRC.x,y:SRC.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,e:1,b:0});}
+  emitT=performance.now();const id={};anim2=id;let last=emitT;
+  (function step(now){if(anim2!==id)return;const dt=Math.min(0.033,(now-last)/1000);last=now;
+    for(const p of parts){if(p.e<0.02)continue;p.x+=p.vx*dt;p.y+=p.vy*dt;
+      let hit=null;
+      if(p.x<ROOM.x0){p.x=ROOM.x0;hit='left';}else if(p.x>ROOM.x1){p.x=ROOM.x1;hit='right';}
+      if(p.y<ROOM.y0){p.y=ROOM.y0;hit='top';}else if(p.y>ROOM.y1){p.y=ROOM.y1;hit='bottom';}
+      if(hit){const m=walls[hit];p.e*=MAT[m].keep;p.b++;
+        const nx=hit==='left'?1:hit==='right'?-1:0,ny=hit==='top'?1:hit==='bottom'?-1:0,sp=Math.hypot(p.vx,p.vy);
+        if(m==='diffuse'){const base=Math.atan2(ny,nx),a=base+(Math.random()-0.5)*Math.PI*0.95;p.vx=Math.cos(a)*sp;p.vy=Math.sin(a)*sp;}
+        else{if(nx)p.vx=-p.vx;if(ny)p.vy=-p.vy;}}
+      if(p.x>ZONE.x0&&p.x<ZONE.x1&&p.y>ZONE.y0&&p.y<ZONE.y1){if(p.b===0)acc.dir+=p.e*dt;else acc.ref+=p.e*dt;}}
+    draw2();show2(false);
+    if((now-emitT)<9000)requestAnimationFrame(step);else{anim2=null;show2(true);}})(emitT);
+}
+function show2(final){
+  const s=x=>Math.min(100,x/40*100);
+  $('dirB').style.width=s(acc.dir)+'%';$('refB').style.width=s(acc.ref)+'%';
+  $('dirV').textContent=acc.dir.toFixed(2);$('refV').textContent=acc.ref.toFixed(2);
+  const v=$('verdict2');
+  if(acc.dir+acc.ref===0){v.className='verdict';v.textContent='按「發聲」開始測量。';return;}
+  const r=acc.ref/Math.max(acc.dir,0.01);
+  const prefix=final?'':'測量中… ';
+  if(r>8){v.className='verdict no';v.textContent=prefix+'反射聲遠多於直達聲：回聲干擾嚴重，聲音混雜不清。';}
+  else if(r>1){v.className='verdict ok';v.textContent=prefix+'有一些反射聲幫忙把聲音送到後排，回聲干擾不大。';}
+  else{v.className='verdict ok';v.textContent=prefix+'幾乎只有直達聲：很安靜、沒有回聲，但後排聽到的音量較小。';}
+}
+$('emit').addEventListener('click',()=>{clapAt(0,0.8);
+  // 依材質給一段殘響：反射越多，殘響越長
+  const keep=(MAT[walls.top].keep+MAT[walls.bottom].keep+MAT[walls.left].keep+MAT[walls.right].keep)/4;
+  let g=0.5;for(let i=1;i<14&&g>0.03;i++){g*=keep*0.85;clapAt(i*0.11,g);}
+  emit();});
+draw2();show2(true);
+
+/* ---- 管內反射 ---- */
+const c2b=$('c2b'),xb=c2b.getContext('2d');let tube=false;
+function drawTube(){
+  const c=xb,W=1600,H=400,cy=200,h=32,sx=150,ex=1450;c.fillStyle='#0b1418';c.fillRect(0,0,W,H);
+  let hits=0;const N=41;
+  for(let i=0;i<N;i++){const a=(-55+110*i/(N-1))*Math.PI/180;let x=sx,y=cy,vx=Math.cos(a),vy=Math.sin(a);
+    c.beginPath();c.moveTo(x,y);let ok=false;
+    for(let s=0;s<4000;s++){x+=vx*2;y+=vy*2;
+      if(tube&&x<ex){if(y<cy-h){y=2*(cy-h)-y;vy=-vy;c.lineTo(x,cy-h);}else if(y>cy+h){y=2*(cy+h)-y;vy=-vy;c.lineTo(x,cy+h);}}
+      if(x>=ex){ok=Math.abs(y-cy)<=h;break;}if(x<0||y<0||y>H)break;}
+    c.lineTo(x,y);c.strokeStyle=ok?'rgba(255,138,76,.9)':'rgba(120,145,160,.45)';c.lineWidth=ok?3:2;c.stroke();if(ok)hits++;}
+  if(tube){c.strokeStyle='#cfdbe1';c.lineWidth=6;c.beginPath();c.moveTo(sx-20,cy-h-3);c.lineTo(ex,cy-h-3);c.moveTo(sx-20,cy+h+3);c.lineTo(ex,cy+h+3);c.stroke();}
+  c.fillStyle='#ffe066';c.beginPath();c.arc(sx,cy,14,0,7);c.fill();
+  c.fillStyle='#4cc3d2';c.fillRect(ex,cy-h,26,2*h);
+  c.fillStyle='#e7eef2';c.font='24px "Noto Sans TC",sans-serif';c.textAlign='center';c.fillText('聲源（心音）',sx,cy+80);c.fillText('耳朵',ex+13,cy+80);
+  $('tubeStat').textContent=`到達耳朵的聲線：${hits} / ${N} 條`;
+}
+$('tubeOff').addEventListener('click',()=>{tube=false;$('tubeOff').setAttribute('aria-pressed',true);$('tubeOn').setAttribute('aria-pressed',false);drawTube();});
+$('tubeOn').addEventListener('click',()=>{tube=true;$('tubeOn').setAttribute('aria-pressed',true);$('tubeOff').setAttribute('aria-pressed',false);drawTube();});
+drawTube();
+
+/* =========================================================
+   3a. 可聽頻率
+   ========================================================= */
+const c3=$('c3'),x3=c3.getContext('2d');
+const ANIMALS=[['人',20,20000,'#9bd34a'],['狗',15,50000,'#ef6b6b'],['貓',60,65000,'#5b8def'],['海豚',2000,100000,'#3fbf9a'],['蝙蝠',1000,120000,'#ef8f3c']];
+const FMIN=Math.log10(5),FMAX=Math.log10(200000);
+let F=1000;
+function sliderToF(v){return Math.round(Math.pow(10,1+v/1000*(Math.log10(150000)-1)));}
+function fToSlider(f){return (Math.log10(f)-1)/(Math.log10(150000)-1)*1000;}
+function fmt(f){return f.toLocaleString('en-US')+' Hz';}
+function drawFreq(){
+  const c=x3,W=1600,H=470,L=150,R=W-60,X=f=>L+(R-L)*(Math.log10(f)-FMIN)/(FMAX-FMIN);
+  c.fillStyle='#0b1418';c.fillRect(0,0,W,H);
+  c.fillStyle='rgba(91,141,239,.12)';c.fillRect(L,10,X(20)-L,380);
+  c.fillStyle='rgba(239,143,60,.12)';c.fillRect(X(20000),10,R-X(20000),380);
+  c.font='22px "Noto Sans TC",sans-serif';c.textAlign='center';c.fillStyle='#8fb0ff';c.fillText('次聲波',(L+X(20))/2,36);
+  c.fillStyle='#ffb27a';c.fillText('超聲波（超音波）',(X(20000)+R)/2,36);
+  ANIMALS.forEach(([n,a,b,col],i)=>{const y=80+i*60,can=F>=a&&F<=b;
+    c.globalAlpha=can?1:0.28;c.fillStyle=col;c.fillRect(X(a),y,X(b)-X(a),38);
+    c.fillStyle='#0b1418';c.font='bold 20px "Noto Sans TC",sans-serif';c.textAlign='center';c.fillText(`${a.toLocaleString()} ～ ${b.toLocaleString()}`,(X(a)+X(b))/2,y+27);
+    c.globalAlpha=1;c.fillStyle=can?'#e7eef2':'#5f7480';c.font='bold 26px "Noto Sans TC",sans-serif';c.textAlign='right';c.fillText(n+(can?' ✓':''),L-20,y+29);});
+  c.strokeStyle='#4a5d67';c.lineWidth=2;c.beginPath();c.moveTo(L,400);c.lineTo(R,400);c.stroke();
+  c.fillStyle='#93a6b0';c.font='22px "Noto Sans TC",sans-serif';c.textAlign='center';
+  [10,100,1000,10000,100000].forEach((f,i)=>{c.fillRect(X(f)-1,400,2,10);c.fillText(['10','10²','10³','10⁴','10⁵'][i],X(f),436);});
+  c.textAlign='right';c.fillText('頻率（Hz）',R,462);
+  const x=X(F);c.strokeStyle='#ffe066';c.lineWidth=4;c.beginPath();c.moveTo(x,50);c.lineTo(x,400);c.stroke();
+  c.fillStyle='#ffe066';c.beginPath();c.moveTo(x-12,400);c.lineTo(x+12,400);c.lineTo(x,384);c.fill();
+}
+function update3(){
+  $('freqOut').textContent=fmt(F);
+  const cat=F<20?'次聲波':F>20000?'超聲波':'人耳可聽到';$('freqCat').textContent=cat;
+  const who=ANIMALS.filter(a=>F>=a[1]&&F<=a[2]).map(a=>a[0]);
+  $('hearList').textContent=who.length?`${fmt(F)}：${who.join('、')}聽得到。`:`${fmt(F)}：圖中的動物都聽不到。`;
+  drawFreq();if(osc)osc.frequency.setTargetAtTime(Math.min(F,ac().sampleRate/2-1),ac().currentTime,0.02);
+}
+$('freq').addEventListener('input',e=>{F=sliderToF(+e.target.value);update3();});
+let osc=null,og=null;
+function stopTone(){if(osc){const a=ac();og.gain.setTargetAtTime(0,a.currentTime,0.03);osc.stop(a.currentTime+0.2);osc=null;$('tone').textContent='▶ 播放這個頻率';}}
+$('tone').addEventListener('click',()=>{if(osc){stopTone();return;}const a=ac();osc=a.createOscillator();og=a.createGain();osc.type='sine';osc.frequency.value=Math.min(F,a.sampleRate/2-1);
+  og.gain.value=0;og.gain.setTargetAtTime(0.08,a.currentTime,0.05);osc.connect(og).connect(a.destination);osc.start();$('tone').textContent='■ 停止';});
+$('freq').value=fToSlider(F);update3();
+
+/* =========================================================
+   3b. 聲納
+   ========================================================= */
+const c4=$('c4')||$('c3b'),x4=c4.getContext('2d');
+const SEA=130,K4=(690-SEA)/520; // px per m
+let shipX=420,showFloor=false,pts=[],ping=null;
+function floorDepth(x){return 300+80*Math.sin(x/190)+45*Math.sin(x/71+1.3)+30*Math.cos(x/37);}
+let fish={x:900,d:150,w:110,vx:28};
+function newFish(){fish={x:200+Math.random()*1200,d:90+Math.random()*120,w:90+Math.random()*50,vx:(Math.random()<.5?-1:1)*(20+Math.random()*25)};}
+newFish();
+function target(x){if(Math.abs(x-fish.x)<fish.w/2)return{d:fish.d,what:'魚群'};return{d:floorDepth(x),what:'海底'};}
+function drawSonar(now){
+  const c=x4,W=1600,H=700;
+  const g=c.createLinearGradient(0,SEA,0,H);g.addColorStop(0,'#0e4a63');g.addColorStop(1,'#061a24');
+  c.fillStyle='#0b1418';c.fillRect(0,0,W,SEA);c.fillStyle=g;c.fillRect(0,SEA,W,H-SEA);
+  // depth scale
+  c.fillStyle='#8fb6c6';c.font='20px "Noto Sans TC",sans-serif';c.textAlign='left';
+  for(let m=0;m<=500;m+=100){const y=SEA+m*K4;c.fillRect(0,y,14,2);c.fillText(m+' m',18,y+7);}
+  // seabed
+  c.beginPath();c.moveTo(0,H);for(let x=0;x<=W;x+=8)c.lineTo(x,SEA+floorDepth(x)*K4);c.lineTo(W,H);c.closePath();
+  c.fillStyle=showFloor?'#8a7a5a':'rgba(138,122,90,0.0)';c.fill();
+  if(!showFloor){c.fillStyle='rgba(255,255,255,.35)';c.textAlign='center';c.fillText('海底地形未知：發射超聲波來測量',W/2,H-30);}
+  // fish
+  c.fillStyle='#d6e9f2';for(let i=0;i<22;i++){const fx=fish.x+Math.sin(i*12.9)*fish.w/2,fy=SEA+(fish.d+Math.cos(i*7.3)*14)*K4;c.beginPath();c.ellipse(fx,fy,9,4,0,0,7);c.fill();c.beginPath();c.moveTo(fx-8*Math.sign(fish.vx),fy);c.lineTo(fx-15*Math.sign(fish.vx),fy-5);c.lineTo(fx-15*Math.sign(fish.vx),fy+5);c.fill();}
+  // measured points
+  if(pts.length>1){c.strokeStyle='#ffe066';c.lineWidth=2;c.setLineDash([6,6]);const s=[...pts].filter(p=>p.what==='海底').sort((a,b)=>a.x-b.x);c.beginPath();s.forEach((p,i)=>{const y=SEA+p.d*K4;i?c.lineTo(p.x,y):c.moveTo(p.x,y);});c.stroke();c.setLineDash([]);}
+  pts.forEach(p=>{c.fillStyle=p.what==='魚群'?'#4cc3d2':'#ffe066';c.beginPath();c.arc(p.x,SEA+p.d*K4,8,0,7);c.fill();});
+  // ship
+  c.fillStyle='#e7eef2';c.beginPath();c.moveTo(shipX-90,SEA-30);c.lineTo(shipX+90,SEA-30);c.lineTo(shipX+65,SEA);c.lineTo(shipX-65,SEA);c.fill();
+  c.fillRect(shipX-30,SEA-62,60,32);c.fillStyle='#c92a2a';c.fillRect(shipX-90,SEA-36,180,6);
+  c.fillStyle='#93a6b0';c.textAlign='center';c.fillText('拖動船隻',shipX,SEA-74);
+  // ping
+  if(ping){const t=(now-ping.t0)/1000/ping.vis*ping.T,half=ping.T/2;
+    const dep=t<=half?V_WATER*t/2:V_WATER*(ping.T-t)/2;const y=SEA+Math.max(0,dep)*K4;
+    c.strokeStyle=t<=half?'#ffe066':'#ff8a4c';c.lineWidth=5;c.setLineDash(t<=half?[]:[12,8]);
+    for(let k=0;k<3;k++){c.globalAlpha=1-k*0.3;c.beginPath();c.ellipse(ping.x,y-(t<=half?k*14:-k*14),40+k*10,10,0,0,7);c.stroke();}
+    c.globalAlpha=1;c.setLineDash([]);
+    c.fillStyle='#ffe066';c.textAlign='left';c.font='bold 24px "Noto Sans TC",sans-serif';c.fillText((t<=half?'超聲波 ↓':'回聲 ↑')+'  t = '+Math.min(t,ping.T).toFixed(3)+' s',ping.x+70,y+8);}
+}
+let lastS=performance.now();
+function sonarLoop(now){const dt=(now-lastS)/1000;lastS=now;
+  if(active==='p3'){fish.x+=fish.vx*dt;if(fish.x<120||fish.x>1500)fish.vx*=-1;
+    if(ping&&(now-ping.t0)/1000>=ping.vis){finishPing();}
+    drawSonar(now);}
+  requestAnimationFrame(sonarLoop);}
+function finishPing(){const p=ping;ping=null;pts.push({x:p.x,d:p.d,t:p.T,what:p.what});
+  $('sonarT').textContent=`${p.what}，深度 ${p.d.toFixed(0)} m`;
+  $('sonarF').textContent=`1500 × ${p.T.toFixed(3)} ÷ 2 = ${(V_WATER*p.T/2).toFixed(0)} m`;
+  const tb=$('sonarRows');tb.innerHTML=pts.map((q,i)=>`<tr><td>${i+1}</td><td>${Math.round(q.x/16)} 號</td><td>${q.t.toFixed(3)}</td><td>${q.d.toFixed(0)}</td><td>${q.what}</td></tr>`).reverse().join('');}
+$('ping').addEventListener('click',()=>{if(ping)return;const tg=target(shipX);const d=Math.round(tg.d);const T=2*d/V_WATER;
+  ping={x:shipX,d,T,what:tg.what,t0:performance.now(),vis:2.2};
+  // 回聲音效（放慢）
+  const a=ac(),o=a.createOscillator(),g=a.createGain();o.frequency.value=1400;g.gain.setValueAtTime(0.12,a.currentTime);g.gain.exponentialRampToValueAtTime(0.001,a.currentTime+0.25);o.connect(g).connect(a.destination);o.start();o.stop(a.currentTime+0.3);
+  const o2=a.createOscillator(),g2=a.createGain();o2.frequency.value=1400;g2.gain.setValueAtTime(0.0001,a.currentTime);g2.gain.setValueAtTime(0.06,a.currentTime+2.2);g2.gain.exponentialRampToValueAtTime(0.001,a.currentTime+2.45);o2.connect(g2).connect(a.destination);o2.start();o2.stop(a.currentTime+2.5);
+});
+$('showFloor').addEventListener('click',e=>{showFloor=!showFloor;e.currentTarget.setAttribute('aria-pressed',showFloor);});
+$('clearPts').addEventListener('click',()=>{pts=[];$('sonarRows').innerHTML='';$('sonarT').textContent='—';$('sonarF').textContent='按下「發射超聲波」';newFish();});
+let drag=false;
+c4.addEventListener('pointerdown',e=>{const p=canvasPt(c4,e);if(p.y<SEA+40&&Math.abs(p.x-shipX)<130&&!ping){drag=true;c4.setPointerCapture(e.pointerId);}});
+c4.addEventListener('pointermove',e=>{if(!drag)return;shipX=Math.max(100,Math.min(1500,canvasPt(c4,e).x));});
+c4.addEventListener('pointerup',()=>drag=false);
+requestAnimationFrame(sonarLoop);
+
+/* =========================================================
+   4. 計算練習與測驗
+   ========================================================= */
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+let cur=null,score=0,tries=0,answered=false;
+const GEN=[
+  ()=>{const t=pick([0.2,0.4,0.5,0.6,1,1.2,1.5,2,3]);const a=V_AIR*t/2;return{q:`對著山壁大喊，${t} 秒後聽到回聲。山壁離你多遠？`,u:'公尺',a,sol:`聲音一去一回，走了 2 倍距離：距離 = 340 × ${t} ÷ 2 = ${fmtN(a)} 公尺`};},
+  ()=>{const d=pick([17,34,51,68,85,170,255,340]);const a=2*d/V_AIR;return{q:`站在離大樓 ${d} 公尺處拍手，多久後會聽到回聲？`,u:'秒',a,sol:`時間 = 2 × ${d} ÷ 340 = ${fmtN(a)} 秒`};},
+  ()=>{const t=pick([0.2,0.4,0.5,0.6,0.8,1,1.2]);const a=V_WATER*t/2;return{q:`船上聲納發出超聲波，${t} 秒後收到海底的回聲。海底深度是多少？`,u:'公尺',a,sol:`水中聲速 1500 m/s：深度 = 1500 × ${t} ÷ 2 = ${fmtN(a)} 公尺`};},
+  ()=>({q:'人耳要分辨原聲和回聲，兩者需相隔 0.1 秒以上。站在牆前拍手，牆至少要離你多遠才聽得到回聲？',u:'公尺',a:17,sol:'距離 = 340 × 0.1 ÷ 2 = 17 公尺'}),
+  ()=>{const d=pick([150,300,450,600,750]);const a=2*d/V_WATER;return{q:`海底深 ${d} 公尺，聲納發出超聲波後，多久會收到回聲？`,u:'秒',a,sol:`時間 = 2 × ${d} ÷ 1500 = ${fmtN(a)} 秒`};},
+];
+function fmtN(x){return (Math.round(x*1000)/1000).toString();}
+function nextProb(){cur=pick(GEN)();answered=false;$('prob').textContent=cur.q;$('unit').textContent=cur.u;$('ansIn').value='';$('sol').textContent='';$('sol').style.color='';}
+$('ansForm').addEventListener('submit',e=>{e.preventDefault();const v=parseFloat($('ansIn').value);
+  if(isNaN(v)){$('sol').textContent='請先輸入數字。';return;}
+  const ok=Math.abs(v-cur.a)<=Math.max(0.01*cur.a,0.005);
+  if(!answered){tries++;if(ok)score++;answered=true;}
+  $('score').textContent=score;$('tries').textContent=tries;
+  $('sol').style.color=ok?'var(--good)':'var(--bad)';
+  $('sol').textContent=(ok?'✔ 正確！':`✘ 正確答案是 ${fmtN(cur.a)} ${cur.u}。常見錯誤：忘了除以 2。`)+'　'+cur.sol;});
+$('nextP').addEventListener('click',nextProb);
+nextProb();
+
+const Q=[
+  {q:'在山谷中大喊會聽到陣陣回聲，這是聲波的哪種現象？',o:['反射','吸收','折射'],a:0,why:'聲音遇到遠近不同的山壁反射回來，就是回聲。'},
+  {q:'平時在教室裡不容易聽到回聲，原因是？',o:['教室沒有牆','牆離我們太近，原聲與回聲間隔太短','聲音在教室中傳得比較慢'],a:1,why:'牆在 17 m 以內，回聲不到 0.1 秒就回來，和原聲混在一起。'},
+  {q:'下列哪種表面最容易吸收聲音？',o:['磚砌牆面','光滑玻璃','吸音海綿'],a:2,why:'粗糙、柔軟的表面容易吸收聲音；光滑、堅硬的表面容易反射聲音。'},
+  {q:'聽診器能讓醫生聽清楚心音，主要原因是？',o:['它會放大聲音','聲波在管內不斷反射，不易散失','它改變了聲音的頻率'],a:1,why:'聽診器不會放大聲音，只是把聲音限制在管內傳遞。'},
+  {q:'頻率 30000 Hz 的聲音，下列何者聽不到？',o:['人','狗','蝙蝠'],a:0,why:'人約只能聽到 20～20000 Hz，30000 Hz 是超聲波。'},
+  {q:'在相同介質中，超聲波和一般聲波的傳播速率？',o:['超聲波較快','一般聲波較快','一樣快'],a:2,why:'不論頻率高低，在相同介質中聲速都一樣。'},
+  {q:'下列何者不是超聲波的應用？',o:['聲納測量海底深度','產檢觀察胎兒','傳聲筒'],a:2,why:'傳聲筒是利用一般聲音的反射，讓聲音集中朝一個方向傳。'},
+];
+const qz=$('quiz');
+Q.forEach((it,i)=>{const d=document.createElement('div');d.className='q';
+  d.innerHTML=`<p>${i+1}. ${it.q}</p><div class="opts"></div><div class="fb" aria-live="polite"></div>`;
+  const ops=d.querySelector('.opts'),fb=d.querySelector('.fb');
+  it.o.forEach((t,j)=>{const b=document.createElement('button');b.type='button';b.textContent=t;
+    b.addEventListener('click',()=>{if(j===it.a){b.className='ok';fb.textContent='正確！'+it.why;fb.style.color='var(--good)';}else{b.className='no';fb.textContent='再想想看，可以回到前面的實驗試試。';fb.style.color='var(--bad)';}});
+    ops.appendChild(b);});
+  qz.appendChild(d);});
+['ck1','ck2','ck3'].forEach(id=>{const el=$(id);try{el.checked=localStorage.getItem('sound-'+id)==='1';}catch(e){}
+  el.addEventListener('change',()=>{try{localStorage.setItem('sound-'+id,el.checked?'1':'0');}catch(e){}});});
+
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{update1();draw2();drawTube();drawFreq();});
+})();
+</script>
+</body>
+</html>

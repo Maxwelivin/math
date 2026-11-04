@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>聲波遊戲場</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@900&display=swap">
+<style>
+/* Layout: 計分板（各組＋目前上台組）→ 遊戲選單 → 遊戲畫面（大畫布＋大按鈕）；為電子白板設計 */
+:root{
+  --bg:#eef2f6; --surface:#ffffff; --fg:#152230; --muted:#5a6a78; --line:#d2dbe3;
+  --accent:#0f7c8c; --accent-soft:#dff1f3; --warm:#d9480f; --good:#15803d; --bad:#c92a2a; --gold:#d99a00;
+  --display:"Noto Serif TC","Songti TC",serif; --body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f171c; --surface:#18232a; --fg:#e4edf1; --muted:#93a6b0; --line:#2a3a43;
+  --accent:#4cc3d2; --accent-soft:#163a40; --warm:#ff8a4c; --good:#4ade80; --bad:#ff6b6b; --gold:#ffd166; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f171c; --surface:#18232a; --fg:#e4edf1; --muted:#93a6b0; --line:#2a3a43;
+  --accent:#4cc3d2; --accent-soft:#163a40; --warm:#ff8a4c; --good:#4ade80; --bad:#ff6b6b; --gold:#ffd166; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:18px;line-height:1.6}
+.wrap{max-width:1440px;margin:0 auto;padding-block:16px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:16px}
+header{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+h1{font-family:var(--display);font-weight:900;font-size:2.1rem;margin:0;line-height:1.2}
+.unit{font-family:var(--display);font-weight:900;font-size:2.3rem;color:var(--warm);line-height:1}
+header a{color:var(--accent);font-weight:700;text-decoration:none}
+header .links{margin-left:auto;display:flex;gap:16px;flex-wrap:wrap}
+.board{display:flex;gap:10px;flex-wrap:wrap;align-items:stretch}
+.team{flex:1 1 150px;border:3px solid transparent;border-radius:14px;padding:8px 12px;cursor:pointer;color:#fff;font:inherit;text-align:left;display:grid;gap:0;min-height:80px}
+.team .n{font-weight:700;font-size:1rem;opacity:.95}
+.team .s{font-weight:900;font-size:2rem;font-variant-numeric:tabular-nums;line-height:1.1}
+.team[aria-pressed="true"]{border-color:var(--fg);box-shadow:0 0 0 3px var(--bg),0 0 0 6px var(--gold)}
+.team[aria-pressed="true"] .n::after{content:"  ◀ 上台中"}
+.boardctl{display:flex;flex-direction:column;gap:6px;justify-content:center}
+.small{font:inherit;font-size:.9rem;padding:6px 10px;border-radius:8px;border:2px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer}
+.menu{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media (max-width:800px){.menu{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.menu button{font:inherit;text-align:left;padding:14px 16px;border-radius:14px;border:3px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer;display:grid;gap:2px}
+.menu button b{font-size:1.25rem}
+.menu button span{font-size:.9rem;color:var(--muted)}
+.menu button[aria-selected="true"]{border-color:var(--warm);background:color-mix(in srgb,var(--warm) 10%,var(--surface))}
+.game{display:grid;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 18px}
+h2{font-family:var(--display);font-size:1.5rem;margin:0}
+.rule{margin:4px 0 0;color:var(--muted);max-width:75ch}
+.scene{background:#0a1216;border-radius:12px;overflow:hidden;position:relative;touch-action:none}
+.scene canvas{display:block;width:100%;height:auto}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.big{font:inherit;font-size:1.25rem;font-weight:900;padding:12px 26px;border-radius:12px;border:0;background:var(--warm);color:#fff;cursor:pointer;min-height:58px}
+.big.alt{background:var(--accent)}
+.big:disabled{opacity:.4;cursor:default}
+.btn{font:inherit;font-size:1.05rem;padding:10px 18px;border-radius:12px;border:2px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer;min-height:52px}
+.btn[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);font-weight:700}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.info{font-size:1.3rem;font-weight:700;font-variant-numeric:tabular-nums}
+.msg{border-radius:12px;padding:12px 16px;font-weight:700;font-size:1.2rem;background:var(--accent-soft)}
+.msg.ok{background:color-mix(in srgb,var(--good) 16%,transparent);color:var(--good)}
+.msg.no{background:color-mix(in srgb,var(--bad) 14%,transparent);color:var(--bad)}
+.slider{flex:1 1 340px;display:grid}
+.slider label{display:flex;justify-content:space-between;font-weight:700}
+.slider output{color:var(--accent);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;height:40px;accent-color:var(--warm)}
+.mats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media (max-width:800px){.mats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.mats label{display:grid;gap:4px;font-weight:700;font-size:.95rem}
+select{font:inherit;padding:10px;border-radius:10px;border:2px solid var(--line);background:var(--surface);color:var(--fg);min-height:50px}
+.stars{font-size:2.2rem;letter-spacing:.1em;color:var(--gold);line-height:1}
+.freqbig{font-family:var(--display);font-size:clamp(2.6rem,7vw,5rem);font-weight:900;font-variant-numeric:tabular-nums;color:var(--warm);line-height:1.1}
+.animals{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
+@media (max-width:800px){.animals{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.animals button{font:inherit;font-size:1.4rem;font-weight:900;padding:18px 6px;border-radius:14px;border:3px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer}
+.animals button[aria-pressed="true"]{border-color:var(--warm);background:color-mix(in srgb,var(--warm) 14%,var(--surface))}
+.animals button.right{border-color:var(--good)}
+.animals button.wrong{border-color:var(--bad)}
+.toast{position:fixed;left:50%;top:calc(24px + env(safe-area-inset-top,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);font-size:1.6rem;font-weight:900;padding:12px 28px;border-radius:999px;z-index:20;pointer-events:none;transition:opacity .4s}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="unit">3-4</span><h1>聲波遊戲場</h1>
+    <span class="links"><a href="聲波的傳播與應用.html">聲波實驗室</a><a href="index.html">← 回首頁</a></span>
+  </header>
+
+  <div class="board" id="board"></div>
+
+  <nav class="menu" role="tablist">
+    <button role="tab" data-g="g1" aria-selected="true"><b>🦇 回聲蝙蝠</b><span>聽回聲，找出牆在哪</span></button>
+    <button role="tab" data-g="g2" aria-selected="false"><b>🏛 音樂廳建築師</b><span>選對材質，控制回聲</span></button>
+    <button role="tab" data-g="g3" aria-selected="false"><b>🐟 聲納獵魚</b><span>算出深度，下網捕魚</span></button>
+    <button role="tab" data-g="g4" aria-selected="false"><b>👂 誰聽得到？</b><span>頻率搶答</span></button>
+  </nav>
+
+  <!-- ========== 回聲蝙蝠 ========== -->
+  <section class="game" id="g1">
+    <div class="card"><h2>🦇 回聲蝙蝠</h2>
+      <p class="rule">洞穴一片漆黑。按「發聲」聽回聲，再把黃色標記拖到你認為牆所在的位置。距離 = 340 × 回聲時間 ÷ 2。誤差 5% 以內得滿分。</p></div>
+    <div class="row">
+      <button class="btn" data-lv="1" aria-pressed="true">第 1 關：看時間</button>
+      <button class="btn" data-lv="2" aria-pressed="false">第 2 關：只用耳朵（雙倍分）</button>
+      <button class="btn" data-lv="3" aria-pressed="false">第 3 關：兩道牆</button>
+    </div>
+    <div class="scene"><canvas id="c1" width="1600" height="440"></canvas></div>
+    <div class="row">
+      <button class="big" id="g1call">🔊 發聲</button>
+      <button class="big alt" id="g1ok">確認位置</button>
+      <button class="btn" id="g1next">下一回合 →</button>
+      <span class="info" id="g1info"></span>
+    </div>
+    <div class="msg" id="g1msg">按「發聲」開始。</div>
+  </section>
+
+  <!-- ========== 音樂廳建築師 ========== -->
+  <section class="game" id="g2" hidden>
+    <div class="card"><h2>🏛 音樂廳建築師</h2>
+      <p class="rule">每一關有不同的場地目標。替四面牆選材質（直接點牆也能換），按「試音」看結果。達成目標得 ★★，同時不超過預算再得一顆 ★。</p></div>
+    <div class="row" id="g2levels"></div>
+    <div class="card" id="g2goal"></div>
+    <div class="mats" id="g2mats"></div>
+    <div class="scene"><canvas id="c2" width="1600" height="720"></canvas></div>
+    <div class="row">
+      <button class="big" id="g2run">🎵 試音</button>
+      <span class="info" id="g2cost"></span>
+      <span class="stars" id="g2stars"></span>
+    </div>
+    <div class="msg" id="g2msg">選好材質後按「試音」。</div>
+  </section>
+
+  <!-- ========== 聲納獵魚 ========== -->
+  <section class="game" id="g3" hidden>
+    <div class="card"><h2>🐟 聲納獵魚</h2>
+      <p class="rule">海水太深看不到魚。拖動船隻、發射超聲波：海底在 600 m 深處，回聲若比海底早回來，代表船下有魚群。算出魚群深度（1500 × 時間 ÷ 2），把網放到那個深度再「下網」。90 秒內抓越多越好！</p></div>
+    <div class="row">
+      <button class="big alt" id="g3start">▶ 開始 90 秒</button>
+      <span class="info" id="g3time">剩餘 90 秒</span>
+      <span class="info" id="g3catch">捕獲 0 群</span>
+    </div>
+    <div class="scene"><canvas id="c3" width="1600" height="660"></canvas></div>
+    <div class="row">
+      <button class="big" id="g3ping">📡 發射超聲波</button>
+      <span class="info" id="g3t">回聲時間：—</span>
+    </div>
+    <div class="row">
+      <div class="slider"><label for="g3net">網子深度 <output id="g3netOut">100 m</output></label><input type="range" id="g3net" min="0" max="600" step="5" value="100"></div>
+      <button class="big alt" id="g3cast">🎣 下網</button>
+    </div>
+    <div class="msg" id="g3msg">按「開始」後計時。</div>
+  </section>
+
+  <!-- ========== 誰聽得到 ========== -->
+  <section class="game" id="g4" hidden>
+    <div class="card"><h2>👂 誰聽得到？</h2>
+      <p class="rule">看頻率，全班一起喊出誰聽得到！上台的同學點選所有聽得到的動物，再按「公布答案」。完全答對得 10 分。</p></div>
+    <div class="row" style="justify-content:space-between">
+      <div><div class="freqbig" id="g4f"></div><span class="info" id="g4cat"></span></div>
+      <button class="btn" id="g4tone">▶ 播放聲音（音量調小）</button>
+    </div>
+    <div class="animals" id="g4ans"></div>
+    <div class="row">
+      <button class="big" id="g4ok">公布答案</button>
+      <button class="btn" id="g4next">下一題 →</button>
+    </div>
+    <div class="scene"><canvas id="c4" width="1600" height="420"></canvas></div>
+    <div class="msg" id="g4msg">選好後按「公布答案」。</div>
+  </section>
+</div>
+<div class="toast" id="toast" style="opacity:0"></div>
+
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+const V_AIR=340,V_WATER=1500;
+const rnd=(a,b)=>a+Math.random()*(b-a), pick=a=>a[Math.floor(Math.random()*a.length)];
+function canvasPt(cv,e){const r=cv.getBoundingClientRect();return{x:(e.clientX-r.left)*cv.width/r.width,y:(e.clientY-r.top)*cv.height/r.height};}
+
+/* ---------- 計分板 ---------- */
+const COLORS=['#d9480f','#1c7ed6','#2b8a3e','#7048e8','#c2255c','#e67700'];
+let teams=[0,0,0,0],cur=0;
+try{const s=JSON.parse(localStorage.getItem('soundgame')||'null');if(s&&Array.isArray(s.teams)){teams=s.teams;cur=Math.min(s.cur||0,teams.length-1);}}catch(e){}
+function save(){try{localStorage.setItem('soundgame',JSON.stringify({teams,cur}));}catch(e){}}
+function renderBoard(){
+  const b=$('board');b.innerHTML='';
+  teams.forEach((s,i)=>{const t=document.createElement('button');t.className='team';t.style.background=COLORS[i];t.setAttribute('aria-pressed',i===cur);
+    t.innerHTML=`<span class="n">第 ${i+1} 組</span><span class="s">${s}</span>`;t.addEventListener('click',()=>{cur=i;save();renderBoard();});b.appendChild(t);});
+  const c=document.createElement('div');c.className='boardctl';
+  c.innerHTML=`<button class="small" id="tAdd">＋組</button><button class="small" id="tDel">－組</button><button class="small" id="tReset">分數歸零</button>`;
+  b.appendChild(c);
+  $('tAdd').onclick=()=>{if(teams.length<6){teams.push(0);save();renderBoard();}};
+  $('tDel').onclick=()=>{if(teams.length>2){teams.pop();cur=Math.min(cur,teams.length-1);save();renderBoard();}};
+  let armed=false;$('tReset').onclick=e=>{if(!armed){armed=true;e.target.textContent='再按一次確認';setTimeout(()=>{armed=false;if(e.target.isConnected)e.target.textContent='分數歸零';},2500);return;}teams=teams.map(()=>0);save();renderBoard();};
+}
+function award(p){if(p<=0)return;teams[cur]+=p;save();renderBoard();toast(`第 ${cur+1} 組 +${p} 分！`);}
+let tt;function toast(s){const t=$('toast');t.textContent=s;t.style.opacity=1;clearTimeout(tt);tt=setTimeout(()=>t.style.opacity=0,1600);}
+renderBoard();
+
+/* ---------- 分頁 ---------- */
+let active='g1';
+document.querySelectorAll('.menu button').forEach(b=>b.addEventListener('click',()=>{active=b.dataset.g;
+  document.querySelectorAll('.menu button').forEach(x=>x.setAttribute('aria-selected',x===b));
+  document.querySelectorAll('section.game').forEach(s=>s.hidden=s.id!==active);stopTone();}));
+
+/* ---------- 音效 ---------- */
+let AC=null;
+function ac(){if(!AC)AC=new (window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume();return AC;}
+function clapAt(t,gain,dur=0.06){const a=ac(),n=Math.floor(a.sampleRate*dur),buf=a.createBuffer(1,n,a.sampleRate),d=buf.getChannelData(0);
+  for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*Math.exp(-i/(n/6));
+  const s=a.createBufferSource();s.buffer=buf;const f=a.createBiquadFilter();f.type='bandpass';f.frequency.value=2200;const g=a.createGain();g.gain.value=gain;
+  s.connect(f).connect(g).connect(a.destination);s.start(a.currentTime+t);}
+function beep(t,f,g,d){const a=ac(),o=a.createOscillator(),G=a.createGain();o.frequency.value=f;G.gain.setValueAtTime(0.0001,a.currentTime+t);G.gain.exponentialRampToValueAtTime(g,a.currentTime+t+0.01);G.gain.exponentialRampToValueAtTime(0.0001,a.currentTime+t+d);o.connect(G).connect(a.destination);o.start(a.currentTime+t);o.stop(a.currentTime+t+d+0.05);}
+function fanfare(){[523,659,784].forEach((f,i)=>beep(i*0.12,f,0.15,0.25));}
+function buzz(){beep(0,180,0.12,0.35);}
+
+/* =========================================================
+   遊戲一：回聲蝙蝠
+   ========================================================= */
+const c1=$('c1'),x1=c1.getContext('2d');
+const L1=170,R1=1540,MAXD=170,X1=d=>L1+(R1-L1)*d/MAXD,D1=x=>Math.max(5,Math.min(MAXD,(x-L1)/(R1-L1)*MAXD));
+let lv=1,walls=[],marks=[],revealed=false,called=false,round=0,dragI=-1,wave=null;
+function newRound(){
+  round++;revealed=false;called=false;
+  if(lv===3){const a=Math.round(rnd(20,90)),b=Math.round(rnd(a+30,165));walls=[a,b];marks=[60,120];}
+  else{walls=[Math.round(rnd(20,165))];marks=[85];}
+  $('g1info').textContent=`第 ${round} 回合`;$('g1msg').className='msg';$('g1msg').textContent='按「發聲」聽回聲。';$('g1ok').disabled=true;draw1();}
+function draw1(now){
+  const c=x1,W=1600,H=440,G=340;c.fillStyle='#0a1216';c.fillRect(0,0,W,H);
+  // cave rocks
+  c.fillStyle='#141f25';c.beginPath();c.moveTo(0,0);for(let x=0;x<=W;x+=40)c.lineTo(x,40+18*Math.sin(x*0.05)+10*Math.sin(x*0.13));c.lineTo(W,0);c.fill();
+  c.beginPath();c.moveTo(0,H);for(let x=0;x<=W;x+=40)c.lineTo(x,G+12*Math.sin(x*0.07));c.lineTo(W,H);c.fill();
+  // ruler
+  c.fillStyle='#6f8794';c.font='22px "Noto Sans TC",sans-serif';c.textAlign='center';
+  for(let d=0;d<=MAXD;d+=10){c.fillRect(X1(d)-1,G+30,2,d%50===0?16:8);if(d%20===0)c.fillText(d+' m',X1(d),G+70);}
+  // bat
+  const bx=X1(0)-40,by=190;c.fillStyle='#e4edf1';c.beginPath();c.ellipse(bx,by,22,30,0,0,7);c.fill();
+  c.beginPath();c.moveTo(bx-10,by-6);c.quadraticCurveTo(bx-70,by-60,bx-90,by+10);c.quadraticCurveTo(bx-60,by-5,bx-12,by+14);c.fill();
+  c.beginPath();c.moveTo(bx+10,by-6);c.quadraticCurveTo(bx+70,by-60,bx+90,by+10);c.quadraticCurveTo(bx+60,by-5,bx+12,by+14);c.fill();
+  c.fillStyle='#0a1216';c.beginPath();c.arc(bx-8,by-10,4,0,7);c.arc(bx+8,by-10,4,0,7);c.fill();
+  // wave animation (sound ripples, no wall shown)
+  if(wave&&now){const f=(now-wave)/1200;if(f<1){c.strokeStyle=`rgba(76,195,210,${1-f})`;c.lineWidth=5;for(let k=0;k<3;k++){const r=f*1300-k*30;if(r>0){c.beginPath();c.arc(bx,by,r,-0.9,0.9);c.stroke();}}}else wave=null;}
+  // walls (revealed)
+  if(revealed){walls.forEach(d=>{const x=X1(d);c.fillStyle='#c8604a';c.fillRect(x,70,34,G-70);c.fillStyle='#ffe066';c.font='bold 26px "Noto Sans TC",sans-serif';c.fillText(d+' m',x+17,62);});}
+  else{c.fillStyle='rgba(255,255,255,.25)';c.font='26px "Noto Sans TC",sans-serif';c.fillText('？？？  牆在哪裡  ？？？',W/2+80,200);}
+  // markers
+  marks.forEach((m,i)=>{const x=X1(m);c.strokeStyle='#ffd166';c.lineWidth=5;c.setLineDash([12,8]);c.beginPath();c.moveTo(x,80);c.lineTo(x,G);c.stroke();c.setLineDash([]);
+    c.fillStyle='#ffd166';c.beginPath();c.moveTo(x-22,G+4);c.lineTo(x+22,G+4);c.lineTo(x,G-30);c.fill();
+    c.font='bold 28px "Noto Sans TC",sans-serif';c.fillText((lv===3?`標記${i+1}：`:'')+m+' m',x,112+(i%2)*36);});
+}
+function animLoop1(now){if(wave){draw1(now);requestAnimationFrame(animLoop1);}else draw1();}
+c1.addEventListener('pointerdown',e=>{if(revealed)return;const p=canvasPt(c1,e);let best=0,bd=1e9;marks.forEach((m,i)=>{const d=Math.abs(X1(m)-p.x);if(d<bd){bd=d;best=i;}});
+  dragI=best;marks[dragI]=Math.round(D1(p.x));c1.setPointerCapture(e.pointerId);draw1();});
+c1.addEventListener('pointermove',e=>{if(dragI<0)return;marks[dragI]=Math.round(D1(canvasPt(c1,e).x));draw1();});
+c1.addEventListener('pointerup',()=>{dragI=-1;});
+$('g1call').addEventListener('click',()=>{clapAt(0,0.9);walls.forEach((d,i)=>clapAt(2*d/V_AIR,0.5-i*0.12));called=true;$('g1ok').disabled=revealed;
+  wave=performance.now();requestAnimationFrame(animLoop1);
+  const m=$('g1msg');m.className='msg';
+  if(lv===2)m.textContent='仔細聽原聲和回聲隔多久！可以多按幾次。';
+  else m.textContent='回聲時間：'+walls.map(d=>(2*d/V_AIR).toFixed(3)+' 秒').join('、')+'　→ 把標記拖到正確距離';});
+$('g1ok').addEventListener('click',()=>{if(revealed||!called)return;revealed=true;$('g1ok').disabled=true;
+  const ws=[...walls].sort((a,b)=>a-b),ms=[...marks].sort((a,b)=>a-b);let pts=0,parts=[];
+  ws.forEach((d,i)=>{const e=Math.abs(ms[i]-d)/d;const p=e<=0.05?50:e<=0.1?30:e<=0.2?15:0;pts+=p;parts.push(`牆在 ${d} m，你標 ${ms[i]} m（誤差 ${Math.round(e*100)}%）`);});
+  if(lv===2)pts*=2;
+  const m=$('g1msg');m.className='msg '+(pts>0?'ok':'no');
+  m.textContent=parts.join('；')+(pts>0?`　得 ${pts} 分！`:'　沒有得分，再接再厲！')+'　算式：距離 = 340 × '+ws.map(d=>(2*d/V_AIR).toFixed(3)).join(' 或 ')+' ÷ 2';
+  pts>0?fanfare():buzz();award(pts);draw1();});
+$('g1next').addEventListener('click',newRound);
+document.querySelectorAll('[data-lv]').forEach(b=>b.addEventListener('click',()=>{lv=+b.dataset.lv;document.querySelectorAll('[data-lv]').forEach(x=>x.setAttribute('aria-pressed',x===b));round=0;newRound();}));
+newRound();
+
+/* =========================================================
+   遊戲二：音樂廳建築師
+   ========================================================= */
+const c2=$('c2'),x2=c2.getContext('2d');
+const ROOM={x0:70,y0:50,x1:1530,y1:670},SRC={x:220,y:360},ZONE={x0:1180,y0:190,x1:1470,y1:530};
+const MAT={reflect:{name:'光滑硬牆',col:'#c8553d',keep:0.92,cost:0},diffuse:{name:'凹凸擴散板',col:'#c9a96e',keep:0.45,cost:2},absorb:{name:'吸音海綿',col:'#3d4a52',keep:0.12,cost:3}};
+const WN=[['top','上牆'],['bottom','下牆'],['left','舞台後方（左）'],['right','觀眾後方（右）']];
+const LEVELS=[
+  {name:'錄音室',goal:'錄音時不能有回聲：反射聲 ÷ 直達聲 要小於 1.5',budget:12,ok:r=>r<1.5},
+  {name:'演講廳',goal:'演講要清楚又要傳得到後排：反射聲 ÷ 直達聲 要在 1～8 之間',budget:5,ok:r=>r>=1&&r<=8},
+  {name:'音樂廳',goal:'舞台後方要用光滑硬牆把音樂送出去，回聲又不能太吵：左牆必須是硬牆，且比值在 1～8 之間',budget:5,ok:(r,w)=>w.left==='reflect'&&r>=1&&r<=8},
+  {name:'回音谷遊客中心',goal:'設計一個「回聲體驗館」：讓回聲越多越好，比值要大於 15',budget:0,ok:r=>r>15},
+];
+let lvl2=0,w2={top:'reflect',bottom:'reflect',left:'reflect',right:'reflect'},parts2=[],anim2=null,best={};
+try{best=JSON.parse(localStorage.getItem('soundgame-hall')||'{}');}catch(e){}
+function renderLevels(){const r=$('g2levels');r.innerHTML='';LEVELS.forEach((L,i)=>{const b=document.createElement('button');b.className='btn';b.setAttribute('aria-pressed',i===lvl2);
+  b.textContent=`${i+1}. ${L.name} ${best[i]?'★'.repeat(best[i]):''}`;b.onclick=()=>{lvl2=i;renderLevels();showGoal();};r.appendChild(b);});}
+function showGoal(){const L=LEVELS[lvl2];$('g2goal').innerHTML=`<b style="font-size:1.25rem">任務：${L.name}</b><br>${L.goal}<br>預算：<b>${L.budget}</b> 點（硬牆 0、擴散板 2、吸音海綿 3）`;
+  $('g2stars').textContent='';$('g2msg').className='msg';$('g2msg').textContent='選好材質後按「試音」。';costTxt();}
+const mats=$('g2mats');
+WN.forEach(([k,n])=>{const l=document.createElement('label');l.innerHTML=`${n}<select id="m_${k}">${Object.entries(MAT).map(([m,o])=>`<option value="${m}">${o.name}（${o.cost}）</option>`).join('')}</select>`;mats.appendChild(l);
+  l.querySelector('select').onchange=e=>{w2[k]=e.target.value;costTxt();draw2();};});
+function cost(){return Object.values(w2).reduce((s,m)=>s+MAT[m].cost,0);}
+function costTxt(){const c=cost(),B=LEVELS[lvl2].budget;$('g2cost').textContent=`花費 ${c} / 預算 ${B}`;$('g2cost').style.color=c>B?'var(--bad)':'';}
+c2.addEventListener('pointerdown',e=>{const p=canvasPt(c2,e),t=36;let k=null;
+  if(Math.abs(p.y-ROOM.y0)<t)k='top';else if(Math.abs(p.y-ROOM.y1)<t)k='bottom';else if(Math.abs(p.x-ROOM.x0)<t)k='left';else if(Math.abs(p.x-ROOM.x1)<t)k='right';
+  if(k){const o=['reflect','diffuse','absorb'];w2[k]=o[(o.indexOf(w2[k])+1)%3];$('m_'+k).value=w2[k];costTxt();draw2();}});
+function wallLine(c,k){const{x0,y0,x1,y1}=ROOM;c.beginPath();if(k==='top'){c.moveTo(x0,y0);c.lineTo(x1,y0);}if(k==='bottom'){c.moveTo(x0,y1);c.lineTo(x1,y1);}if(k==='left'){c.moveTo(x0,y0);c.lineTo(x0,y1);}if(k==='right'){c.moveTo(x1,y0);c.lineTo(x1,y1);}}
+function draw2(){const c=x2;c.fillStyle='#0a1216';c.fillRect(0,0,1600,720);c.fillStyle='#121f25';c.fillRect(ROOM.x0,ROOM.y0,ROOM.x1-ROOM.x0,ROOM.y1-ROOM.y0);
+  c.fillStyle='rgba(76,195,210,.10)';c.fillRect(ZONE.x0,ZONE.y0,ZONE.x1-ZONE.x0,ZONE.y1-ZONE.y0);
+  c.fillStyle='#4cc3d2';for(let y=ZONE.y0+30;y<ZONE.y1;y+=50)for(let x=ZONE.x0+30;x<ZONE.x1;x+=55){c.beginPath();c.arc(x,y,10,0,7);c.fill();}
+  c.font='24px "Noto Sans TC",sans-serif';c.textAlign='center';c.fillText('後排聽眾',(ZONE.x0+ZONE.x1)/2,ZONE.y1+34);
+  WN.forEach(([k])=>{const m=w2[k];c.lineWidth=24;c.strokeStyle=MAT[m].col;wallLine(c,k);c.stroke();
+    if(m==='diffuse'){c.strokeStyle='#7a5e2e';c.lineWidth=5;c.setLineDash([10,10]);wallLine(c,k);c.stroke();c.setLineDash([]);}
+    if(m==='absorb'){c.strokeStyle='#6b7a83';c.lineWidth=3;c.setLineDash([3,7]);wallLine(c,k);c.stroke();c.setLineDash([]);}});
+  c.fillStyle='#ffe066';c.beginPath();c.arc(SRC.x,SRC.y,18,0,7);c.fill();c.fillStyle='#e7eef2';c.fillText('舞台',SRC.x,SRC.y+50);
+  c.fillStyle='rgba(207,219,225,.55)';c.fillText('點牆面可更換材質',800,ROOM.y0+44);
+  for(const p of parts2){if(p.e<0.02)continue;const col=p.b===0?'76,195,210':'255,138,76';c.strokeStyle=`rgba(${col},${Math.min(1,p.e)})`;c.lineWidth=4;c.beginPath();c.moveTo(p.x-p.vx*0.05,p.y-p.vy*0.05);c.lineTo(p.x,p.y);c.stroke();}}
+function stepParts(ps,acc,dt,w){for(const p of ps){if(p.e<0.02)continue;p.x+=p.vx*dt;p.y+=p.vy*dt;let hit=null;
+  if(p.x<ROOM.x0){p.x=ROOM.x0;hit='left';}else if(p.x>ROOM.x1){p.x=ROOM.x1;hit='right';}
+  if(p.y<ROOM.y0){p.y=ROOM.y0;hit='top';}else if(p.y>ROOM.y1){p.y=ROOM.y1;hit='bottom';}
+  if(hit){const m=w[hit];p.e*=MAT[m].keep;p.b++;const nx=hit==='left'?1:hit==='right'?-1:0,ny=hit==='top'?1:hit==='bottom'?-1:0,sp=Math.hypot(p.vx,p.vy);
+    if(m==='diffuse'){const a=Math.atan2(ny,nx)+(Math.random()-0.5)*Math.PI*0.95;p.vx=Math.cos(a)*sp;p.vy=Math.sin(a)*sp;}else{if(nx)p.vx=-p.vx;if(ny)p.vy=-p.vy;}}
+  if(p.x>ZONE.x0&&p.x<ZONE.x1&&p.y>ZONE.y0&&p.y<ZONE.y1){if(p.b===0)acc.dir+=p.e*dt;else acc.ref+=p.e*dt;}}}
+function makeParts(){const ps=[],N=260,sp=520;for(let i=0;i<N;i++){const a=i/N*Math.PI*2;ps.push({x:SRC.x,y:SRC.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,e:1,b:0});}return ps;}
+function simulate(w){const ps=makeParts(),acc={dir:0,ref:0};for(let t=0;t<9;t+=1/60)stepParts(ps,acc,1/60,w);return acc.ref/Math.max(acc.dir,0.01);}
+window.__hallSim=simulate;
+$('g2run').addEventListener('click',()=>{if(anim2)return;$('g2run').disabled=true;
+  const keep=(MAT[w2.top].keep+MAT[w2.bottom].keep+MAT[w2.left].keep+MAT[w2.right].keep)/4;clapAt(0,0.8);let g=0.5;for(let i=1;i<14&&g>0.03;i++){g*=keep*0.85;clapAt(i*0.11,g);}
+  const r=simulate({...w2});parts2=makeParts();const acc={dir:0,ref:0},t0=performance.now();let last=t0;const id={};anim2=id;
+  $('g2msg').className='msg';$('g2msg').textContent='試音中…';$('g2stars').textContent='';
+  (function step(now){if(anim2!==id)return;const dt=Math.min(0.033,(now-last)/1000)*2;last=now;stepParts(parts2,acc,dt,w2);draw2();
+    if(now-t0<3500)requestAnimationFrame(step);else{anim2=null;$('g2run').disabled=false;finish2(r);}})(t0);});
+function finish2(r){const L=LEVELS[lvl2],ok=L.ok(r,w2),inB=cost()<=L.budget;const stars=ok?(inB?3:2):0;
+  $('g2stars').textContent=stars?'★'.repeat(stars)+'☆'.repeat(3-stars):'☆☆☆';
+  const m=$('g2msg');m.className='msg '+(ok?'ok':'no');
+  const desc=r>8?'回聲很多、聲音混雜':r>=1?'有適量反射聲，清楚又傳得遠':'幾乎沒有回聲';
+  m.textContent=`反射聲 ÷ 直達聲 = ${r.toFixed(1)}（${desc}）。`+(ok?(inB?'完美達成！':`達成目標，但超出預算 ${cost()-L.budget} 點。`):'沒有達成目標，想想哪一面牆最關鍵？');
+  if(stars){const prev=best[lvl2]||0;if(stars>prev){award((stars-prev)*10);best[lvl2]=stars;try{localStorage.setItem('soundgame-hall',JSON.stringify(best));}catch(e){}renderLevels();}fanfare();}else buzz();}
+renderLevels();showGoal();draw2();
+
+/* =========================================================
+   遊戲三：聲納獵魚
+   ========================================================= */
+const c3=$('c3'),x3=c3.getContext('2d');
+const SEA=110,FLOOR=600,K3=(640-SEA)/620;
+let ship=500,school=null,ping=null,lastEcho=null,running=false,tEnd=0,caught=0,net=null,drag3=false;
+function newSchool(){school={x:rnd(200,1450),d:Math.round(rnd(60,520)/5)*5,w:rnd(140,220)};}
+function draw3(now){const c=x3,W=1600,H=660;
+  c.fillStyle='#0a1216';c.fillRect(0,0,W,SEA);const g=c.createLinearGradient(0,SEA,0,H);g.addColorStop(0,'#0d3d52');g.addColorStop(1,'#040d12');c.fillStyle=g;c.fillRect(0,SEA,W,H-SEA);
+  c.fillStyle='#8fb6c6';c.font='20px "Noto Sans TC",sans-serif';c.textAlign='left';for(let m=0;m<=600;m+=100){const y=SEA+m*K3;c.fillRect(0,y,14,2);c.fillText(m+' m',18,y+7);}
+  c.fillStyle='#5c5038';c.fillRect(0,SEA+FLOOR*K3,W,H);c.fillStyle='#c9b98f';c.textAlign='right';c.fillText('海底 600 m',W-16,SEA+FLOOR*K3+28);
+  // reveal fish briefly when caught or time over
+  if(school&&(!running||school.show)){c.fillStyle='rgba(214,233,242,.9)';for(let i=0;i<24;i++){const fx=school.x+Math.sin(i*12.9)*school.w/2,fy=SEA+(school.d+Math.cos(i*7.3)*12)*K3;c.beginPath();c.ellipse(fx,fy,9,4,0,0,7);c.fill();}}
+  // net
+  if(net){const y=SEA+net.d*K3;c.strokeStyle=net.hit?'#4ade80':'#ff6b6b';c.lineWidth=3;c.beginPath();c.moveTo(net.x,SEA);c.lineTo(net.x,y);c.stroke();c.beginPath();c.arc(net.x,y,40,0,Math.PI);c.stroke();}
+  // net depth preview
+  const nd=+$('g3net').value,ny=SEA+nd*K3;c.strokeStyle='rgba(255,209,102,.6)';c.setLineDash([8,8]);c.lineWidth=2;c.beginPath();c.moveTo(ship-80,ny);c.lineTo(ship+80,ny);c.stroke();c.setLineDash([]);
+  // ship
+  c.fillStyle='#e7eef2';c.beginPath();c.moveTo(ship-90,SEA-28);c.lineTo(ship+90,SEA-28);c.lineTo(ship+65,SEA);c.lineTo(ship-65,SEA);c.fill();c.fillRect(ship-30,SEA-58,60,30);c.fillStyle='#c92a2a';c.fillRect(ship-90,SEA-34,180,6);
+  c.fillStyle='#93a6b0';c.textAlign='center';c.font='20px "Noto Sans TC",sans-serif';c.fillText('拖動船隻',ship,SEA-66);
+  if(ping){const f=(now-ping.t0)/900;const half=0.5;const dep=f<=half?ping.d*f/half:ping.d*(1-f)/half;const y=SEA+Math.max(0,dep)*K3;
+    c.strokeStyle=f<=half?'#ffe066':'#ff8a4c';c.lineWidth=5;c.beginPath();c.ellipse(ping.x,y,46,11,0,0,7);c.stroke();}}
+function loop3(now){if(active==='g3'){
+    if(ping&&now-ping.t0>=900){lastEcho=ping;ping=null;$('g3t').textContent=`回聲時間：${lastEcho.T.toFixed(3)} 秒`+(Math.abs(lastEcho.d-FLOOR)<1?'（海底）':'');}
+    if(running){const left=Math.max(0,Math.ceil((tEnd-now)/1000));$('g3time').textContent=`剩餘 ${left} 秒`;if(left<=0)endGame3();}
+    draw3(now);}
+  requestAnimationFrame(loop3);}
+function endGame3(){running=false;$('g3start').disabled=false;const p=caught*20;$('g3msg').className='msg ok';$('g3msg').textContent=`時間到！捕獲 ${caught} 群，得 ${p} 分。魚群剛才在 ${school.d} m 深。`;award(p);fanfare();}
+$('g3start').addEventListener('click',()=>{running=true;caught=0;tEnd=performance.now()+90000;newSchool();net=null;lastEcho=null;$('g3catch').textContent='捕獲 0 群';$('g3t').textContent='回聲時間：—';
+  $('g3start').disabled=true;$('g3msg').className='msg';$('g3msg').textContent='移動船隻、發射超聲波，找出魚群！';});
+$('g3ping').addEventListener('click',()=>{if(ping||!school)return;const over=Math.abs(ship-school.x)<school.w/2;const d=over?school.d:FLOOR;
+  ping={x:ship,d,T:2*d/V_WATER,t0:performance.now()};beep(0,1400,0.12,0.2);beep(0.85,1400,0.06,0.2);});
+$('g3net').addEventListener('input',e=>$('g3netOut').textContent=e.target.value+' m');
+$('g3cast').addEventListener('click',()=>{if(!running)return;const d=+$('g3net').value;const over=Math.abs(ship-school.x)<school.w/2;const hit=over&&Math.abs(d-school.d)<=15;
+  net={x:ship,d,hit};const m=$('g3msg');
+  if(hit){caught++;$('g3catch').textContent=`捕獲 ${caught} 群`;m.className='msg ok';m.textContent=`抓到了！魚群在 ${school.d} m（1500 × ${(2*school.d/V_WATER).toFixed(3)} ÷ 2）。新的魚群出現了。`;fanfare();school.show=true;setTimeout(()=>{newSchool();net=null;lastEcho=null;$('g3t').textContent='回聲時間：—';},1200);}
+  else{m.className='msg no';m.textContent=over?`位置對了，但深度不對！再算一次：深度 = 1500 × 時間 ÷ 2。`:'這裡下方沒有魚群喔，先用聲納找找看。';buzz();}});
+c3.addEventListener('pointerdown',e=>{const p=canvasPt(c3,e);if(p.y<SEA+60){drag3=true;ship=Math.max(100,Math.min(1500,p.x));c3.setPointerCapture(e.pointerId);}});
+c3.addEventListener('pointermove',e=>{if(drag3&&!ping)ship=Math.max(100,Math.min(1500,canvasPt(c3,e).x));});
+c3.addEventListener('pointerup',()=>drag3=false);
+newSchool();requestAnimationFrame(loop3);
+
+/* =========================================================
+   遊戲四：誰聽得到
+   ========================================================= */
+const AN=[['人',20,20000,'#9bd34a'],['狗',15,50000,'#ef6b6b'],['貓',60,65000,'#5b8def'],['海豚',2000,100000,'#3fbf9a'],['蝙蝠',1000,120000,'#ef8f3c']];
+const FREQS=[10,16,18,30,45,100,500,1200,1800,3000,8000,18000,25000,40000,55000,62000,70000,90000,110000,150000];
+let F=1000,sel=new Set(),done4=false;
+const ansBox=$('g4ans');
+[...AN.map(a=>a[0]),'都聽不到'].forEach(n=>{const b=document.createElement('button');b.textContent=n;b.setAttribute('aria-pressed','false');
+  b.onclick=()=>{if(done4)return;if(n==='都聽不到'){sel.clear();sel.add(n);}else{sel.delete('都聽不到');sel.has(n)?sel.delete(n):sel.add(n);}
+    [...ansBox.children].forEach(x=>x.setAttribute('aria-pressed',sel.has(x.textContent)));};ansBox.appendChild(b);});
+function truth(){const s=new Set(AN.filter(a=>F>=a[1]&&F<=a[2]).map(a=>a[0]));if(!s.size)s.add('都聽不到');return s;}
+function next4(){F=pick(FREQS.filter(f=>f!==F));sel.clear();done4=false;$('g4f').textContent=F.toLocaleString('en-US')+' Hz';$('g4cat').textContent='';
+  [...ansBox.children].forEach(x=>{x.setAttribute('aria-pressed','false');x.className='';});$('g4msg').className='msg';$('g4msg').textContent='選好後按「公布答案」。';stopTone();draw4(false);}
+$('g4ok').addEventListener('click',()=>{if(done4)return;done4=true;const t=truth();const ok=t.size===sel.size&&[...t].every(x=>sel.has(x));
+  [...ansBox.children].forEach(x=>{if(t.has(x.textContent))x.className='right';else if(sel.has(x.textContent))x.className='wrong';});
+  $('g4cat').textContent=F<20?'次聲波（低於 20 Hz）':F>20000?'超聲波（高於 20000 Hz）':'人耳可聽範圍';
+  const m=$('g4msg');m.className='msg '+(ok?'ok':'no');m.textContent=(ok?'完全答對！':'差一點！')+'聽得到的是：'+[...t].join('、');
+  ok?(fanfare(),award(10)):buzz();draw4(true);});
+$('g4next').addEventListener('click',next4);
+function draw4(show){const c=$('c4').getContext('2d'),W=1600,H=420,L=150,R=W-60,FMIN=Math.log10(5),FMAX=Math.log10(200000),X=f=>L+(R-L)*(Math.log10(f)-FMIN)/(FMAX-FMIN);
+  c.fillStyle='#0a1216';c.fillRect(0,0,W,H);
+  if(!show){c.fillStyle='rgba(255,255,255,.35)';c.font='30px "Noto Sans TC",sans-serif';c.textAlign='center';c.fillText('公布答案後顯示可聽範圍',W/2,H/2);return;}
+  c.fillStyle='rgba(91,141,239,.12)';c.fillRect(L,10,X(20)-L,330);c.fillStyle='rgba(239,143,60,.12)';c.fillRect(X(20000),10,R-X(20000),330);
+  AN.forEach(([n,a,b,col],i)=>{const y=30+i*60,can=F>=a&&F<=b;c.globalAlpha=can?1:.28;c.fillStyle=col;c.fillRect(X(a),y,X(b)-X(a),40);c.globalAlpha=1;
+    c.fillStyle='#0a1216';c.font='bold 20px "Noto Sans TC",sans-serif';c.textAlign='center';c.fillText(`${a.toLocaleString()} ～ ${b.toLocaleString()}`,(X(a)+X(b))/2,y+28);
+    c.fillStyle=can?'#e7eef2':'#5f7480';c.font='bold 26px "Noto Sans TC",sans-serif';c.textAlign='right';c.fillText(n,L-20,y+30);});
+  c.strokeStyle='#4a5d67';c.lineWidth=2;c.beginPath();c.moveTo(L,350);c.lineTo(R,350);c.stroke();c.fillStyle='#93a6b0';c.font='22px "Noto Sans TC",sans-serif';c.textAlign='center';
+  [10,100,1000,10000,100000].forEach((f,i)=>{c.fillRect(X(f)-1,350,2,10);c.fillText(['10','10²','10³','10⁴','10⁵'][i],X(f),388);});
+  const x=X(F);c.strokeStyle='#ffe066';c.lineWidth=5;c.beginPath();c.moveTo(x,10);c.lineTo(x,350);c.stroke();}
+let osc=null,og=null;
+function stopTone(){if(osc){const a=ac();og.gain.setTargetAtTime(0,a.currentTime,0.03);osc.stop(a.currentTime+0.2);osc=null;$('g4tone').textContent='▶ 播放聲音（音量調小）';}}
+$('g4tone').addEventListener('click',()=>{if(osc){stopTone();return;}const a=ac();osc=a.createOscillator();og=a.createGain();osc.frequency.value=Math.min(F,a.sampleRate/2-1);og.gain.value=0;og.gain.setTargetAtTime(0.08,a.currentTime,0.05);osc.connect(og).connect(a.destination);osc.start();$('g4tone').textContent='■ 停止';setTimeout(stopTone,2000);});
+next4();
+
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{draw1();draw2();});
+})();
+</script>
+</body>
+</html>

@@ -316,10 +316,13 @@ function makeParts(){const ps=[],N=260,sp=520;for(let i=0;i<N;i++){const a=i/N*M
 function simulate(w){const ps=makeParts(),acc={dir:0,ref:0};for(let t=0;t<9;t+=1/60)stepParts(ps,acc,1/60,w);return acc.ref/Math.max(acc.dir,0.01);}
 window.__hallSim=simulate;
 $('g2run').addEventListener('click',()=>{if(anim2)return;$('g2run').disabled=true;
-  const keep=(MAT[w2.top].keep+MAT[w2.bottom].keep+MAT[w2.left].keep+MAT[w2.right].keep)/4;clapAt(0,0.8);let g=0.5;for(let i=1;i<14&&g>0.03;i++){g*=keep*0.85;clapAt(i*0.11,g);}
-  const r=simulate({...w2});parts2=makeParts();const acc={dir:0,ref:0},t0=performance.now();let last=t0;const id={};anim2=id;
+  ac();
+  const r=simulate({...w2});parts2=makeParts();const acc={dir:0,ref:0},t0=performance.now();let last=t0;const id={};anim2=id;let binE=0,binT=t0,refE=0;const seen=new Set();
   $('g2msg').className='msg';$('g2msg').textContent='試音中…';$('g2stars').textContent='';
-  (function step(now){if(anim2!==id)return;const dt=Math.min(0.033,(now-last)/1000)*2;last=now;stepParts(parts2,acc,dt,w2);draw2();
+  (function step(now){if(anim2!==id)return;const dt=Math.min(0.033,(now-last)/1000)*2;last=now;stepParts(parts2,acc,dt,w2);
+    parts2.forEach(p=>{const inz=p.x>ZONE.x0&&p.x<ZONE.x1&&p.y>ZONE.y0&&p.y<ZONE.y1;if(inz&&!p.z&&p.e>=0.02)binE+=p.e;p.z=inz;});
+    if(now-binT>=150){if(binE>0){if(!refE)refE=binE;if(binE>=0.12*refE)clapAt(0,0.9*Math.min(1,binE/refE));}binE=0;binT=now;}
+    draw2();
     if(now-t0<3500)requestAnimationFrame(step);else{anim2=null;$('g2run').disabled=false;finish2(r);}})(t0);});
 function finish2(r){const L=LEVELS[lvl2],ok=L.ok(r,w2),inB=cost()<=L.budget;const stars=ok?(inB?3:2):0;
   $('g2stars').textContent=stars?'★'.repeat(stars)+'☆'.repeat(3-stars):'☆☆☆';

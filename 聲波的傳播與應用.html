@@ -112,7 +112,8 @@ th:first-child,td:first-child{text-align:left}
     </div>
     <div class="scene"><canvas id="c1" width="1600" height="500"></canvas></div>
     <div class="row">
-      <button class="big" id="clap">👏 拍手</button>
+      <button class="big" id="clap">👏 拍手（慢動作）</button>
+      <button class="btn" id="clapReal">🔊 真實速度聽一次</button>
       <div class="slider">
         <label for="dist">人與牆的距離 <output id="distOut"></output></label>
         <input type="range" id="dist" min="2" max="100" step="1" value="34">
@@ -125,14 +126,14 @@ th:first-child,td:first-child{text-align:left}
       <div class="stat"><span>回聲時間 = 2 × 距離 ÷ 聲速</span><b id="echoT"></b><span class="formula" id="echoF"></span></div>
     </div>
     <div class="verdict" id="verdict1"></div>
-    <p class="note">動畫已放慢，聲音則是真實的時間差。用喇叭播放時，0.1 秒前後的差別最明顯。</p>
+    <p class="note">「拍手」是慢動作：回聲在反射波回到人身上時才響起，和動畫同步。「真實速度聽一次」播放真實的時間差，可比較 0.1 秒前後的差別：牆在 17 m 以內時，兩聲會混成一聲。</p>
   </section>
 
   <!-- ============ 2 材質 ============ -->
   <section class="page" id="p2" hidden>
     <div class="card">
       <h2>不同表面的反射與吸收</h2>
-      <p class="lead">光滑、堅硬的表面容易反射聲音；粗糙、柔軟的表面容易吸收聲音；凹凸不平的紋路會把聲音打散到各方向。點牆面就能更換材質，按「發聲」觀察聲音怎麼傳到後排。</p>
+      <p class="lead">光滑、堅硬的表面容易反射聲音；粗糙、柔軟的表面容易吸收聲音；凹凸不平的紋路會把聲音打散到各方向。點牆面就能更換材質，按「發聲」觀察聲音怎麼傳到後排。聲音是以後排聽眾的位置來播放：聲波抵達時才聽得到，每一波反射聲抵達都會再響一聲。</p>
     </div>
     <div class="row">
       <button class="big" id="emit">🔊 發聲</button>
@@ -357,13 +358,15 @@ $('dist').addEventListener('input',e=>{D=+e.target.value;update1();});
 $('mode1').addEventListener('click',e=>{thunder=!thunder;e.currentTarget.setAttribute('aria-pressed',thunder);$('dist').disabled=thunder;
   if(thunder){thunderEchoes=[];for(let i=0;i<26;i++){const t=0.12+Math.pow(Math.random(),0.8)*2.3;thunderEchoes.push({t,g:0.75*Math.exp(-t*0.8)*(0.5+Math.random()*0.5)});}}
   anim1=null;update1();});
+$('clapReal').addEventListener('click',()=>{if(thunder){clapAt(0,0.9,0.25);thunderEchoes.forEach(e=>clapAt(e.t,e.g*0.9,0.25));}else{clapAt(0,0.9);clapAt(2*D/V_AIR,0.45);}});
 $('clap').addEventListener('click',()=>{
   if(thunder){
     // rumble: noisy burst + many echoes
     clapAt(0,0.9,0.25);thunderEchoes.forEach(e=>clapAt(e.t,e.g*0.9,0.25));
-  }else{const te=2*D/V_AIR;clapAt(0,0.9);clapAt(te,0.45);}
+  }
   const real=thunder?2.6:Math.max(2*D/V_AIR*1.25,0.12);
-  const visual=thunder?2.6:2.6; const t0=performance.now(); const id={};anim1=id;
+  const visual=2.6;
+  if(!thunder){const te=2*D/V_AIR;clapAt(0,0.9);clapAt(te/real*visual,0.45);} const t0=performance.now(); const id={};anim1=id;
   (function step(now){if(anim1!==id)return;const f=(now-t0)/1000/visual;const tSim=f*real;
     drawScene1(thunder?f*2.6:tSim);drawTimeline(tSim);
     if(f<1)requestAnimationFrame(step);else{anim1=null;drawTimeline(null);}})(t0);
@@ -420,6 +423,7 @@ function emit(){
   parts=[];acc={dir:0,ref:0};const N=260,sp=520;
   for(let i=0;i<N;i++){const a=i/N*Math.PI*2;parts.push({x:SRC.x,y:SRC.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,e:1,b:0});}
   emitT=performance.now();const id={};anim2=id;let last=emitT;
+  let binE=0,binT=emitT,refE=0;
   (function step(now){if(anim2!==id)return;const dt=Math.min(0.033,(now-last)/1000);last=now;
     for(const p of parts){if(p.e<0.02)continue;p.x+=p.vx*dt;p.y+=p.vy*dt;
       let hit=null;
@@ -429,7 +433,11 @@ function emit(){
         const nx=hit==='left'?1:hit==='right'?-1:0,ny=hit==='top'?1:hit==='bottom'?-1:0,sp=Math.hypot(p.vx,p.vy);
         if(m==='diffuse'){const base=Math.atan2(ny,nx),a=base+(Math.random()-0.5)*Math.PI*0.95;p.vx=Math.cos(a)*sp;p.vy=Math.sin(a)*sp;}
         else{if(nx)p.vx=-p.vx;if(ny)p.vy=-p.vy;}}
-      if(p.x>ZONE.x0&&p.x<ZONE.x1&&p.y>ZONE.y0&&p.y<ZONE.y1){if(p.b===0)acc.dir+=p.e*dt;else acc.ref+=p.e*dt;}}
+      const inz=p.x>ZONE.x0&&p.x<ZONE.x1&&p.y>ZONE.y0&&p.y<ZONE.y1;
+      if(inz){if(p.b===0)acc.dir+=p.e*dt;else acc.ref+=p.e*dt;if(!p.z)binE+=p.e;}
+      p.z=inz;}
+    // 聲波抵達後排聽眾時才發出聲音：每 0.15 秒統計一次新抵達的聲波能量
+    if(now-binT>=150){if(binE>0){if(!refE)refE=binE;if(binE>=0.12*refE)clapAt(0,0.9*Math.min(1,binE/refE));}binE=0;binT=now;}
     draw2();show2(false);
     if((now-emitT)<9000)requestAnimationFrame(step);else{anim2=null;show2(true);}})(emitT);
 }
@@ -445,11 +453,7 @@ function show2(final){
   else if(r>1){v.className='verdict ok';v.textContent=prefix+'有一些反射聲幫忙把聲音送到後排，回聲干擾不大。';}
   else{v.className='verdict ok';v.textContent=prefix+'幾乎只有直達聲：很安靜、沒有回聲，但後排聽到的音量較小。';}
 }
-$('emit').addEventListener('click',()=>{clapAt(0,0.8);
-  // 依材質給一段殘響：反射越多，殘響越長
-  const keep=(MAT[walls.top].keep+MAT[walls.bottom].keep+MAT[walls.left].keep+MAT[walls.right].keep)/4;
-  let g=0.5;for(let i=1;i<14&&g>0.03;i++){g*=keep*0.85;clapAt(i*0.11,g);}
-  emit();});
+$('emit').addEventListener('click',()=>{ac();emit();});
 draw2();show2(true);
 
 /* ---- 管內反射 ---- */
@@ -548,7 +552,7 @@ function drawSonar(now){
   c.fillStyle='#93a6b0';c.textAlign='center';c.fillText('拖動船隻',shipX,SEA-74);
   // ping
   if(ping){const t=(now-ping.t0)/1000/ping.vis*ping.T,half=ping.T/2;
-    const dep=t<=half?V_WATER*t/2:V_WATER*(ping.T-t)/2;const y=SEA+Math.max(0,dep)*K4;
+    const dep=t<=half?V_WATER*t:V_WATER*(ping.T-t);const y=SEA+Math.max(0,dep)*K4;
     c.strokeStyle=t<=half?'#ffe066':'#ff8a4c';c.lineWidth=5;c.setLineDash(t<=half?[]:[12,8]);
     for(let k=0;k<3;k++){c.globalAlpha=1-k*0.3;c.beginPath();c.ellipse(ping.x,y-(t<=half?k*14:-k*14),40+k*10,10,0,0,7);c.stroke();}
     c.globalAlpha=1;c.setLineDash([]);

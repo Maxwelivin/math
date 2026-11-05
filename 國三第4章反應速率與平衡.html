@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>反應速率與平衡實驗室</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&family=JetBrains+Mono:wght@500;700&display=swap">
+<link rel="stylesheet" href="science-lab.css">
+<style>:root{--accent:#a07d14;--accent-soft:#f6efd9;--accent-d:#e3c35a;--accent-soft-d:#3a3014;--tabs:4}
+.setup{display:grid;gap:8px}.setup b{color:var(--accent)}</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="unit">第 4 章</span><h1>反應速率與平衡</h1>
+    <a class="home" href="index.html">← 回首頁</a>
+  </header>
+  <nav class="tabs" role="tablist">
+    <button role="tab" data-p="p1">4-1 反應速率<small>本性・濃度・接觸面積</small></button>
+    <button role="tab" data-p="p2">4-2 反應溫度與催化劑<small>溫度・催化劑</small></button>
+    <button role="tab" data-p="p3">4-3 可逆反應與平衡<small>動態平衡</small></button>
+    <button role="tab" data-p="p4">測驗<small>觀念複習</small></button>
+  </nav>
+
+  <!-- ===== 4-1 ===== -->
+  <section class="page" id="p1">
+    <details class="goal" open><summary>4-1 反應速率 <span class="prog"></span></summary><div class="cols">
+      <div><h4>學習目標</h4><ol><li>理解化學反應速率的定義，了解不同的化學反應有不同之反應速率。</li><li>根據實驗結果，了解濃度與顆粒大小對反應速率的影響。</li><li>利用粒子的觀點，解釋濃度與接觸面積對反應速率的影響。</li></ol><p class="note" style="margin:6px 0 0">不涉及計算。</p></div>
+      <div><h4>學習內容</h4><ul><li><span class="code">Je-IV-1</span>實驗認識化學反應速率及影響反應速率的因素，例如：本性、溫度、濃度、接觸面積及催化劑。</li></ul></div>
+      <div><h4>學習任務</h4><ul class="tasks"><li><label><input type="checkbox" id="t41a">比較 4 種金屬與鹽酸的反應快慢（本性）</label></li><li><label><input type="checkbox" id="t41b">只改變鹽酸濃度做一組對照實驗</label></li><li><label><input type="checkbox" id="t41c">只改變大理石顆粒大小做一組對照實驗</label></li><li><label><input type="checkbox" id="t41d">用粒子模型說明碰撞次數的變化</label></li></ul></div>
+    </div></details>
+    <div class="card"><h2>反應物的本性</h2><p class="lead">反應速率是指化學反應進行的快慢，可以用單位時間內反應物減少或生成物增加的量來表示。不同的物質反應快慢不同：把相同大小的金屬片放入相同的稀鹽酸，比較產生氫氣的快慢。</p></div>
+    <div class="row"><button class="big" id="metalGo">▶ 同時放入稀鹽酸</button></div>
+    <div class="scene"><canvas id="cMetal" width="1600" height="380"></canvas></div>
+    <div class="verdict" id="vMetal">按下按鈕開始。</div>
+
+    <div class="card"><h2>實驗：大理石與鹽酸</h2><p class="lead">設定 A、B 兩組實驗，每次<b>只改變一個變因</b>（操作變因），其他條件都相同，比較產生二氧化碳的快慢。兩組大理石的質量相同。</p>
+      <div class="two" style="margin-top:10px">
+        <div class="setup"><b>A 組</b><div class="row"><span>鹽酸濃度</span><select id="aC"><option value="1">稀（1 倍）</option><option value="2">較濃（2 倍）</option></select><span>大理石</span><select id="aS"><option value="1">塊狀</option><option value="3">粒狀</option><option value="8">粉末</option></select></div></div>
+        <div class="setup"><b>B 組</b><div class="row"><span>鹽酸濃度</span><select id="bC"><option value="1">稀（1 倍）</option><option value="2" selected>較濃（2 倍）</option></select><span>大理石</span><select id="bS"><option value="1">塊狀</option><option value="3">粒狀</option><option value="8">粉末</option></select></div></div>
+      </div>
+      <div class="row" style="margin-top:10px"><button class="big" id="runAB">▶ 同時開始</button><span class="note" id="varNote"></span></div></div>
+    <div class="two"><div class="scene"><canvas id="cAB" width="800" height="520"></canvas></div><div class="scene"><canvas id="gAB" width="800" height="520"></canvas></div></div>
+    <div class="verdict" id="vAB">設定好兩組後按「同時開始」。</div>
+
+    <div class="card"><h2>粒子觀點：有效碰撞</h2><p class="lead">反應物的粒子必須互相碰撞才可能發生反應。濃度越大，單位體積內的粒子越多；顆粒越小，總表面積（接觸面積）越大。兩者都讓碰撞次數增加，反應速率變快。</p>
+      <div class="row" style="margin-top:8px"><b>濃度：</b><button class="btn" data-pc="1" aria-pressed="true">稀</button><button class="btn" data-pc="2" aria-pressed="false">濃</button><b>固體：</b><button class="btn" data-ps="1" aria-pressed="true">一大塊</button><button class="btn" data-ps="4" aria-pressed="false">切成小塊</button></div></div>
+    <div class="scene"><canvas id="cCol" width="1600" height="420"></canvas></div>
+    <div class="verdict" id="vCol"></div>
+  </section>
+
+  <!-- ===== 4-2 ===== -->
+  <section class="page" id="p2" hidden>
+    <details class="goal" open><summary>4-2 反應溫度與催化劑 <span class="prog"></span></summary><div class="cols">
+      <div><h4>學習目標</h4><ol><li>理解溫度對反應速率的影響，並利用粒子的觀點作解釋。</li><li>討論催化劑對化學反應速率的影響。</li><li>介紹日常生活中催化劑的應用。</li></ol><p class="note" style="margin:6px 0 0">不涉及計算。</p></div>
+      <div><h4>學習內容</h4><ul><li><span class="code">Je-IV-1</span>實驗認識化學反應速率及影響反應速率的因素，例如：本性、溫度、濃度、接觸面積及催化劑。</li></ul></div>
+      <div><h4>學習任務</h4><ul class="tasks"><li><label><input type="checkbox" id="t42a">比較發泡錠在冷水、溫水、熱水中的反應時間</label></li><li><label><input type="checkbox" id="t42b">用粒子速率解釋溫度的影響</label></li><li><label><input type="checkbox" id="t42c">比較雙氧水加入不同催化劑的結果，並確認催化劑質量不變</label></li></ul></div>
+    </div></details>
+    <div class="card"><h2>溫度的影響</h2><p class="lead">把相同的發泡錠分別放入不同溫度的水中，記錄完全反應所需的時間。</p></div>
+    <div class="row"><button class="big" id="tabGo">▶ 同時放入發泡錠</button></div>
+    <div class="scene"><canvas id="cTab" width="1600" height="420"></canvas></div>
+    <div class="verdict" id="vTab">按下按鈕開始。</div>
+    <div class="card"><h3>粒子觀點</h3><p style="margin:0 0 8px">溫度越高，粒子運動越快，碰撞的次數越多、碰撞也越激烈，有效碰撞增加，反應速率變快。冰箱冷藏食物就是降低溫度、減慢食物腐敗的反應。</p>
+      <div class="slider"><label for="temp">溫度 <output id="tempO"></output></label><input type="range" id="temp" min="5" max="80" value="25"></div></div>
+    <div class="scene"><canvas id="cTP" width="1600" height="300"></canvas></div>
+
+    <div class="card"><h2>催化劑：雙氧水分解</h2><p class="lead">雙氧水（過氧化氫）在常溫下分解得很慢。加入催化劑能加快反應速率，但催化劑本身在反應前後質量和性質都不變。生物體內的催化劑稱為酵素。</p></div>
+    <div class="row"><b>加入：</b><button class="btn" data-cat="none" aria-pressed="true">不加</button><button class="btn" data-cat="mno2" aria-pressed="false">二氧化錳 1 g</button><button class="btn" data-cat="potato" aria-pressed="false">切碎的馬鈴薯（含酵素）</button><button class="big" id="catGo">▶ 開始</button><button class="btn" id="spl">🔥 伸入有火星的線香</button></div>
+    <div class="two"><div class="scene"><canvas id="cCat" width="800" height="500"></canvas></div><div class="scene"><canvas id="gCat" width="800" height="500"></canvas></div></div>
+    <div class="verdict" id="vCat">選擇後按「開始」。</div>
+    <div class="card"><h3>生活中的催化劑</h3><ul style="margin:0;padding-left:1.2em"><li>汽車的觸媒轉化器：把廢氣中的一氧化碳、氮氧化物轉變成較無害的物質。</li><li>加酵素的洗衣粉：分解衣物上的蛋白質、油脂汙漬。</li><li>人體的消化酵素：加快食物分解，例如唾液澱粉酶分解澱粉。</li></ul></div>
+  </section>
+
+  <!-- ===== 4-3 ===== -->
+  <section class="page" id="p3" hidden>
+    <details class="goal" open><summary>4-3 可逆反應與平衡 <span class="prog"></span></summary><div class="cols">
+      <div><h4>學習目標</h4><ol><li>由蒸發與凝結之物理變化平衡，理解正、逆反應和平衡的概念。</li><li>從先備知識引入化學的可逆反應，並探索化學平衡的概念。</li><li>介紹濃度、溫度如何影響化學平衡。</li></ol><p class="note" style="margin:6px 0 0">不需要記憶反應結果與反應式。</p></div>
+      <div><h4>學習內容</h4><ul><li><span class="code">Je-IV-2</span>可逆反應。</li><li><span class="code">Je-IV-3</span>化學平衡及溫度、濃度如何影響化學平衡的因素。</li></ul></div>
+      <div><h4>學習任務</h4><ul class="tasks"><li><label><input type="checkbox" id="t43a">比較開放與密閉容器中水的蒸發，找出平衡時的特徵</label></li><li><label><input type="checkbox" id="t43b">加入酸或鹼，觀察溶液顏色如何移動</label></li><li><label><input type="checkbox" id="t43c">把氣體試管放入冰水與熱水，觀察顏色變化</label></li></ul></div>
+    </div></details>
+    <div class="card"><h2>物理變化的平衡：蒸發與凝結</h2><p class="lead">在密閉容器中，水分子不斷蒸發成水蒸氣，水蒸氣也不斷凝結回水。當蒸發速率＝凝結速率時，水量和水蒸氣量都不再改變，稱為平衡；此時正、逆反應仍持續進行，是一種<b>動態平衡</b>。</p></div>
+    <div class="row"><button class="btn" data-lid="closed" aria-pressed="true">密閉容器</button><button class="btn" data-lid="open" aria-pressed="false">開放容器</button><button class="btn" id="evReset">重來</button></div>
+    <div class="two"><div class="scene"><canvas id="cEv" width="800" height="480"></canvas></div><div class="scene"><canvas id="gEv" width="800" height="480"></canvas></div></div>
+    <div class="verdict" id="vEv"></div>
+
+    <div class="card"><h2>化學平衡與濃度</h2><p class="lead">黃色的鉻酸根離子和橙色的二鉻酸根離子可以互相轉換，是可逆反應。在溶液中加入酸或鹼，平衡會移動，顏色跟著改變。</p>
+      <div class="row" style="margin-top:8px"><button class="big" id="addH">滴入鹽酸（酸）</button><button class="big" id="addOH" style="background:#2378c0">滴入氫氧化鈉（鹼）</button></div></div>
+    <div class="scene"><canvas id="cCr" width="1600" height="360"></canvas></div>
+    <div class="verdict" id="vCr">黃色（鉻酸根）⇌ 橙色（二鉻酸根）</div>
+
+    <div class="card"><h2>化學平衡與溫度</h2><p class="lead">密封試管中，紅棕色的二氧化氮和無色的四氧化二氮互相轉換並達到平衡。改變溫度，平衡移動，氣體顏色深淺也跟著改變。</p>
+      <div class="row" style="margin-top:8px"><button class="btn" data-bath="ice">放入冰水</button><button class="btn" data-bath="room" aria-pressed="true">室溫</button><button class="btn" data-bath="hot">放入熱水</button></div></div>
+    <div class="scene"><canvas id="cNO" width="1600" height="360"></canvas></div>
+    <div class="verdict" id="vNO">紅棕色（二氧化氮）⇌ 無色（四氧化二氮）</div>
+  </section>
+
+  <section class="page" id="p4" hidden><div class="card" id="quiz"><h2>第 4 章觀念測驗</h2></div></section>
+</div>
+<script src="science-lab.js"></script>
+<script>
+(function(){
+const {$,txt,line,circle}=Lab;const BG='#0e1418';
+function graph(c,W,H,tMax,yMax,series,xl,yl){c.fillStyle=BG;c.fillRect(0,0,W,H);const L=80,R=W-30,T=30,B=H-70,X=t=>L+(R-L)*t/tMax,Y=v=>B-(B-T)*v/yMax;
+  for(let i=0;i<=5;i++){const v=yMax*i/5;Lab.line(c,L,Y(v),R,Y(v),'rgba(255,255,255,.08)',1);txt(c,Lab.fmt(v,0),L-10,Y(v)+7,'#98a7b3',18,'right');}
+  for(let i=0;i<=5;i++){const t=tMax*i/5;txt(c,Lab.fmt(t,0),X(t),B+26,'#98a7b3',18,'center');}
+  Lab.line(c,L,B,R,B,'#98a7b3',2);Lab.line(c,L,B,L,T,'#98a7b3',2);txt(c,xl,(L+R)/2,H-16,'#e4ebf0',20,'center');c.save();c.translate(22,(T+B)/2);c.rotate(-Math.PI/2);txt(c,yl,0,0,'#e4ebf0',20,'center');c.restore();
+  series.forEach(s=>{c.strokeStyle=s.col;c.lineWidth=4;c.beginPath();s.pts.forEach(([t,v],i)=>{i?c.lineTo(X(t),Y(Math.min(yMax,v))):c.moveTo(X(t),Y(v));});c.stroke();const p=s.pts[s.pts.length-1];if(p)txt(c,s.name,Math.min(R-40,X(p[0])+6),Y(Math.min(yMax,p[1]))-10,s.col,20,'left',true);});}
+function bubbles(c,x,y,w,h,n,t,sp){for(let i=0;i<n;i++){const by=y+h-((t*(sp||120)+i*37)%h);c.strokeStyle='rgba(255,255,255,.8)';c.lineWidth=2;c.beginPath();c.arc(x+((i*53)%w),by,4+(i%3)*2,0,7);c.stroke();}}
+
+/* ===== 本性 ===== */
+const MET=[['鎂','#c9d1d9',1],['鋅','#b8c2cc',0.45],['鐵','#8e959c',0.15],['銅','#c87533',0]];let mT=null;
+$('metalGo').onclick=()=>{mT=performance.now();setTimeout(()=>{$('vMetal').textContent='鎂反應最快、鋅次之、鐵很慢、銅不反應。反應物本身的性質（本性）會影響反應速率；活性越大的金屬，與酸反應越快。';Lab.done('#t41a');},2500);};
+function drawMetal(t){const c=$('cMetal').getContext('2d');c.fillStyle=BG;c.fillRect(0,0,1600,380);const el=mT?(performance.now()-mT)/1000:0;
+  MET.forEach(([n,col,k],i)=>{const x=150+i*370;Lab.beaker(c,x,60,220,250,'rgba(200,220,240,.3)',0.75);c.fillStyle=col;c.fillRect(x+60,270,100*(mT?Math.max(0.15,1-k*el/12):1),18);
+    if(mT&&k>0)bubbles(c,x+20,120,180,170,Math.round(30*k),t,80+100*k);txt(c,n,x+110,350,'#e4ebf0',26,'center',true);});}
+
+/* ===== A/B 實驗 ===== */
+let ab=null,serAB=[];
+function cfg(p){return{c:+$(p+'C').value,s:+$(p+'S').value};}
+function nameOf(o){return`${o.c===1?'稀':'較濃'}鹽酸＋${{1:'塊狀',3:'粒狀',8:'粉末'}[o.s]}`;}
+function varNote(){const A=cfg('a'),B=cfg('b');const d=(A.c!==B.c)+(A.s!==B.s);$('varNote').textContent=d===0?'兩組完全相同，無法比較。':d===2?'⚠ 同時改變了兩個變因，無法判斷是哪一個造成差異。':A.c!==B.c?'操作變因：鹽酸濃度':'操作變因：大理石顆粒大小';}
+['aC','aS','bC','bS'].forEach(id=>$(id).addEventListener('change',varNote));varNote();
+const VMAX=100;
+$('runAB').onclick=()=>{const A=cfg('a'),B=cfg('b');const kA=0.12*A.c*Math.sqrt(A.s),kB=0.12*B.c*Math.sqrt(B.s);serAB=[{name:'A',col:'#4cc3d2',pts:[[0,0]],k:kA,o:A},{name:'B',col:'#ffb000',pts:[[0,0]],k:kB,o:B}];
+  const t0=performance.now(),id={};ab=id;(function s(n){if(ab!==id)return;const t=Math.min(60,Math.max(0,(n-t0)/1000*6));serAB.forEach(S=>S.pts.push([t,VMAX*(1-Math.exp(-S.k*t))]));
+    if(t<60)requestAnimationFrame(s);else{ab=null;const d=(A.c!==B.c)+(A.s!==B.s);const v=$('vAB');
+      if(d!==1){v.className='verdict no';v.textContent=d===0?'兩組條件相同，反應速率一樣。':'同時改變兩個變因，無法得出結論。請一次只改變一個變因。';}
+      else{v.className='verdict ok';const fast=kA>kB?'A':'B';if(A.c!==B.c){v.textContent=`${fast} 組的鹽酸濃度較大，產生氣體較快：濃度越大，反應速率越快。兩組最後產生的氣體量相同，因為大理石的量相同。`;Lab.done('#t41b');}
+        else{v.textContent=`${fast} 組的大理石顆粒較小，與鹽酸的接觸面積較大，反應速率較快。最後產生的氣體量相同。`;Lab.done('#t41c');}}}})(t0);};
+function drawAB(t){const c=$('cAB').getContext('2d');c.fillStyle=BG;c.fillRect(0,0,800,520);
+  [['A','a'],['B','b']].forEach(([n,p],i)=>{const o=cfg(p),S=serAB[i];const x=80+i*360,last=S?S.pts[S.pts.length-1][1]:0,k=S?S.k:0;const rate=S&&ab?k*(VMAX-last)/VMAX:0;
+    Lab.beaker(c,x,170,240,260,o.c===2?'rgba(200,230,250,.5)':'rgba(200,230,250,.3)',0.7);
+    const n0=o.s===1?1:o.s===3?6:30,sz=o.s===1?40:o.s===3?16:5;const shrink=1-last/VMAX*0.9;c.fillStyle='#e8e2d4';for(let j=0;j<n0;j++){c.beginPath();c.arc(x+120+((j*37)%(o.s===8?150:100))-(o.s===8?75:50)*(n0>1?1:0),408-((j*13)%(o.s===8?10:20)),sz*Math.sqrt(shrink),0,7);c.fill();}
+    if(rate>0.002)bubbles(c,x+20,250,200,170,Math.round(rate*300),t,140);
+    // 氣球
+    const r=20+last*0.7;c.fillStyle=i?'rgba(255,176,0,.75)':'rgba(76,195,210,.75)';c.beginPath();c.ellipse(x+120,150-r*0.8,r*0.85,r,0,0,7);c.fill();
+    txt(c,n+' 組',x+120,470,'#e4ebf0',24,'center',true);txt(c,nameOf(o),x+120,500,'#98a7b3',18,'center');});
+  graph($('gAB').getContext('2d'),800,520,60,VMAX,serAB,'時間（秒）','二氧化碳體積（相對量）');}
+
+/* ===== 碰撞 ===== */
+let pc=1,ps=1,parts=[],hits=[];Lab.seg('[data-pc]',b=>{pc=+b.dataset.pc;initCol();});Lab.seg('[data-ps]',b=>{ps=+b.dataset.ps;initCol();});
+function initCol(){parts=Array.from({length:20*pc},()=>({x:Math.random()*700+20,y:Math.random()*380+20,vx:(Math.random()-.5)*300,vy:(Math.random()-.5)*300}));hits=[];Lab.done('#t41d');}
+function solids(){const R=[];if(ps===1)R.push([1100,210,100]);else for(let i=0;i<4;i++)R.push([960+(i%2)*260,110+Math.floor(i/2)*200,50]);return R;}
+function drawCol(dt,t){const c=$('cCol').getContext('2d');c.fillStyle=BG;c.fillRect(0,0,1600,420);const S=solids();
+  parts.forEach(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;if(p.x<10||p.x>1590)p.vx*=-1;if(p.y<10||p.y>410)p.vy*=-1;
+    S.forEach(([sx,sy,r])=>{const dx=p.x-sx,dy=p.y-sy,d=Math.hypot(dx,dy);if(d<r+8){p.vx=dx/d*Math.hypot(p.vx,p.vy);p.vy=dy/d*Math.hypot(p.vx,p.vy);p.x=sx+dx/d*(r+9);p.y=sy+dy/d*(r+9);hits.push(t);}});
+    circle(c,p.x,p.y,8,'#ff6b6b');});
+  S.forEach(([sx,sy,r])=>{c.fillStyle='#e8e2d4';c.fillRect(sx-r,sy-r,2*r,2*r);});
+  hits=hits.filter(h=>t-h<2);txt(c,`每秒碰撞次數約 ${Math.round(hits.length/2)}`,40,40,'#ffd166',26,'left',true);
+  txt(c,`總表面積：${ps===1?'200×200 的一塊（周長 800）':'四塊 100×100（周長共 1600）'}`,40,400,'#98a7b3',20,'left');
+  $('vCol').textContent=`${pc===2?'濃度較大，酸粒子較多':'濃度較小'}；${ps===4?'切成小塊，接觸面積加倍':'一大塊，接觸面積較小'}。碰撞次數越多，反應速率越快。`;}
+initCol();
+
+/* ===== 4-2 溫度 ===== */
+const TW=[['冷水 10 ℃',10,'#5aa9ff'],['溫水 40 ℃',40,'#ffb000'],['熱水 70 ℃',70,'#ff6b6b']];let tabT=null;
+const tReact=T=>Math.round(90*Math.pow(2,-(T-10)/15));
+$('tabGo').onclick=()=>{tabT=performance.now();setTimeout(()=>{$('vTab').textContent=`完全反應的時間：冷水約 ${tReact(10)} 秒、溫水約 ${tReact(40)} 秒、熱水約 ${tReact(70)} 秒。溫度越高，反應速率越快。`;Lab.done('#t42a');},4200);};
+function drawTab(t){const c=$('cTab').getContext('2d');c.fillStyle=BG;c.fillRect(0,0,1600,420);const el=tabT?(performance.now()-tabT)/1000*20:0;
+  TW.forEach(([n,T,col],i)=>{const x=170+i*470;Lab.beaker(c,x,80,260,260,col==='#5aa9ff'?'rgba(90,169,255,.3)':col==='#ffb000'?'rgba(255,176,0,.22)':'rgba(255,107,107,.25)',0.75);
+    const left=tabT?Math.max(0,1-el/tReact(T)):1;if(left>0){c.fillStyle='#f4f4f4';c.beginPath();c.ellipse(x+130,322,60*Math.sqrt(left),12*Math.sqrt(left)+2,0,0,7);c.fill();bubbles(c,x+30,150,200,170,tabT?Math.round(40*(1-left/1.3)*Math.pow(2,(T-10)/30)):0,t,100+T*3);}
+    txt(c,n,x+130,380,'#e4ebf0',24,'center',true);txt(c,tabT?(left>0?`${Math.min(Math.round(el),tReact(T))} 秒`:`完成！${tReact(T)} 秒`):'',x+130,60,'#ffd166',24,'center',true);});}
+let tp=Array.from({length:40},()=>({x:Math.random()*1560+20,y:Math.random()*260+20,a:Math.random()*7}));let T42=25;
+$('temp').oninput=e=>{T42=+e.target.value;Lab.done('#t42b');};
+function drawTP(dt){const c=$('cTP').getContext('2d');c.fillStyle=BG;c.fillRect(0,0,1600,300);const sp=40+T42*7;
+  tp.forEach(p=>{p.x+=Math.cos(p.a)*sp*dt;p.y+=Math.sin(p.a)*sp*dt;if(p.x<10||p.x>1590){p.a=Math.PI-p.a;}if(p.y<10||p.y>290){p.a=-p.a;}p.x=Math.max(10,Math.min(1590,p.x));p.y=Math.max(10,Math.min(290,p.y));
+    circle(c,p.x,p.y,9,T42>50?'#ff6b6b':T42>25?'#ffb000':'#5aa9ff');line(c,p.x,p.y,p.x-Math.cos(p.a)*sp*0.08,p.y-Math.sin(p.a)*sp*0.08,'rgba(255,255,255,.3)',2);});
+  $('tempO').textContent=T42+' ℃';}
+
+/* ===== 催化劑 ===== */
+let cat='none',catRun=null,serCat=[],glow=null;Lab.seg('[data-cat]',b=>{cat=b.dataset.cat;});
+const CK={none:0.004,mno2:0.25,potato:0.12},CN={none:'不加',mno2:'二氧化錳',potato:'馬鈴薯'},CC={none:'#98a7b3',mno2:'#ffb000',potato:'#4ade80'};
+const doneCat=new Set();
+$('catGo').onclick=()=>{const k=CK[cat],S={name:CN[cat],col:CC[cat],pts:[[0,0]],k,cat};serCat=serCat.filter(x=>x.cat!==cat);serCat.push(S);glow=null;
+  const t0=performance.now(),id={};catRun=id;(function s(n){if(catRun!==id)return;const t=Math.min(30,Math.max(0,(n-t0)/1000*5));S.pts.push([t,100*(1-Math.exp(-k*t))]);if(t<30)requestAnimationFrame(s);else{catRun=null;doneCat.add(cat);
+    const v=$('vCat');v.className='verdict';v.textContent=cat==='none'?'不加催化劑時，雙氧水分解得很慢，幾乎看不到氣泡。':cat==='mno2'?'加入二氧化錳後迅速產生大量氧氣。反應結束後把二氧化錳過濾、烘乾再秤，質量仍是 1 g：催化劑本身不會被消耗。':'馬鈴薯中的酵素（過氧化氫酶）也能加快雙氧水分解。酵素是生物體內的催化劑。';
+    if(doneCat.size>=2&&doneCat.has('mno2'))Lab.done('#t42c');}})(t0);};
+$('spl').onclick=()=>{const last=serCat.length?serCat[serCat.length-1]:null;glow=last&&last.pts[last.pts.length-1][1]>40?'yes':'no';$('vCat').textContent=glow==='yes'?'線香復燃！證明產生的氣體是氧氣（氧氣能助燃）。':'氧氣太少，線香沒有復燃。';};
+function drawCat(t){const c=$('cCat').getContext('2d');c.fillStyle=BG;c.fillRect(0,0,800,500);const S=serCat.find(x=>x.cat===cat);const last=S?S.pts[S.pts.length-1][1]:0;const rate=S&&catRun?S.k*(100-last):0;
+  Lab.beaker(c,240,140,320,280,'rgba(200,230,250,.35)',0.6);if(cat==='mno2'){c.fillStyle='#2b2b2b';for(let i=0;i<30;i++)c.fillRect(300+(i*23)%200,400-(i*7)%14,8,6);}if(cat==='potato'){c.fillStyle='#e6d29a';for(let i=0;i<12;i++)c.fillRect(290+(i*29)%220,390-(i*11)%20,18,14);}
+  bubbles(c,260,260,280,150,Math.round(Math.min(60,rate*4)),t,160);
+  if(glow){line(c,400,20,400,140,'#a0703a',6);c.fillStyle=glow==='yes'?'#ffb000':'#ff5a2a';c.beginPath();c.arc(400,140,glow==='yes'?22+Math.sin(t*20)*3:6,0,7);c.fill();}
+  txt(c,'雙氧水＋'+CN[cat],400,470,'#e4ebf0',24,'center',true);
+  graph($('gCat').getContext('2d'),800,500,30,100,serCat,'時間（秒）','產生氧氣（相對量）');}
+
+/* ===== 4-3 蒸發 ===== */
+let lid='closed',W=[],V=[],evT=0,evSer={ev:[],co:[]},evAcc=0;
+function evReset(){W=Array.from({length:120},()=>({x:Math.random(),y:Math.random()}));V=[];evT=0;evSer={vap:[]};}
+Lab.seg('[data-lid]',b=>{lid=b.dataset.lid;evReset();});$('evReset').onclick=evReset;evReset();
+let evRate=0,coRate=0,evc=0,coc=0,winT=0;
+function stepEv(dt){evT+=dt;const X0=180,X1=620,WY=320,TOP=60;// 液面以下為水，上方為蒸氣
+  if(Math.random()<dt*W.length*0.06){const w=W.pop();if(w){V.push({x:X0+w.x*(X1-X0),y:WY-5,vx:(Math.random()-.5)*120,vy:-80-Math.random()*80});evc++;}}
+  V=V.filter(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;if(p.x<X0+8||p.x>X1-8)p.vx*=-1;if(p.y<TOP){if(lid==='open'&&Math.random()<0.6){return false;}p.vy=Math.abs(p.vy);}
+    if(p.y>WY){if(Math.random()<0.5){W.push({x:(p.x-X0)/(X1-X0),y:Math.random()});coc++;return false;}p.vy=-Math.abs(p.vy);}return true;});
+  winT+=dt;if(winT>1){evRate=evRate*0.6+evc*0.4;coRate=coRate*0.6+coc*0.4;evc=0;coc=0;winT=0;evSer.vap.push([evT,V.length]);if(evSer.vap.length>200)evSer.vap.shift();}}
+function drawEv(){const c=$('cEv').getContext('2d');c.fillStyle=BG;c.fillRect(0,0,800,480);const X0=180,X1=620,WY=320;
+  const lvl=W.length/120;const wy=420-(420-WY)*lvl*1.0;c.fillStyle='rgba(90,169,255,.35)';c.fillRect(X0,Math.max(WY,wy),X1-X0,420-Math.max(WY,wy));
+  for(let i=0;i<Math.min(W.length,90);i++){circle(c,X0+12+((i*37)%(X1-X0-24)),Math.max(WY,wy)+10+((i*23)%Math.max(10,420-Math.max(WY,wy)-16)),6,'#5aa9ff');}
+  V.forEach(p=>circle(c,p.x,p.y,7,'#cfe6ff'));
+  c.strokeStyle='#dfe7ec';c.lineWidth=5;c.beginPath();c.moveTo(X0,40);c.lineTo(X0,420);c.lineTo(X1,420);c.lineTo(X1,40);c.stroke();if(lid==='closed'){c.fillStyle='#8d5a3b';c.fillRect(X0-10,30,X1-X0+20,24);}
+  txt(c,`蒸發速率 ${Lab.fmt(evRate,1)}　凝結速率 ${Lab.fmt(coRate,1)}（個／秒）`,400,465,'#ffd166',22,'center',true);
+  const g=$('gEv').getContext('2d');graph(g,800,480,Math.max(30,evT),60,[{name:'水蒸氣分子數',col:'#cfe6ff',pts:evSer.vap}],'時間（秒）','水蒸氣分子數');
+  const v=$('vEv');if(lid==='open'){v.className='verdict no';v.textContent='開放容器：水蒸氣不斷散失，凝結回來的很少，水會越來越少，無法達到平衡。';}
+  else if(evT>15&&Math.abs(evRate-coRate)<2){v.className='verdict ok';v.textContent='已達平衡：蒸發速率≈凝結速率，水蒸氣分子數大致不變。蒸發和凝結仍持續進行（動態平衡）。';Lab.done('#t43a');}
+  else{v.className='verdict';v.textContent='剛開始蒸發速率大於凝結速率，水蒸氣逐漸增加……';}}
+
+/* ===== 鉻酸根 ===== */
+let cr=0.15;// 0 黃 → 1 橙
+$('addH').onclick=()=>{cr=Math.min(1,cr+0.3);$('vCr').textContent='加入酸：平衡向生成二鉻酸根（橙色）的方向移動，溶液變橙色。';crd.add('H');if(crd.size>1)Lab.done('#t43b');};
+$('addOH').onclick=()=>{cr=Math.max(0,cr-0.3);$('vCr').textContent='加入鹼：平衡向生成鉻酸根（黃色）的方向移動，溶液變黃色。';crd.add('OH');if(crd.size>1)Lab.done('#t43b');};const crd=new Set();
+let crShow=0.15;
+function drawCr(dt){crShow+=(cr-crShow)*Math.min(1,dt*3);const c=$('cCr').getContext('2d');c.fillStyle=BG;c.fillRect(0,0,1600,360);
+  const r=Math.round(245+0*crShow),g=Math.round(220-110*crShow),b=Math.round(40-10*crShow);Lab.beaker(c,640,60,320,260,`rgba(${r},${g},${b},.85)`,0.75);
+  // bar
+  c.fillStyle='#f5dc28';c.fillRect(1100,120,300*(1-crShow),40);c.fillStyle='#f07a1e';c.fillRect(1100+300*(1-crShow),120,300*crShow,40);txt(c,'黃 鉻酸根',1100,105,'#f5dc28',20,'left',true);txt(c,'二鉻酸根 橙',1400,105,'#f07a1e',20,'right',true);
+  txt(c,'⇌',800,350,'#e4ebf0',30,'center',true);}
+
+/* ===== NO2 ===== */
+let bath='room',no2=0.5,no2Show=0.5;const bd=new Set();
+Lab.seg('[data-bath]',b=>{bath=b.dataset.bath;no2={ice:0.12,room:0.5,hot:0.92}[bath];bd.add(bath);$('vNO').textContent=bath==='ice'?'冰水中：平衡向生成無色四氧化二氮的方向移動，顏色變淺。':bath==='hot'?'熱水中：平衡向生成紅棕色二氧化氮的方向移動，顏色變深。':'室溫下兩者達成平衡。';if(bd.has('ice')&&bd.has('hot'))Lab.done('#t43c');});
+function drawNO(dt){no2Show+=(no2-no2Show)*Math.min(1,dt*2);const c=$('cNO').getContext('2d');c.fillStyle=BG;c.fillRect(0,0,1600,360);
+  const bc=bath==='ice'?'rgba(150,200,255,.3)':bath==='hot'?'rgba(255,120,80,.3)':'rgba(0,0,0,0)';Lab.beaker(c,580,100,440,220,bc,0.8);
+  c.fillStyle=`rgba(150,60,20,${0.1+0.8*no2Show})`;c.fillRect(770,40,60,240);c.strokeStyle='#dfe7ec';c.lineWidth=4;c.strokeRect(770,40,60,240);c.fillStyle='#8d5a3b';c.fillRect(764,26,72,20);
+  if(bath==='ice')for(let i=0;i<8;i++){c.fillStyle='rgba(220,240,255,.8)';c.fillRect(600+i*50,140+(i%2)*20,30,26);}if(bath==='hot')for(let i=0;i<6;i++){c.strokeStyle='rgba(255,255,255,.3)';c.beginPath();c.arc(620+i*70,90-((performance.now()/30+i*20)%40),10,0,7);c.stroke();}
+  txt(c,{ice:'冰水',room:'室溫',hot:'熱水'}[bath],800,350,'#e4ebf0',24,'center',true);}
+
+Lab.quiz('quiz',[
+ {q:'下列何者不是影響反應速率的因素？',o:['溫度','濃度','容器的顏色'],a:2},
+ {q:'相同大小的金屬片放入稀鹽酸，反應最快的是？',o:['鎂','鐵','銅'],a:0,w:'反應物的本性影響反應速率。'},
+ {q:'相同質量的大理石，何者與鹽酸反應最快？',o:['一大塊','小顆粒','粉末'],a:2,w:'顆粒越小，接觸面積越大。'},
+ {q:'鹽酸濃度越大，與大理石反應時？',o:['速率越快，最後產生的氣體也越多','速率越快，但大理石量相同時產生的氣體總量相同','速率不變'],a:1},
+ {q:'以粒子觀點，濃度增加使反應變快的原因是？',o:['粒子變大','單位體積內粒子多，碰撞次數增加','粒子變慢'],a:1},
+ {q:'食物放在冰箱可以保存較久，是因為？',o:['降低溫度使反應速率變慢','冰箱有催化劑','冰箱沒有氧氣'],a:0},
+ {q:'溫度升高使反應速率變快，是因為粒子？',o:['運動變快，有效碰撞增加','數目增加','體積變大'],a:0},
+ {q:'雙氧水加入二氧化錳，二氧化錳在反應後？',o:['完全消失','質量不變','變成氧氣'],a:1,w:'催化劑反應前後質量和性質不變。'},
+ {q:'生物體內的催化劑稱為？',o:['酵素','觸媒轉化器','指示劑'],a:0},
+ {q:'用什麼方法檢驗雙氧水分解產生的氧氣？',o:['通入石灰水','伸入有火星的線香，線香復燃','點火聽到爆鳴聲'],a:1},
+ {q:'密閉容器中水的蒸發與凝結達到平衡時？',o:['蒸發與凝結都停止','蒸發速率等於凝結速率','水全部蒸發'],a:1,w:'動態平衡：正逆反應仍在進行。'},
+ {q:'鉻酸根（黃）⇌ 二鉻酸根（橙）的溶液中加入酸，顏色會？',o:['變黃','變橙','不變'],a:1},
+ {q:'裝有二氧化氮（紅棕）與四氧化二氮（無色）的試管放入熱水，顏色會？',o:['變深','變淺','不變'],a:0},
+]);
+Lab.tasks('g9c4');Lab.tabs();
+Lab.loop((dt,t,a)=>{if(a==='p1'){drawMetal(t);drawAB(t);drawCol(dt,t);}if(a==='p2'){drawTab(t);drawTP(dt);drawCat(t);}if(a==='p3'){stepEv(dt);drawEv();drawCr(dt);drawNO(dt);}});
+})();
+</script>
+</body>
+</html>

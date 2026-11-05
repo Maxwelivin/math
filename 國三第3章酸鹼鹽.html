@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>酸鹼鹽實驗室</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&family=JetBrains+Mono:wght@500;700&display=swap">
+<link rel="stylesheet" href="science-lab.css">
+<style>
+:root{--accent:#b8457a;--accent-soft:#f9e5ee;--accent-d:#f28cb8;--accent-soft-d:#3d1a2a;--tabs:6}
+.phbar{height:44px;border-radius:10px;background:linear-gradient(90deg,#e0262b,#f0592b,#f7942e,#fcc02c,#f5e62c,#c6dd2a,#7cc242,#3aa64b,#24a07e,#1f9fb4,#2378c0,#2a52a6,#3d3a96,#5a2d86,#6b2479);position:relative}
+.phbar .knob{position:absolute;top:-8px;width:6px;height:60px;background:var(--fg);border-radius:3px;transform:translateX(-50%)}
+.phticks{display:grid;grid-template-columns:repeat(15,1fr);font-family:var(--mono);font-size:.85rem;color:var(--muted);text-align:center}
+.subs{display:flex;flex-wrap:wrap;gap:6px}
+.ionlist{display:flex;flex-wrap:wrap;gap:8px}
+.ion{font-family:var(--mono);font-weight:700;font-size:1.1rem;padding:6px 12px;border-radius:8px}
+.ion.p{background:color-mix(in srgb,#ff6b6b 20%,var(--surface))}.ion.n{background:color-mix(in srgb,#5aa9ff 22%,var(--surface))}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="unit">第 3 章</span><h1>酸、鹼、鹽</h1>
+    <a class="home" href="index.html">← 回首頁</a>
+  </header>
+  <nav class="tabs" role="tablist">
+    <button role="tab" data-p="p1">3-1 認識電解質<small>導電・解離</small></button>
+    <button role="tab" data-p="p2">3-2 常見的酸與鹼<small>性質・用途・安全</small></button>
+    <button role="tab" data-p="p3">3-3 酸鹼程度的表示<small>pH・指示劑</small></button>
+    <button role="tab" data-p="p4">3-4 酸鹼中和反應<small>中和・鹽類</small></button>
+    <button role="tab" data-p="p5">跨科：酸雨危機<small>天空的眼淚</small></button>
+    <button role="tab" data-p="p6">測驗<small>觀念複習</small></button>
+  </nav>
+
+  <!-- ===== 3-1 ===== -->
+  <section class="page" id="p1">
+    <details class="goal" open><summary>3-1 認識電解質 <span class="prog"></span></summary><div class="cols">
+      <div><h4>學習目標</h4><ol><li>能由化合物水溶液的導電性加以分類。</li><li>能區分電解質與非電解質。</li><li>能了解電解質的導電方式。</li><li>能了解離子的形成和認識常見的離子式。</li><li>能了解電離說的意涵。</li><li>能知道電解質包含酸、鹼、鹽類。</li></ol></div>
+      <div><h4>學習內容</h4><ul><li><span class="code">Jb-IV-1</span>由水溶液導電的實驗認識電解質與非電解質。</li><li><span class="code">Jb-IV-2</span>電解質在水溶液中會解離出陰離子和陽離子而導電。</li></ul></div>
+      <div><h4>學習任務</h4><ul class="tasks"><li><label><input type="checkbox" id="t31a">測試 6 種水溶液的導電性並分類</label></li><li><label><input type="checkbox" id="t31b">觀察粒子模型，說明離子怎麼移動而導電</label></li><li><label><input type="checkbox" id="t31c">寫出 3 種電解質的解離式</label></li></ul></div>
+    </div></details>
+    <div class="card"><h2>哪些水溶液可以導電？</h2><p class="lead">把電極放入水溶液，燈泡亮起表示能導電。溶於水後能導電的化合物稱為<b>電解質</b>，不能導電的稱為<b>非電解質</b>。選一種溶液測試。</p></div>
+    <div class="row subs" id="sol31"></div>
+    <div class="row"><button class="btn" id="view31" aria-pressed="false">🔍 顯示粒子模型</button></div>
+    <div class="scene"><canvas id="c31" width="1600" height="500"></canvas></div>
+    <div class="verdict" id="v31">選一種溶液。</div>
+    <div class="two">
+      <div class="card tablebox"><h3>分類紀錄</h3><table><thead><tr><th>電解質（燈泡亮）</th><th>非電解質（燈泡不亮）</th></tr></thead><tbody><tr><td id="eY">—</td><td id="eN">—</td></tr></tbody></table></div>
+      <div class="card"><h3>電離說（阿瑞尼斯）</h3><p style="margin:0">電解質溶於水會解離成帶正電的<b>陽離子</b>和帶負電的<b>陰離子</b>；陽離子的總電量＝陰離子的總電量，所以溶液不帶電。通電時，陽離子移向負極、陰離子移向正極，溶液因此能導電。酸、鹼、鹽都是電解質。</p></div>
+    </div>
+    <div class="card"><h3>解離式</h3><p class="note" style="margin:0 0 8px">點一種電解質，看它在水中解離出哪些離子。</p><div class="row" id="dis"></div><div class="eq" id="disEq" style="margin-top:8px"></div>
+      <h3 style="margin-top:10px">常見的離子</h3><div class="ionlist">
+      <span class="ion p">H⁺ 氫離子</span><span class="ion p">Na⁺ 鈉離子</span><span class="ion p">K⁺ 鉀離子</span><span class="ion p">NH₄⁺ 銨根離子</span><span class="ion p">Ca²⁺ 鈣離子</span><span class="ion p">Cu²⁺ 銅離子</span>
+      <span class="ion n">OH⁻ 氫氧根離子</span><span class="ion n">Cl⁻ 氯離子</span><span class="ion n">NO₃⁻ 硝酸根離子</span><span class="ion n">SO₄²⁻ 硫酸根離子</span><span class="ion n">CO₃²⁻ 碳酸根離子</span></div></div>
+  </section>
+
+  <!-- ===== 3-2 ===== -->
+  <section class="page" id="p2" hidden>
+    <details class="goal" open><summary>3-2 常見的酸與鹼 <span class="prog"></span></summary><div class="cols">
+      <div><h4>學習目標</h4><ol><li>能說明酸、鹼的定義及特性。</li><li>能由實驗了解酸性溶液對金屬與大理石的反應。</li><li>能知道常見的酸或鹼的性質及用途。</li></ol></div>
+      <div><h4>學習內容</h4><ul><li><span class="code">Jd-IV-1</span>金屬與非金屬氧化物在水溶液中的酸鹼性，及酸性溶液對金屬與大理石的反應。</li><li><span class="code">Jd-IV-5</span>酸、鹼、鹽類在日常生活中的應用與危險性。</li></ul></div>
+      <div><h4>學習任務</h4><ul class="tasks"><li><label><input type="checkbox" id="t32a">對酸和鹼各做 4 項測試，歸納共同性質</label></li><li><label><input type="checkbox" id="t32b">說出酸與鎂帶、大理石反應的生成氣體</label></li><li><label><input type="checkbox" id="t32c">說明稀釋濃硫酸的正確方法</label></li></ul></div>
+    </div></details>
+    <div class="card"><h2>探討酸鹼的性質</h2><p class="lead">酸在水中會解離出氫離子（H⁺），鹼在水中會解離出氫氧根離子（OH⁻）。選一種溶液，再選一種測試。</p></div>
+    <div class="row subs" id="sol32"></div>
+    <div class="row"><button class="big" data-t32="blue">藍色石蕊試紙</button><button class="big" data-t32="red">紅色石蕊試紙</button><button class="big" data-t32="phen">滴入酚酞</button><button class="big" data-t32="mg">放入鎂帶</button><button class="big" data-t32="marble">放入大理石</button></div>
+    <div class="scene"><canvas id="c32" width="1600" height="440"></canvas></div>
+    <div class="verdict" id="v32">選一種溶液和測試。</div>
+    <div class="card tablebox"><h3>實驗紀錄</h3><table><thead><tr><th>溶液</th><th>藍色石蕊</th><th>紅色石蕊</th><th>酚酞</th><th>鎂帶</th><th>大理石</th></tr></thead><tbody id="tb32"></tbody></table></div>
+    <div class="card"><h2>稀釋濃硫酸</h2><p class="lead">濃硫酸溶於水會放出大量的熱。稀釋時應該把哪一個倒入哪一個？</p>
+      <div class="row" style="margin-top:8px"><button class="btn" id="dilA">把濃硫酸慢慢倒入水中</button><button class="btn" id="dilB">把水倒入濃硫酸中</button></div></div>
+    <div class="scene"><canvas id="cDil" width="1600" height="360"></canvas></div>
+    <div class="verdict" id="vDil">選一種做法。</div>
+    <div class="card tablebox"><h3>常見的酸與鹼</h3><table><thead><tr><th>名稱</th><th>化學式</th><th>性質與用途</th><th>注意事項</th></tr></thead><tbody>
+      <tr><td>鹽酸</td><td class="mono">HCl</td><td>胃液中含有鹽酸；工業上用於清洗金屬表面</td><td>濃鹽酸易揮發，有刺激性</td></tr>
+      <tr><td>硫酸</td><td class="mono">H₂SO₄</td><td>汽車電瓶、製造肥料</td><td>濃硫酸有強烈脫水性與腐蝕性</td></tr>
+      <tr><td>硝酸</td><td class="mono">HNO₃</td><td>製造肥料、炸藥</td><td>見光易分解，需存放於棕色瓶</td></tr>
+      <tr><td>醋酸</td><td class="mono">CH₃COOH</td><td>食醋的成分</td><td>屬於弱酸</td></tr>
+      <tr><td>氫氧化鈉</td><td class="mono">NaOH</td><td>製造肥皂、清潔劑（通水管）</td><td>俗稱苛性鈉，具強腐蝕性；易吸收空氣中水分而潮解</td></tr>
+      <tr><td>氫氧化鈣</td><td class="mono">Ca(OH)₂</td><td>水溶液稱石灰水，可檢驗二氧化碳；改良酸性土壤</td><td>微溶於水</td></tr>
+      <tr><td>氨水</td><td class="mono">NH₃</td><td>製造肥料、清潔劑</td><td>有刺激性臭味</td></tr></tbody></table></div>
+  </section>
+
+  <!-- ===== 3-3 ===== -->
+  <section class="page" id="p3" hidden>
+    <details class="goal" open><summary>3-3 酸鹼程度的表示 <span class="prog"></span></summary><div class="cols">
+      <div><h4>學習目標</h4><ol><li>了解酸鹼濃度的意義及表示法。</li><li>了解 pH 值的意義，與氫離子濃度、酸鹼程度間的關係（不涉及計算）。</li><li>知道酸鹼指示劑的意義。</li><li>認識實驗室常用指示劑（如石蕊、酚酞、廣用試紙）及在不同酸鹼環境下所呈現的顏色。</li></ol></div>
+      <div><h4>學習內容</h4><ul><li><span class="code">Jd-IV-2</span>酸鹼強度與 pH 值的關係。</li><li><span class="code">Jd-IV-3</span>實驗認識廣用指示劑及 pH 計。</li><li><span class="code">Jd-IV-4</span>水溶液中氫離子與氫氧根離子的關係。</li></ul></div>
+      <div><h4>學習任務</h4><ul class="tasks"><li><label><input type="checkbox" id="t33a">拖動 pH，說出 [H⁺] 與 [OH⁻] 的大小關係</label></li><li><label><input type="checkbox" id="t33b">比較石蕊、酚酞、廣用試紙在酸、中、鹼性的顏色</label></li><li><label><input type="checkbox" id="t33c">測出 5 種生活物質的 pH</label></li></ul></div>
+    </div></details>
+    <div class="card"><h2>pH 值</h2><p class="lead">常溫（25 ℃）下，pH＜7 為酸性、pH＝7 為中性、pH＞7 為鹼性。pH 越小，氫離子濃度越大、酸性越強；pH 越大，氫氧根離子濃度越大、鹼性越強。</p></div>
+    <div class="slider" style="flex:none"><label for="ph">pH <output id="phO"></output></label><input type="range" id="ph" min="0" max="14" step="0.5" value="7"></div>
+    <div><div class="phbar"><div class="knob" id="knob"></div></div><div class="phticks"></div></div>
+    <div class="row subs" id="lifeSubs"></div>
+    <div class="scene"><canvas id="c33" width="1600" height="460"></canvas></div>
+    <div class="verdict" id="v33"></div>
+  </section>
+
+  <!-- ===== 3-4 ===== -->
+  <section class="page" id="p4" hidden>
+    <details class="goal" open><summary>3-4 酸鹼中和反應 <span class="prog"></span></summary><div class="cols">
+      <div><h4>學習目標</h4><ol><li>了解酸鹼反應的意義。</li><li>知道中和反應是放熱的過程。</li><li>知道中和反應的酸鹼度變化。</li><li>了解中和反應過程指示劑顏色變化的意義。</li></ol></div>
+      <div><h4>學習內容</h4><ul><li><span class="code">Jd-IV-5</span>酸、鹼、鹽類在日常生活中的應用與危險性。</li><li><span class="code">Jd-IV-6</span>實驗認識酸與鹼中和生成鹽和水，並可放出熱量而使溫度變化。</li></ul></div>
+      <div><h4>學習任務</h4><ul class="tasks"><li><label><input type="checkbox" id="t34a">在鹽酸中逐滴加入氫氧化鈉，找出酚酞變色的時刻</label></li><li><label><input type="checkbox" id="t34b">記錄溫度與 pH 的變化</label></li><li><label><input type="checkbox" id="t34c">說出中和反應的生成物與 3 種常見的鹽</label></li></ul></div>
+    </div></details>
+    <div class="card"><h2>中和反應實驗</h2><p class="lead">燒杯中有 20 mL 稀鹽酸（加入指示劑），用滴管逐次加入相同濃度的氫氧化鈉溶液。H⁺ 和 OH⁻ 結合成水，Na⁺ 和 Cl⁻ 留在溶液中，蒸乾後得到鹽（氯化鈉）。</p></div>
+    <div class="row"><b>指示劑：</b><button class="btn" data-ind="phen" aria-pressed="true">酚酞</button><button class="btn" data-ind="univ" aria-pressed="false">廣用指示劑</button>
+      <button class="big" data-add="1">＋1 mL NaOH</button><button class="big" data-add="5">＋5 mL</button><button class="btn" id="reset34">重來</button></div>
+    <div class="two"><div class="scene"><canvas id="c34" width="800" height="560"></canvas></div><div class="scene"><canvas id="g34" width="800" height="560"></canvas></div></div>
+    <div class="stats"><div class="stat"><span>加入 NaOH</span><b id="s34v"></b></div><div class="stat"><span>pH</span><b id="s34p"></b></div><div class="stat"><span>溫度</span><b id="s34t"></b></div></div>
+    <div class="verdict" id="v34"></div>
+    <div class="card"><div class="eq">HCl + NaOH → NaCl + H₂O</div><div class="eq" style="font-size:1.2rem">酸 ＋ 鹼 → 鹽 ＋ 水（放熱）</div></div>
+    <div class="card tablebox"><h3>常見的鹽類</h3><table><thead><tr><th>名稱</th><th>化學式</th><th>用途</th></tr></thead><tbody id="salts"></tbody></table></div>
+  </section>
+
+  <!-- ===== 酸雨 ===== -->
+  <section class="page" id="p5" hidden>
+    <details class="goal" open><summary>跨科主題：天空的眼淚──酸雨危機 <span class="prog"></span></summary><div class="cols">
+      <div><h4>學習目標</h4><ol><li>延續酸鹼中和的生活例子，認識酸雨的成因和危害。</li><li>訓練查詢資料的能力，了解臺灣的酸雨情形。</li><li>學習面對酸雨的危害，透過個人力量改善環境。</li></ol></div>
+      <div><h4>學習內容</h4><ul><li><span class="code">Jd-IV-2</span>酸鹼強度與 pH 值的關係。</li><li><span class="code">Jd-IV-4</span>水溶液中氫離子與氫氧根離子的關係。</li><li><span class="code">Jd-IV-5</span>酸、鹼、鹽類在日常生活中的應用與危險性。</li><li><span class="code">INg-IV-5</span><span class="code">INg-IV-6</span><span class="code">Lb-IV-2</span><span class="code">Lb-IV-3</span></li></ul></div>
+      <div><h4>學習任務</h4><ul class="tasks"><li><label><input type="checkbox" id="t35a">調整汙染排放，觀察雨水 pH 的變化</label></li><li><label><input type="checkbox" id="t35b">觀察酸雨對大理石雕像、湖泊、森林的影響</label></li><li><label><input type="checkbox" id="t35c">選出 3 種減少酸雨的行動</label></li></ul></div>
+    </div></details>
+    <div class="card"><h2>酸雨是怎麼形成的？</h2><p class="lead">正常雨水溶有二氧化碳，pH 約 5.6。燃燒煤、石油產生的二氧化硫（SO₂）和氮氧化物（NOₓ）溶在雨水中形成酸，使雨水 pH 小於 5.0，稱為酸雨。</p></div>
+    <div class="row"><div class="slider"><label for="fac">工廠燃煤排放 <output id="facO"></output></label><input type="range" id="fac" min="0" max="10" value="3"></div><div class="slider"><label for="car">汽機車廢氣 <output id="carO"></output></label><input type="range" id="car" min="0" max="10" value="3"></div></div>
+    <div class="scene"><canvas id="c35" width="1600" height="520"></canvas></div>
+    <div class="row"><div class="slider"><label for="yr">經過年數 <output id="yrO"></output></label><input type="range" id="yr" min="0" max="50" step="5" value="0"></div></div>
+    <div class="verdict" id="v35"></div>
+    <div class="card"><h3>減少酸雨，我可以怎麼做？</h3><p class="note" style="margin:0 0 8px">點選能減少酸雨的行動，排放量會跟著下降。</p><div class="row" id="acts"></div><div class="verdict" id="vAct" style="margin-top:10px">選擇行動。</div></div>
+  </section>
+
+  <section class="page" id="p6" hidden><div class="card" id="quiz"><h2>第 3 章觀念測驗</h2></div></section>
+</div>
+<script src="science-lab.js"></script>
+<script>
+(function(){
+const {$,txt,line,circle}=Lab;const BG='#0e1418';
+document.querySelector('.phticks').innerHTML=Array.from({length:15},(_,i)=>`<span>${i}</span>`).join('');
+
+/* ===== 3-1 導電 ===== */
+const SOL=[
+ {n:'純水',e:false,ions:[],mol:'H₂O'},{n:'糖水',e:false,ions:[],mol:'糖'},{n:'酒精水溶液',e:false,ions:[],mol:'酒精'},
+ {n:'食鹽水',e:true,ions:[['Na⁺',1],['Cl⁻',-1]],b:1,k:'NaCl'},{n:'稀鹽酸',e:true,ions:[['H⁺',1],['Cl⁻',-1]],b:1,k:'HCl'},{n:'氫氧化鈉溶液',e:true,ions:[['Na⁺',1],['OH⁻',-1]],b:1,k:'NaOH'},
+ {n:'醋酸溶液',e:true,ions:[['H⁺',1],['CH₃COO⁻',-1]],b:0.35,k:'CH3COOH'},{n:'硫酸銅溶液',e:true,ions:[['Cu²⁺',2],['SO₄²⁻',-2]],b:0.9,k:'CuSO4',col:'rgba(70,140,230,.45)'}];
+let s31=null,view=false,parts=[];const tested=new Set();
+SOL.forEach(s=>{const b=document.createElement('button');b.className='btn';b.textContent=s.n;b.onclick=()=>{s31=s;[...$('sol31').children].forEach(x=>x.setAttribute('aria-pressed',x===b));tested.add(s.n);initParts();msg31();};$('sol31').appendChild(b);});
+function initParts(){parts=[];if(!s31)return;const N=s31.e?14:16;for(let i=0;i<N;i++){if(s31.e){s31.ions.forEach(([l,q])=>parts.push({l,q,x:Math.random(),y:Math.random()}));}else parts.push({l:s31.mol,q:0,x:Math.random(),y:Math.random()});}}
+function msg31(){const s=s31,v=$('v31');v.className='verdict '+(s.e?'ok':'no');
+  v.textContent=s.e?`${s.n}：燈泡亮，是電解質。溶液中有${s.ions.map(i=>i[0]).join('、')}等離子，通電時陽離子移向負極、陰離子移向正極。`+(s.b<0.5?'（醋酸只有少部分解離，燈泡較暗）':''):`${s.n}：燈泡不亮，是非電解質。溶質在水中以分子存在，沒有可以移動的離子。`;
+  const Y=SOL.filter(x=>x.e&&tested.has(x.n)).map(x=>x.n),N=SOL.filter(x=>!x.e&&tested.has(x.n)).map(x=>x.n);$('eY').textContent=Y.join('、')||'—';$('eN').textContent=N.join('、')||'—';if(tested.size>=6)Lab.done('#t31a');}
+$('view31').addEventListener('click',e=>{view=!view;e.currentTarget.setAttribute('aria-pressed',view);if(view&&s31&&s31.e)Lab.done('#t31b');});
+function draw31(dt,t){const c=$('c31').getContext('2d');c.fillStyle=BG;c.fillRect(0,0,1600,500);
+  // 電路
+  const bx=520,by=150,bw=560,bh=320;const on=s31&&s31.e;const br=on?s31.b:0;
+  c.strokeStyle='#dfe7ec';c.lineWidth=4;c.beginPath();c.moveTo(bx+120,by+60);c.lineTo(bx+120,60);c.lineTo(760,60);c.moveTo(840,60);c.lineTo(bx+bw-120,60);c.lineTo(bx+bw-120,by+60);c.stroke();
+  c.fillStyle='#444';c.fillRect(bx+105,by+40,30,bh-40);c.fillRect(bx+bw-135,by+40,30,bh-40);txt(c,'－',bx+120,by+30,'#5aa9ff',30,'center',true);txt(c,'＋',bx+bw-120,by+30,'#ff6b6b',30,'center',true);
+  if(br>0){c.fillStyle=`rgba(255,224,102,${0.25*br})`;c.beginPath();c.arc(800,60,110*br,0,7);c.fill();}circle(c,800,60,34,br>0?`rgba(255,224,102,${0.4+0.6*br})`:'#333','#999');
+  c.fillStyle=s31&&s31.col?s31.col:'rgba(150,200,240,.25)';c.fillRect(bx+4,by+100,bw-8,bh-104);Lab.beaker(c,bx,by,bw,bh,'rgba(0,0,0,0)',0);
+  txt(c,s31?s31.n:'選一種溶液',800,490,'#e4ebf0',26,'center',true);
+  if(view&&s31){const X0=bx+150,X1=bx+bw-150,Y0=by+120,Y1=by+bh-20;parts.forEach(p=>{if(p.q!==0&&on){p.x+=(p.q>0?-1:1)*dt*0.08*(Math.abs(p.q)>1?1:1);}p.x+=(Math.random()-.5)*dt*0.2;p.y+=(Math.random()-.5)*dt*0.2;
+      if(p.x<0)p.x=1;if(p.x>1)p.x=0;p.y=Math.min(1,Math.max(0,p.y));const x=X0+p.x*(X1-X0),y=Y0+p.y*(Y1-Y0);
+      if(p.q>0){circle(c,x,y,16,'#ff6b6b');}else if(p.q<0){circle(c,x,y,18,'#5aa9ff');}else{circle(c,x,y,14,'#b9c7d6');}txt(c,p.l,x,y+6,'#111',p.l.length>3?11:15,'center',true);});
+    if(on){txt(c,'← 陽離子移向負極',bx+20,by+bh+30,'#ff9b9b',20,'left');txt(c,'陰離子移向正極 →',bx+bw-20,by+bh+30,'#9fd3ff',20,'right');}}}
+const DIS=[['NaCl','NaCl → Na⁺ + Cl⁻'],['HCl','HCl → H⁺ + Cl⁻'],['NaOH','NaOH → Na⁺ + OH⁻'],['CuSO4','CuSO₄ → Cu²⁺ + SO₄²⁻'],['CaCl2','CaCl₂ → Ca²⁺ + 2Cl⁻'],['H2SO4','H₂SO₄ → 2H⁺ + SO₄²⁻']];const dseen=new Set();
+DIS.forEach(([k,e])=>{const b=document.createElement('button');b.className='btn mono';b.textContent=Lab.sub(k);b.onclick=()=>{$('disEq').textContent=e;dseen.add(k);if(dseen.size>=3)Lab.done('#t31c');};$('dis').appendChild(b);});
+
+/* ===== 3-2 酸鹼性質 ===== */
+const S32=[{n:'稀鹽酸',t:'a'},{n:'稀硫酸',t:'a'},{n:'醋酸',t:'a',weak:true},{n:'氫氧化鈉溶液',t:'b'},{n:'石灰水',t:'b'},{n:'氨水',t:'b'},{n:'食鹽水',t:'n'}];
+let s32=S32[0],t32=null,f32=null;const rec32={};
+S32.forEach((s,i)=>{const b=document.createElement('button');b.className='btn';b.textContent=s.n;b.setAttribute('aria-pressed',i===0);b.onclick=()=>{s32=s;t32=null;f32=null;[...$('sol32').children].forEach(x=>x.setAttribute('aria-pressed',x===b));};$('sol32').appendChild(b);});
+const RES={blue:{a:['變紅色','#e0453a'],b:['不變（藍）','#4a7be0'],n:['不變（藍）','#4a7be0']},red:{a:['不變（紅）','#e0453a'],b:['變藍色','#4a7be0'],n:['不變（紅）','#e0453a']},phen:{a:['無色','rgba(220,235,245,.4)'],b:['變紅色','#e0407a'],n:['無色','rgba(220,235,245,.4)']},mg:{a:['產生氫氣（氣泡）'],b:['無明顯變化'],n:['無明顯變化']},marble:{a:['產生二氧化碳（氣泡）'],b:['無明顯變化'],n:['無明顯變化']}};
+document.querySelectorAll('[data-t32]').forEach(b=>b.addEventListener('click',()=>{t32=b.dataset.t32;Lab.anim(2200,f=>{f32=f;},()=>{(rec32[s32.n]=rec32[s32.n]||{})[t32]=RES[t32][s32.t][0];render32();
+  const r=RES[t32][s32.t][0];const v=$('v32');v.className='verdict';v.textContent=`${s32.n}＋${b.textContent}：${r}。`+(t32==='mg'&&s32.t==='a'?' 用點燃的線香靠近會有爆鳴聲，證明是氫氣。':'')+(t32==='marble'&&s32.t==='a'?' 氣體使澄清石灰水混濁，證明是二氧化碳。':'')+(s32.weak&&(t32==='mg'||t32==='marble')?'（醋酸是弱酸，反應較緩慢）':'');});}));
+function render32(){$('tb32').innerHTML=S32.map(s=>{const r=rec32[s.n]||{};return`<tr><td><b>${s.n}</b></td>${['blue','red','phen','mg','marble'].map(k=>`<td>${r[k]||'—'}</td>`).join('')}</tr>`;}).join('');
+  const full=t=>S32.filter(s=>s.t===t&&rec32[s.n]&&Object.keys(rec32[s.n]).length>=4).length>=1;if(full('a')&&full('b'))Lab.done('#t32a');
+  if(S32.some(s=>s.t==='a'&&rec32[s.n]&&rec32[s.n].mg)&&S32.some(s=>s.t==='a'&&rec32[s.n]&&rec32[s.n].marble))Lab.done('#t32b');}
+render32();
+function draw32(t){const c=$('c32').getContext('2d');c.fillStyle=BG;c.fillRect(0,0,1600,440);const f=f32||0;
+  Lab.beaker(c,640,100,320,280,s32.t==='n'?'rgba(200,220,240,.35)':'rgba(200,220,240,.35)',0.7);txt(c,s32.n,800,420,'#e4ebf0',24,'center',true);
+  if(!t32)return;const R=RES[t32][s32.t];
+  if(t32==='blue'||t32==='red'){const base=t32==='blue'?'#4a7be0':'#e0453a';const y=60+f*160;c.fillStyle=f>0.6?R[1]:base;c.fillRect(780,y,40,120);if(f>0.6&&R[1]!==base){c.fillStyle=base;c.fillRect(780,y,40,40);}}
+  if(t32==='phen'){if(f<0.5){c.fillStyle='rgba(255,255,255,.8)';c.beginPath();c.arc(800,60+f*300,8,0,7);c.fill();}else if(s32.t==='b'){c.fillStyle=`rgba(224,64,122,${Math.min(.7,(f-.5)*2)})`;c.fillRect(644,100+280*0.3,312,280*0.7-4);}}
+  if(t32==='mg'||t32==='marble'){if(t32==='mg'){c.fillStyle='#c9d1d9';c.fillRect(740,350,120*(s32.t==='a'?1-f*0.6:1),10);}else{c.fillStyle='#e8e2d4';c.beginPath();c.arc(800,350,26*(s32.t==='a'?1-f*0.3:1),0,7);c.fill();}
+    if(s32.t==='a'&&f<1){const n=s32.weak?6:22;for(let i=0;i<n;i++){const by=360-((t*130+i*31)%190);c.strokeStyle='rgba(255,255,255,.85)';c.lineWidth=2;c.beginPath();c.arc(700+(i*47)%200,by,5,0,7);c.stroke();}}}
+  if(f>=1)txt(c,R[0],1200,250,'#ffd166',30,'center',true);}
+// 稀釋
+let dil=null,fd=null;
+$('dilA').onclick=()=>{dil='A';Lab.anim(2500,f=>fd=f,()=>{$('vDil').className='verdict ok';$('vDil').textContent='正確！把濃硫酸沿著玻棒慢慢倒入大量水中，並不斷攪拌，讓熱量分散。';Lab.done('#t32c');});};
+$('dilB').onclick=()=>{dil='B';Lab.anim(2500,f=>fd=f,()=>{$('vDil').className='verdict no';$('vDil').textContent='危險！少量的水加入濃硫酸，瞬間放出大量的熱使水沸騰，酸液會噴濺出來。';});};
+function drawDil(t){const c=$('cDil').getContext('2d');c.fillStyle=BG;c.fillRect(0,0,1600,360);if(!dil){txt(c,'選一種做法',800,180,'#98a7b3',28,'center');return;}const f=fd||0;
+  Lab.beaker(c,680,120,240,200,dil==='A'?'rgba(150,200,240,.4)':'rgba(240,230,170,.5)',0.6);
+  c.save();c.translate(560,80);c.rotate(0.6*Math.min(1,f*2));c.fillStyle=dil==='A'?'rgba(240,230,170,.7)':'rgba(150,200,240,.6)';c.fillRect(-30,-80,60,70);c.strokeStyle='#dfe7ec';c.lineWidth=3;c.strokeRect(-34,-100,68,110);c.restore();
+  txt(c,dil==='A'?'濃硫酸':'水',520,40,'#e4ebf0',22,'center');txt(c,dil==='A'?'水':'濃硫酸',800,350,'#e4ebf0',22,'center');
+  if(dil==='A'&&f>0.3){line(c,620,110,760,250,'#cfd8dc',4);txt(c,'沿玻棒慢慢倒入，邊加邊攪拌',1150,180,'#4ade80',26,'center',true);}
+  if(dil==='B'&&f>0.4){for(let i=0;i<30;i++){const a=-Math.PI*(0.1+0.8*((i*37)%100)/100),r=(f-0.4)*400*((i%5)/5+0.4);c.fillStyle='rgba(255,220,120,.8)';c.beginPath();c.arc(800+r*Math.cos(a),190+r*Math.sin(a)+r*r*0.002,6,0,7);c.fill();}txt(c,'沸騰噴濺！',1150,180,'#ff6b6b',34,'center',true);}}
+
+/* ===== 3-3 pH ===== */
+const LIFE=[['胃液',1.5],['檸檬汁',2.3],['食醋',3],['汽水',4],['正常雨水',5.6],['純水',7],['血液',7.4],['小蘇打水',8.5],['肥皂水',10],['氨水',11.5],['石灰水',12.5],['水管疏通劑（NaOH）',13.5]];let ph=7;const lseen=new Set(),zones=new Set();
+LIFE.forEach(([n,p])=>{const b=document.createElement('button');b.className='btn';b.textContent=n;b.onclick=()=>{ph=p;$('ph').value=Math.round(p*2)/2;lseen.add(n);if(lseen.size>=5)Lab.done('#t33c');draw33(n);};$('lifeSubs').appendChild(b);});
+$('ph').addEventListener('input',e=>{ph=+e.target.value;draw33();});
+function univ(p){const C=['#e0262b','#f0592b','#f7942e','#fcc02c','#f5e62c','#c6dd2a','#7cc242','#3aa64b','#24a07e','#1f9fb4','#2378c0','#2a52a6','#3d3a96','#5a2d86','#6b2479'];return C[Math.max(0,Math.min(14,Math.round(p)))];}
+function draw33(name){const c=$('c33').getContext('2d');c.fillStyle=BG;c.fillRect(0,0,1600,460);$('phO').textContent=ph;$('knob').style.left=(ph/14*100)+'%';
+  // H+ vs OH- 粒子
+  const nH=Math.round(Math.max(1,Math.min(40,20*Math.pow(10,(7-ph)/3.5)))),nO=Math.round(Math.max(1,Math.min(40,20*Math.pow(10,(ph-7)/3.5))));
+  c.fillStyle='rgba(150,200,240,.15)';c.fillRect(40,40,520,380);txt(c,'溶液中的離子（示意）',300,30,'#98a7b3',20,'center');
+  for(let i=0;i<nH;i++){const x=70+((i*97)%460),y=70+((i*53)%330);circle(c,x,y,13,'#ff6b6b');txt(c,'H⁺',x,y+5,'#111',13,'center',true);}
+  for(let i=0;i<nO;i++){const x=90+((i*71+30)%440),y=90+((i*41+20)%300);circle(c,x,y,15,'#5aa9ff');txt(c,'OH⁻',x,y+5,'#111',12,'center',true);}
+  txt(c,ph<7?'[H⁺] ＞ [OH⁻]':ph>7?'[H⁺] ＜ [OH⁻]':'[H⁺] ＝ [OH⁻]',300,450,'#ffd166',24,'center',true);
+  // 指示劑
+  const lit=ph<5?['紅色','#e0453a']:ph>8?['藍色','#4a7be0']:['紫色','#8a5bd6'],phen=ph<8.2?['無色','rgba(230,240,245,.35)']:['紅色','#e0407a'];
+  [['石蕊',lit],['酚酞',phen],['廣用試紙',['',univ(ph)]]].forEach(([n,[cn,col]],i)=>{const x=760+i*260;c.fillStyle=col;if(n==='廣用試紙')c.fillRect(x-30,120,60,200);else{c.fillRect(x-60,180,120,140);c.strokeStyle='#dfe7ec';c.lineWidth=4;c.strokeRect(x-60,120,120,200);}
+    txt(c,n,x,360,'#e4ebf0',22,'center',true);txt(c,n==='廣用試紙'?`pH ${ph}`:cn,x,395,'#ffd166',22,'center',true);});
+  const zone=ph<7?'酸性':ph>7?'鹼性':'中性';zones.add(zone);if(zones.size>=3)Lab.done('#t33b');if(ph!==7)Lab.done('#t33a');
+  $('v33').textContent=(name?`${name}：`:'')+`pH ${ph}，${zone}`+(ph<7?`。pH 越小，H⁺ 越多，酸性越強。`:ph>7?`。pH 越大，OH⁻ 越多，鹼性越強。`:'。H⁺ 與 OH⁻ 一樣多。');}
+
+/* ===== 3-4 中和 ===== */
+let vol=0,ind='phen';const V0=20;
+function phOf(v){const a=V0-v;const tot=V0+v;if(Math.abs(a)<1e-9)return 7;if(a>0)return -Math.log10(0.1*a/tot);return 14+Math.log10(0.1*(-a)/tot);}
+function tempOf(v){const n=Math.min(v,V0);return 25+n*0.35-Math.max(0,v-V0)*0.12;}
+let hist=[[0,phOf(0),25]];
+document.querySelectorAll('[data-add]').forEach(b=>b.addEventListener('click',()=>{const d=+b.dataset.add;for(let i=0;i<d;i++){if(vol>=40)break;vol++;hist.push([vol,phOf(vol),tempOf(vol)]);}Lab.beep(700,0.08,0.06);draw34();}));
+$('reset34').onclick=()=>{vol=0;hist=[[0,phOf(0),25]];draw34();};Lab.seg('[data-ind]',b=>{ind=b.dataset.ind;draw34();});
+function draw34(){const c=$('c34').getContext('2d');c.fillStyle=BG;c.fillRect(0,0,800,560);const p=phOf(vol),T=tempOf(vol);
+  const col=ind==='phen'?(p>8.2?'rgba(224,64,122,.65)':'rgba(220,235,245,.3)'):univ(p);c.globalAlpha=ind==='phen'?1:.7;
+  const lvl=0.35+0.4*(V0+vol)/60;c.fillStyle=col;c.fillRect(204,440-300*lvl,392,300*lvl-4);c.globalAlpha=1;Lab.beaker(c,200,140,400,300,'rgba(0,0,0,0)',0);
+  // 滴管
+  c.fillStyle='#dfe7ec';c.fillRect(385,20,30,90);c.beginPath();c.moveTo(385,110);c.lineTo(400,135);c.lineTo(415,110);c.fill();txt(c,'NaOH',460,70,'#e4ebf0',22,'left');
+  // 溫度計
+  c.fillStyle='#f4efe8';c.fillRect(540,90,14,330);const ty=420-((T-20)/20)*300;c.fillStyle='#d62828';c.fillRect(543,ty,8,420-ty);txt(c,Lab.fmt(T)+' ℃',548,80,'#ffd166',24,'center',true);
+  // 離子數示意
+  const a=Math.max(0,V0-vol),bb=Math.max(0,vol-V0);txt(c,`H⁺ ${a>0?'剩餘':'已用完'}　OH⁻ ${bb>0?'過量':'沒有剩'}`,400,500,'#e4ebf0',22,'center',true);
+  // 曲線
+  const g=$('g34').getContext('2d');g.fillStyle=BG;g.fillRect(0,0,800,560);const L=80,R=770,Tp=30,B=490,X=v=>L+(R-L)*v/40,Y=q=>B-(B-Tp)*q/14;
+  for(let q=0;q<=14;q+=2){Lab.line(g,L,Y(q),R,Y(q),'rgba(255,255,255,.08)',1);txt(g,q+'',L-10,Y(q)+7,'#98a7b3',18,'right');}for(let v=0;v<=40;v+=10)txt(g,v+'',X(v),B+28,'#98a7b3',18,'center');
+  Lab.line(g,L,Y(7),R,Y(7),'rgba(255,209,102,.5)',2,[8,6]);txt(g,'中性 pH 7',R-6,Y(7)-8,'#ffd166',18,'right');
+  g.strokeStyle='#f28cb8';g.lineWidth=4;g.beginPath();hist.forEach(([v,q],i)=>{i?g.lineTo(X(v),Y(q)):g.moveTo(X(v),Y(q));});g.stroke();
+  g.strokeStyle='#ff8a4c';g.lineWidth=3;g.beginPath();hist.forEach(([v,,tt],i)=>{const y=B-(B-Tp)*(tt-20)/20;i?g.lineTo(X(v),y):g.moveTo(X(v),y);});g.stroke();
+  txt(g,'加入 NaOH（mL）',(L+R)/2,B+56,'#e4ebf0',20,'center');txt(g,'— pH',L+10,Tp+10,'#f28cb8',20,'left',true);txt(g,'— 溫度',L+90,Tp+10,'#ff8a4c',20,'left',true);
+  $('s34v').textContent=vol+' mL';$('s34p').textContent=Lab.fmt(p,1);$('s34t').textContent=Lab.fmt(T)+' ℃';
+  const v=$('v34');if(vol===0){v.className='verdict';v.textContent='開始逐次加入氫氧化鈉。';}
+  else if(vol<V0){v.className='verdict';v.textContent=`溶液仍是酸性（pH ${Lab.fmt(p,1)}）。H⁺ 和加入的 OH⁻ 結合成水，溫度持續上升（中和反應放熱）。`+(ind==='phen'?'酚酞仍為無色。':'');}
+  else if(vol===V0){v.className='verdict ok';v.textContent='剛好完全中和：pH＝7，溫度最高。溶液中只剩 Na⁺ 和 Cl⁻（氯化鈉溶液）。'+(ind==='phen'?' 再加一滴 NaOH，酚酞就會變紅。':'');Lab.done('#t34b');Lab.done('#t34c');}
+  else{v.className='verdict ok';v.textContent=`NaOH 過量，溶液變鹼性（pH ${Lab.fmt(p,1)}）`+(ind==='phen'?'，酚酞變成紅色。':'。')+'中和已完成，溫度不再上升，加入室溫的溶液反而使溫度略降。';if(ind==='phen')Lab.done('#t34a');Lab.done('#t34b');}}
+const SALT=[['氯化鈉','NaCl','食鹽，調味、醃漬'],['碳酸鈣','CaCO₃','大理石、石灰岩、蛋殼的主要成分，建材'],['碳酸氫鈉','NaHCO₃','小蘇打，發粉、制酸劑'],['碳酸鈉','Na₂CO₃','蘇打，製造玻璃、清潔劑'],['硫酸鈣','CaSO₄','石膏，固定骨折、點豆花'],['硝酸鉀','KNO₃','肥料、火藥']];
+$('salts').innerHTML=SALT.map(([n,f,u])=>`<tr><td>${n}</td><td class="mono">${f}</td><td>${u}</td></tr>`).join('');
+
+
+/* ===== 酸雨 ===== */
+let fac=3,car=3,yr=0;const acts=new Set();
+const ACTS=[['搭乘大眾運輸',0,1.5],['工廠加裝脫硫設備',2.5,0],['使用太陽能、風力發電',1.5,0],['隨手關燈、節約用電',1,0],['騎腳踏車或步行',0,1],['改用電動車',0,1.5]];
+ACTS.forEach(([n,a,b])=>{const btn=document.createElement('button');btn.className='btn';btn.textContent=n;btn.setAttribute('aria-pressed','false');btn.onclick=()=>{const on=!acts.has(n);on?acts.add(n):acts.delete(n);btn.setAttribute('aria-pressed',on);
+  $('vAct').textContent=acts.size?`已選 ${acts.size} 項：減少燃燒化石燃料，就能減少二氧化硫和氮氧化物的排放。`:'選擇行動。';if(acts.size>=3)Lab.done('#t35c');};$('acts').appendChild(btn);});
+$('fac').oninput=e=>{fac=+e.target.value;Lab.done('#t35a');};$('car').oninput=e=>{car=+e.target.value;Lab.done('#t35a');};$('yr').oninput=e=>{yr=+e.target.value;if(yr>=20)Lab.done('#t35b');};
+function rainPH(){let red=0,redC=0;ACTS.forEach(([n,a,b])=>{if(acts.has(n)){red+=a;redC+=b;}});const E=Math.max(0,fac-red)*0.9+Math.max(0,car-redC)*0.6;return Math.max(3.2,5.6-E*0.17);}
+function draw35(t){const c=$('c35').getContext('2d');c.fillStyle='#0f1a24';c.fillRect(0,0,1600,520);const p=rainPH();const acid=p<5;
+  // 雲
+  c.fillStyle=acid?'#5a5560':'#6f7c88';[[700,70,60],[780,55,75],[870,70,60],[950,60,55]].forEach(([x,y,r])=>{c.beginPath();c.arc(x,y,r,0,7);c.fill();});
+  // 雨
+  for(let i=0;i<70;i++){const x=560+(i*53)%520,y=(t*300+i*37)%330+110;c.strokeStyle=univ(p);c.lineWidth=2;c.beginPath();c.moveTo(x,y);c.lineTo(x-4,y+14);c.stroke();}
+  // 工廠與車
+  c.fillStyle='#55606a';c.fillRect(80,300,180,160);c.fillRect(200,180,30,120);for(let i=0;i<fac;i++){c.fillStyle='rgba(160,160,160,.45)';c.beginPath();c.arc(215+i*18+Math.sin(t+i)*6,170-i*14-((t*30)%20),14+i*2,0,7);c.fill();}txt(c,'工廠（燃煤）',170,490,'#e4ebf0',20,'center');
+  c.fillStyle='#c94';c.fillRect(300,420,110,36);c.fillStyle='#222';c.beginPath();c.arc(325,458,12,0,7);c.arc(385,458,12,0,7);c.fill();for(let i=0;i<car;i++){c.fillStyle='rgba(160,160,160,.35)';c.beginPath();c.arc(290-i*12,440-i*4,8+i,0,7);c.fill();}txt(c,'汽機車',355,490,'#e4ebf0',20,'center');
+  txt(c,'SO₂、NOₓ',300,140,'#ffd166',24,'center',true);
+  // 影響：雕像、湖、森林
+  const dmg=acid?Math.min(1,yr/50*(5-p)/1.8):0;
+  c.fillStyle='#e8e2d4';const sh=160*(1-dmg*0.35);c.fillRect(1150,460-sh,60,sh);c.beginPath();c.arc(1180,460-sh-20,24*(1-dmg*0.3),0,7);c.fill();txt(c,'大理石雕像',1180,490,'#e4ebf0',20,'center');
+  c.fillStyle=`rgba(${Math.round(60+100*dmg)},${Math.round(140-60*dmg)},${Math.round(200-80*dmg)},.8)`;c.beginPath();c.ellipse(1340,450,90,20,0,0,7);c.fill();const fish=Math.round(5*(1-dmg));for(let i=0;i<fish;i++){c.fillStyle='#ffb347';c.beginPath();c.ellipse(1290+i*25,450,8,4,0,0,7);c.fill();}txt(c,'湖泊',1340,490,'#e4ebf0',20,'center');
+  for(let i=0;i<3;i++){const x=1470+i*40;c.fillStyle='#6b4a2a';c.fillRect(x-4,380,8,80);c.fillStyle=dmg>0.5?'#8a7a3a':'#2f8f4f';c.beginPath();c.arc(x,370,26*(1-dmg*0.5),0,7);c.fill();}txt(c,'森林',1510,490,'#e4ebf0',20,'center');
+  txt(c,`雨水 pH ${Lab.fmt(p,1)}`,820,170,acid?'#ff8a80':'#9fd3ff',34,'center',true);
+  $('facO').textContent=fac;$('carO').textContent=car;$('yrO').textContent=yr+' 年';
+  $('v35').textContent=acid?`雨水 pH ${Lab.fmt(p,1)} ＜ 5.0，形成酸雨。`+(yr>0?`經過 ${yr} 年：大理石雕像被侵蝕（碳酸鈣和酸反應）、湖泊酸化使魚類減少、森林枯黃。`:'拖動「經過年數」看看長期影響。'):`雨水 pH ${Lab.fmt(p,1)}，${p>=5.5?'接近正常雨水（溶有二氧化碳，約 5.6）':'略偏酸，但還不算酸雨'}。`;}
+
+Lab.quiz('quiz',[
+ {q:'下列何者的水溶液不能導電？',o:['食鹽','糖','氫氧化鈉'],a:1,w:'糖是非電解質，在水中以分子存在。'},
+ {q:'電解質水溶液通電時，陽離子移向？',o:['正極','負極','不移動'],a:1,w:'陽離子帶正電，移向負極。'},
+ {q:'電解質水溶液為什麼不帶電？',o:['沒有離子','陽離子總電量＝陰離子總電量','離子都不帶電'],a:1},
+ {q:'酸在水中都會解離出？',o:['OH⁻','H⁺','Na⁺'],a:1,w:'酸解離出氫離子。'},
+ {q:'稀鹽酸加入鎂帶，產生的氣體是？',o:['氧氣','氫氣','二氧化碳'],a:1},
+ {q:'稀鹽酸加入大理石，產生的氣體是？',o:['氫氣','二氧化碳','氯氣'],a:1},
+ {q:'鹼性溶液會使？',o:['藍色石蕊試紙變紅','紅色石蕊試紙變藍','酚酞保持無色'],a:1},
+ {q:'稀釋濃硫酸的正確方法是？',o:['把水倒入濃硫酸','把濃硫酸慢慢倒入水中並攪拌','兩者同時倒入'],a:1},
+ {q:'常溫下 pH＝3 的溶液是？',o:['酸性','中性','鹼性'],a:0},
+ {q:'pH 越大，表示？',o:['H⁺ 越多','OH⁻ 越多、鹼性越強','酸性越強'],a:1},
+ {q:'在稀鹽酸中加酚酞再逐滴加入氫氧化鈉，酚酞何時變紅？',o:['一開始','NaOH 稍微過量時','永遠不變'],a:1},
+ {q:'酸鹼中和反應的生成物是？',o:['鹽和水','氫氣和氧氣','只有水'],a:0},
+ {q:'中和反應是？',o:['吸熱反應','放熱反應','不影響溫度'],a:1},
+ {q:'小蘇打的化學名稱是？',o:['碳酸鈣','碳酸氫鈉','氯化鈉'],a:1},
+ {q:'酸雨的 pH 小於多少？',o:['7','5.6','5.0'],a:2,w:'正常雨水約 5.6，酸雨 pH＜5.0。'},
+ {q:'造成酸雨的主要汙染物是？',o:['二氧化硫和氮氧化物','氧氣和氮氣','水蒸氣'],a:0},
+]);
+Lab.tasks('g9c3');Lab.tabs();
+Lab.loop((dt,t,a)=>{if(a==='p1')draw31(dt,t);if(a==='p2'){draw32(t);drawDil(t);}if(a==='p5')draw35(t);});
+draw33();draw34();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>有機化合物實驗室</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&family=JetBrains+Mono:wght@500;700&display=swap">
+<link rel="stylesheet" href="science-lab.css">
+<style>:root{--accent:#2f8a5f;--accent-soft:#e0f2e8;--accent-d:#5fd39a;--accent-soft-d:#173a29;--tabs:5}
+.sortbox{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:700px){.sortbox{grid-template-columns:1fr}}
+.bin{border:3px dashed var(--line);border-radius:14px;padding:12px;min-height:110px;background:var(--surface);cursor:pointer}
+.bin .got{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.bin .got span{background:var(--accent-soft);border-radius:8px;padding:2px 10px;font-weight:700}
+.chipbtn{font:inherit;font-weight:700;padding:10px 14px;border-radius:12px;border:2px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer}
+.chipbtn[aria-pressed="true"]{border-color:var(--warm)}.chipbtn.wrong{border-color:var(--bad)}
+.code7{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
+@media (max-width:800px){.code7{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.code7 button{font:inherit;border:2px solid var(--line);border-radius:12px;background:var(--surface);color:var(--fg);cursor:pointer;padding:8px;display:grid;justify-items:center}
+.code7 svg{width:56px;height:56px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="unit">第 5 章</span><h1>有機化合物</h1>
+    <a class="home" href="index.html">← 回首頁</a>
+  </header>
+  <nav class="tabs" role="tablist">
+    <button role="tab" data-p="p1">5-1 認識有機化合物<small>加熱實驗・分類</small></button>
+    <button role="tab" data-p="p2">5-2 常見的有機化合物<small>烷・醇・酸・酯</small></button>
+    <button role="tab" data-p="p3">5-3 肥皂與合成清潔劑<small>皂化・去汙</small></button>
+    <button role="tab" data-p="p4">5-4 聚合物與衣料纖維<small>塑膠・纖維辨別</small></button>
+    <button role="tab" data-p="p5">測驗<small>觀念複習</small></button>
+  </nav>
+
+  <!-- ===== 5-1 ===== -->
+  <section class="page" id="p1">
+    <details class="goal" open><summary>5-1 認識有機化合物 <span class="prog"></span></summary><div class="cols">
+      <div><h4>學習目標</h4><ol><li>了解有機化合物的由來。</li><li>認識有機化合物的特性。</li></ol><h4 style="margin-top:8px">教學重點</h4><ol><li>以實作將麵粉、糖粉和食鹽放置於蒸發皿中加熱並比較結果，說明有機化合物與無機化合物的差異。</li></ol></div>
+      <div><h4>學習內容</h4><ul><li><span class="code">Jf-IV-1</span>有機化合物與無機化合物的重要特徵。</li></ul></div>
+      <div><h4>學習任務</h4><ul class="tasks"><li><label><input type="checkbox" id="t51a">加熱麵粉、糖粉、食鹽、小蘇打粉並記錄結果</label></li><li><label><input type="checkbox" id="t51b">說明為什麼小蘇打含碳卻不是有機化合物</label></li><li><label><input type="checkbox" id="t51c">完成有機／無機化合物分類</label></li></ul></div>
+    </div></details>
+    <div class="card"><h2>加熱實驗：麵粉、糖粉、食鹽、小蘇打粉</h2><p class="lead">有機化合物都含有碳，多數也含有氫。加熱時容易分解，常留下黑色的碳。把四種粉末分別放在蒸發皿中加熱。</p></div>
+    <div class="row"><button class="big" id="heat51">🔥 同時加熱</button></div>
+    <div class="scene"><canvas id="c51" width="1600" height="420"></canvas></div>
+    <div class="card tablebox"><table><thead><tr><th></th><th>麵粉</th><th>糖粉</th><th>食鹽</th><th>小蘇打粉</th></tr></thead><tbody id="tb51"><tr><td>加熱結果</td><td>—</td><td>—</td><td>—</td><td>—</td></tr></tbody></table></div>
+    <div class="verdict" id="v51">按「同時加熱」。</div>
+    <div class="two">
+      <div class="card"><h3>有機化合物的由來</h3><p style="margin:0">早期科學家認為有機化合物只能由生物體產生。1828 年，德國化學家烏勒在實驗室用無機物製造出尿素，打破了這個想法。現在「有機化合物」泛指含碳的化合物，但<b>一氧化碳、二氧化碳、碳酸鹽類（如碳酸鈣、碳酸氫鈉）等</b>性質與無機物相似，歸類為無機化合物。</p></div>
+      <div class="card"><h3>有機／無機分類</h3><p class="note" style="margin:0 0 6px">點一個物質，再點類別。</p><div class="row" id="items51"></div>
+        <div class="sortbox" style="margin-top:8px"><div class="bin" data-b="o" role="button" tabindex="0"><b>有機化合物</b><div class="got"></div></div><div class="bin" data-b="i" role="button" tabindex="0"><b>無機化合物</b><div class="got"></div></div></div>
+        <div class="verdict" id="vSort" style="margin-top:8px">點一個物質。</div></div>
+    </div>
+  </section>
+
+  <!-- ===== 5-2 ===== -->
+  <section class="page" id="p2" hidden>
+    <details class="goal" open><summary>5-2 常見的有機化合物 <span class="prog"></span></summary><div class="cols">
+      <div><h4>學習目標</h4><ol><li>認識常見有機化合物的種類。</li><li>了解碳氫化合物的概念及特性。</li><li>引導歸納碳氫氧化合物的特性。</li><li>認識酯類及酯化反應。</li></ol></div>
+      <div><h4>學習內容</h4><ul><li><span class="code">Jf-IV-2</span>生活中常見的烷類、醇類、有機酸及酯類。</li><li><span class="code">Jf-IV-3</span>酯化與皂化反應。</li><li><span class="code">Nc-IV-3</span>化石燃料的形成與特性。</li><li><span class="code">Ma-IV-3</span>不同材料對生活及社會的影響。</li></ul></div>
+      <div><h4>學習任務</h4><ul class="tasks"><li><label><input type="checkbox" id="t52a">觀察烷類、醇類、有機酸、酯類各至少一種分子的結構</label></li><li><label><input type="checkbox" id="t52b">完成酯化反應，說出生成物的特殊氣味</label></li><li><label><input type="checkbox" id="t52c">說出化石燃料的種類與對環境的影響</label></li></ul></div>
+    </div></details>
+    <div class="card"><h2>認識分子結構</h2><p class="lead">選一種有機化合物，看它的結構與用途。碳原子能和其他原子形成 4 個鍵，可以互相連成長鏈。</p></div>
+    <div class="row" id="molBtns"></div>
+    <div class="two"><div class="scene"><canvas id="c52" width="800" height="440"></canvas></div><div class="card" id="molInfo"></div></div>
+
+    <div class="card"><h2>酯化反應</h2><p class="lead">醇類和有機酸在濃硫酸催化下加熱，生成酯類和水。酯類大多有水果般的香味，常用來做香料。依序完成步驟。</p>
+      <div class="row" style="margin-top:8px"><button class="big" id="es1">① 加入乙醇和乙酸</button><button class="big" id="es2">② 滴入濃硫酸</button><button class="big" id="es3">③ 隔水加熱</button><button class="big" id="es4">④ 倒入冷水中聞味道</button></div></div>
+    <div class="scene"><canvas id="cEs" width="1600" height="420"></canvas></div>
+    <div class="card"><div class="eq">乙酸 ＋ 乙醇 → 乙酸乙酯 ＋ 水</div><div class="eq" style="font-size:1.2rem">CH₃COOH ＋ C₂H₅OH → CH₃COOC₂H₅ ＋ H₂O</div></div>
+    <div class="verdict" id="vEs">從步驟 ① 開始。</div>
+    <div class="card"><h2>化石燃料</h2><p class="lead">煤、石油、天然氣是古代生物遺骸經過長時間高溫、高壓作用形成的，主要成分是碳氫化合物，屬於不可再生的能源。點一種看看。</p>
+      <div class="row" style="margin-top:8px" id="fossil"></div><div class="verdict" id="vFos" style="margin-top:8px">選一種化石燃料。</div></div>
+  </section>
+
+  <!-- ===== 5-3 ===== -->
+  <section class="page" id="p3" hidden>
+    <details class="goal" open><summary>5-3 肥皂與合成清潔劑 <span class="prog"></span></summary><div class="cols">
+      <div><h4>學習目標</h4><ol><li>認識常用的清潔劑。</li><li>知道如何製造肥皂。</li><li>了解肥皂的去汙原理，並知道皂化反應。</li><li>知道須謹慎使用清潔劑，以減少對環境的汙染。</li></ol></div>
+      <div><h4>學習內容</h4><ul><li><span class="code">Jf-IV-3</span>酯化與皂化反應。</li></ul></div>
+      <div><h4>學習任務</h4><ul class="tasks"><li><label><input type="checkbox" id="t53a">完成製造肥皂的 4 個步驟</label></li><li><label><input type="checkbox" id="t53b">用肥皂分子模型說明去汙原理</label></li><li><label><input type="checkbox" id="t53c">比較肥皂與合成清潔劑，說出減少汙染的做法</label></li></ul></div>
+    </div></details>
+    <div class="card"><h2>製造肥皂（皂化反應）</h2><p class="lead">油脂和氫氧化鈉溶液共熱，生成肥皂和甘油，稱為皂化反應。再加入飽和食鹽水，肥皂會析出浮在上層（鹽析）。</p>
+      <div class="row" style="margin-top:8px"><button class="big" id="sp1">① 加入油脂</button><button class="big" id="sp2">② 加入氫氧化鈉溶液</button><button class="big" id="sp3">③ 加熱並攪拌</button><button class="big" id="sp4">④ 加入飽和食鹽水</button></div></div>
+    <div class="scene"><canvas id="cSoap" width="1600" height="420"></canvas></div>
+    <div class="card"><div class="eq">油脂 ＋ 氫氧化鈉 → 肥皂 ＋ 甘油</div></div>
+    <div class="verdict" id="vSoap">從步驟 ① 開始。實驗時要戴護目鏡，氫氧化鈉有強腐蝕性。</div>
+    <div class="card"><h2>去汙原理</h2><p class="lead">肥皂分子一端是<b>親油端</b>（長長的碳氫鏈，能溶入油汙），另一端是<b>親水端</b>（能溶於水）。親油端鑽進油汙，親水端朝外向著水，把油汙包起來，經過搓洗、沖水就能帶走。</p>
+      <div class="row" style="margin-top:8px"><button class="big" id="addSoap">🧼 加入肥皂</button><button class="big" id="rub" style="background:var(--accent)">🤲 搓洗沖水</button><button class="btn" id="soapReset">重來</button></div></div>
+    <div class="scene"><canvas id="cWash" width="1600" height="440"></canvas></div>
+    <div class="verdict" id="vWash">衣服上有一滴油汙，只用清水沖不掉。</div>
+    <div class="card tablebox"><h3>肥皂與合成清潔劑</h3><table><thead><tr><th></th><th>肥皂</th><th>合成清潔劑（洗衣粉、洗碗精）</th></tr></thead><tbody>
+      <tr><td>原料</td><td>油脂＋氫氧化鈉</td><td>多以石油產品為原料</td></tr><tr><td>去汙原理</td><td colspan="2">相同：分子都有親油端與親水端</td></tr>
+      <tr><td>優缺點</td><td>易被微生物分解；在硬水中去汙力變差</td><td>在硬水中仍有去汙力；部分不易分解，含磷配方會使水中藻類大量繁殖</td></tr></tbody></table>
+      <p style="margin:10px 0 0"><b>減少汙染：</b>適量使用清潔劑、選用可生物分解或無磷的產品、用小蘇打或洗米水清潔。</p>
+      <button class="btn" id="readSoap" style="margin-top:8px">✔ 我讀完了</button></div>
+  </section>
+
+  <!-- ===== 5-4 ===== -->
+  <section class="page" id="p4" hidden>
+    <details class="goal" open><summary>5-4 有機聚合物與衣料纖維 <span class="prog"></span></summary><div class="cols">
+      <div><h4>學習目標</h4><ol><li>了解聚合物的一般性質及用途。</li><li>認識常見的塑膠。</li><li>知道常見衣料纖維及其簡易實驗辨別法。</li><li>能在生活中具體實踐，減少廢棄物與資源回收的行動。</li></ol></div>
+      <div><h4>學習內容</h4><ul><li><span class="code">Jf-IV-4</span>常見的塑膠。</li><li><span class="code">Mc-IV-3</span>生活中對各種材料進行加工與運用。</li><li><span class="code">Mc-IV-4</span>常見人造材料的特性、簡單的製造過程及在生活上的應用。</li></ul></div>
+      <div><h4>學習任務</h4><ul class="tasks"><li><label><input type="checkbox" id="t54a">把小分子連成聚合物，比較天然與合成聚合物</label></li><li><label><input type="checkbox" id="t54b">認識 7 種塑膠回收標誌</label></li><li><label><input type="checkbox" id="t54c">用燃燒法辨別 4 種纖維</label></li><li><label><input type="checkbox" id="t54d">選出 3 項減塑行動</label></li></ul></div>
+    </div></details>
+    <div class="card"><h2>聚合物：小分子連成大分子</h2><p class="lead">許多小分子（單體）一個接一個連結，形成分子量很大的長鏈分子，稱為聚合物。例如許多乙烯分子連成聚乙烯（PE）。按「連結」把單體接上去。</p>
+      <div class="row" style="margin-top:8px"><button class="big" id="link">🔗 連結一個單體</button><button class="btn" id="link10">連結 10 個</button><button class="btn" id="unlink">重來</button></div></div>
+    <div class="scene"><canvas id="cPoly" width="1600" height="300"></canvas></div>
+    <div class="two"><div class="card"><h3>天然聚合物</h3><p style="margin:0">澱粉、纖維素（棉花）、蛋白質（羊毛、蠶絲）、天然橡膠</p></div><div class="card"><h3>合成聚合物</h3><p style="margin:0">塑膠（聚乙烯、保麗龍）、合成纖維（尼龍、聚酯纖維）、合成橡膠</p></div></div>
+    <div class="card"><h2>塑膠回收標誌</h2><p class="lead">點一個回收標誌看看它是哪一種塑膠。</p><div class="code7" id="codes" style="margin-top:8px"></div><div class="verdict" id="vCode" style="margin-top:10px">點一個標誌。</div>
+      <p class="note">熱塑性塑膠（受熱軟化、可重新塑形，如 PE、PET）較易回收；熱固性塑膠（受熱不軟化，如美耐皿、電木）不易回收。</p></div>
+    <div class="card"><h2>衣料纖維的燃燒辨別</h2><p class="lead">取少量纖維，用鑷子夾著靠近火焰，觀察燃燒情形、氣味和灰燼。</p><div class="row" style="margin-top:8px" id="fibers"></div></div>
+    <div class="scene"><canvas id="cFib" width="1600" height="380"></canvas></div>
+    <div class="verdict" id="vFib">選一種纖維。</div>
+    <div class="card"><h3>減塑行動</h3><div class="row" id="acts54"></div><div class="verdict" id="vAct" style="margin-top:8px">選出你做得到的行動。</div></div>
+  </section>
+
+  <section class="page" id="p5" hidden><div class="card" id="quiz"><h2>第 5 章觀念測驗</h2></div></section>
+</div>
+<script src="science-lab.js"></script>
+<script>
+(function(){
+const {$,txt,line,circle}=Lab;const BG='#0e1418';
+
+/* ===== 5-1 加熱 ===== */
+const P51=[['麵粉','#f4efe4','變黑（焦黑），有焦味','o'],['糖粉','#fbfbfb','熔化、冒煙，最後變黑','o'],['食鹽','#ffffff','沒有明顯變化（可能有輕微爆裂聲）','i'],['小蘇打粉','#f6f6f2','產生氣體（二氧化碳和水蒸氣），沒有變黑','i']];let f51=null;
+$('heat51').onclick=()=>Lab.anim(4000,f=>f51=f,()=>{$('tb51').innerHTML='<tr><td>加熱結果</td>'+P51.map(p=>`<td>${p[2]}</td>`).join('')+'</tr>';
+  $('v51').textContent='麵粉和糖粉加熱後變黑，留下的黑色物質是碳，它們是有機化合物；食鹽不變黑，是無機化合物。小蘇打雖然含有碳，但加熱只產生二氧化碳和水，不會變黑，屬於無機化合物。';Lab.done('#t51a');Lab.done('#t51b');});
+function draw51(t){const c=$('c51').getContext('2d');c.fillStyle=BG;c.fillRect(0,0,1600,420);const f=f51||0;
+  P51.forEach(([n,col,r,k],i)=>{const x=200+i*400,y=200;c.fillStyle='#e9eef1';c.beginPath();c.ellipse(x,y,130,40,0,0,Math.PI);c.fill();
+    let cc=col;if(k==='o'){const b=Math.min(1,f*1.4);const base=n==='糖粉'?[251,251,251]:[244,239,228];const mid=n==='糖粉'?[200,140,60]:[170,120,70];const end=[25,22,20];const m=b<0.5?base.map((v,j)=>v+(mid[j]-v)*b*2):mid.map((v,j)=>v+(end[j]-v)*(b-0.5)*2);cc=`rgb(${m.map(Math.round).join(',')})`;}
+    c.fillStyle=cc;c.beginPath();c.ellipse(x,y+8,100,22,0,0,Math.PI*2);c.fill();
+    if(f>0&&f<1){Lab.flame(c,x,y+150,t,1.1);if(k==='o'||n==='小蘇打粉'){for(let j=0;j<6;j++){c.fillStyle=`rgba(200,200,200,${n==='小蘇打粉'?.35:.25})`;c.beginPath();c.arc(x-30+j*12+Math.sin(t*3+j)*10,y-20-((t*60+j*25)%120),10,0,7);c.fill();}}}
+    c.fillStyle='#555';c.fillRect(x-90,y+46,180,8);txt(c,n,x,y+210,'#e4ebf0',26,'center',true);});}
+const ITEMS=[['甲烷','o'],['酒精','o'],['葡萄糖','o'],['澱粉','o'],['蛋白質','o'],['醋酸','o'],['塑膠','o'],['二氧化碳','i'],['一氧化碳','i'],['碳酸鈣','i'],['食鹽','i'],['水','i']];let pick=null,sorted=0;
+[...ITEMS].sort(()=>Math.random()-.5).forEach(([n,k])=>{const b=document.createElement('button');b.className='chipbtn';b.textContent=n;b.setAttribute('aria-pressed','false');b.onclick=()=>{if(b.hidden)return;pick={b,n,k};[...$('items51').children].forEach(x=>x.setAttribute('aria-pressed',x===b));$('vSort').className='verdict';$('vSort').textContent=`已選「${n}」，點它所屬的類別。`;};$('items51').appendChild(b);});
+document.querySelectorAll('.bin').forEach(bin=>{const go=()=>{if(!pick)return;const ok=pick.k===bin.dataset.b;const v=$('vSort');
+  if(ok){pick.b.hidden=true;const s=document.createElement('span');s.textContent=pick.n;bin.querySelector('.got').appendChild(s);sorted++;v.className='verdict ok';v.textContent='正確！'+(['二氧化碳','一氧化碳','碳酸鈣'].includes(pick.n)?`${pick.n}雖然含碳，但歸類為無機化合物。`:'')+(sorted===ITEMS.length?' 全部完成！':'');pick=null;if(sorted===ITEMS.length)Lab.done('#t51c');}
+  else{pick.b.classList.remove('wrong');void pick.b.offsetWidth;pick.b.classList.add('wrong');v.className='verdict no';v.textContent='再想想：它含有碳嗎？是不是一氧化碳、二氧化碳或碳酸鹽這些例外？';}};bin.onclick=go;bin.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go();}};});
+
+/* ===== 5-2 分子結構 ===== */
+// 建立結構：回傳 atoms [{e,x,y}], bonds [[i,j,order]]
+function chain(n){const A=[],B=[];for(let i=0;i<n;i++){A.push({e:'C',x:i*90,y:0});if(i>0)B.push([A.length-2,A.length-1,1]);}return{A,B};}
+function addH(S,ci,dirs){dirs.forEach(([dx,dy])=>{S.A.push({e:'H',x:S.A[ci].x+dx,y:S.A[ci].y+dy});S.B.push([ci,S.A.length-1,1]);});}
+function alkane(n){const S=chain(n);for(let i=0;i<n;i++){const d=[[0,-70],[0,70]];if(i===0)d.push([-70,0]);if(i===n-1)d.push([70,0]);addH(S,i,d);}return S;}
+function alcohol(n){const S=chain(n);for(let i=0;i<n;i++){const d=[[0,-70],[0,70]];if(i===0)d.push([-70,0]);addH(S,i,d);}const c=n-1;S.A.push({e:'O',x:S.A[c].x+80,y:0});S.B.push([c,S.A.length-1,1]);const o=S.A.length-1;S.A.push({e:'H',x:S.A[o].x+65,y:0});S.B.push([o,S.A.length-1,1]);return S;}
+function acid(n){const S=chain(n);for(let i=0;i<n-1;i++){const d=[[0,-70],[0,70]];if(i===0)d.push([-70,0]);addH(S,i,d);}const c=n-1;if(n===1)addH(S,0,[[-70,0]]);
+  S.A.push({e:'O',x:S.A[c].x,y:-80});S.B.push([c,S.A.length-1,2]);S.A.push({e:'O',x:S.A[c].x+80,y:0});S.B.push([c,S.A.length-1,1]);const o=S.A.length-1;S.A.push({e:'H',x:S.A[o].x+65,y:0});S.B.push([o,S.A.length-1,1]);return S;}
+function ester(){const S={A:[],B:[]};const P=(e,x,y)=>{S.A.push({e,x,y});return S.A.length-1;};const Bd=(a,b,o)=>S.B.push([a,b,o||1]);
+  const c1=P('C',0,0),c2=P('C',90,0),o1=P('O',90,-80),o2=P('O',180,0),c3=P('C',270,0),c4=P('C',360,0);Bd(c1,c2);Bd(c2,o1,2);Bd(c2,o2);Bd(o2,c3);Bd(c3,c4);
+  [[c1,[[0,-70],[0,70],[-70,0]]],[c3,[[0,-70],[0,70]]],[c4,[[0,-70],[0,70],[70,0]]]].forEach(([ci,d])=>addH(S,ci,d));return S;}
+const MOL=[
+ {n:'甲烷',f:'CH4',g:'烷類',s:alkane(1),u:'天然氣、沼氣的主要成分，可作燃料。'},
+ {n:'丙烷',f:'C3H8',g:'烷類',s:alkane(3),u:'液化石油氣（桶裝瓦斯）的主要成分之一。'},
+ {n:'丁烷',f:'C4H10',g:'烷類',s:alkane(4),u:'打火機、卡式爐燃料。烷類只含碳和氫，稱為碳氫化合物，燃燒產生二氧化碳和水。'},
+ {n:'甲醇',f:'CH3OH',g:'醇類',s:alcohol(1),u:'工業酒精的成分，有毒，誤飲會造成失明甚至死亡。'},
+ {n:'乙醇',f:'C2H5OH',g:'醇類',s:alcohol(2),u:'俗稱酒精，酒類的成分；75% 的酒精可用來消毒。醇類含有 —OH，但水溶液不是鹼性。'},
+ {n:'甲酸',f:'HCOOH',g:'有機酸',s:acid(1),u:'俗稱蟻酸，螞蟻、蜜蜂叮咬造成的刺痛來自甲酸。'},
+ {n:'乙酸',f:'CH3COOH',g:'有機酸',s:acid(2),u:'俗稱醋酸，是食醋的成分。有機酸含有 —COOH，水溶液呈酸性。'},
+ {n:'乙酸乙酯',f:'CH3COOC2H5',g:'酯類',s:ester(),u:'有水果香味，可作香料與溶劑（去光水）。由乙酸和乙醇經酯化反應生成。'},
+];
+const AC={C:'#555',H:'#f2f2f2',O:'#e74c3c'};const seenG=new Set();
+MOL.forEach((m,i)=>{const b=document.createElement('button');b.className='btn';b.innerHTML=`${m.n} <span class="mono">${Lab.sub(m.f)}</span>`;b.setAttribute('aria-pressed',i===0);b.onclick=()=>{[...$('molBtns').children].forEach(x=>x.setAttribute('aria-pressed',x===b));showMol(m);};$('molBtns').appendChild(b);});
+function showMol(m){const c=$('c52').getContext('2d');c.fillStyle=BG;c.fillRect(0,0,800,440);const xs=m.s.A.map(a=>a.x),ys=m.s.A.map(a=>a.y);const cx=(Math.min(...xs)+Math.max(...xs))/2,cy=(Math.min(...ys)+Math.max(...ys))/2;const sc=Math.min(1.4,620/(Math.max(...xs)-Math.min(...xs)+160));
+  const P=a=>[400+(a.x-cx)*sc,220+(a.y-cy)*sc];
+  m.s.B.forEach(([i,j,o])=>{const [x1,y1]=P(m.s.A[i]),[x2,y2]=P(m.s.A[j]);if(o===2){const dx=y2-y1,dy=x1-x2,l=Math.hypot(dx,dy);line(c,x1+dx/l*5,y1+dy/l*5,x2+dx/l*5,y2+dy/l*5,'#cfd8dc',4);line(c,x1-dx/l*5,y1-dy/l*5,x2-dx/l*5,y2-dy/l*5,'#cfd8dc',4);}else line(c,x1,y1,x2,y2,'#cfd8dc',5);});
+  m.s.A.forEach(a=>{const [x,y]=P(a);circle(c,x,y,a.e==='H'?17*sc:24*sc,AC[a.e],'#111');txt(c,a.e,x,y+8*sc,a.e==='H'?'#222':'#fff',Math.round(22*sc),'center',true);});
+  const cnt={};m.s.A.forEach(a=>cnt[a.e]=(cnt[a.e]||0)+1);
+  $('molInfo').innerHTML=`<span class="chip">${m.g}</span><h2 style="margin-top:8px">${m.n}　<span class="mono">${Lab.sub(m.f)}</span></h2><p style="margin:0 0 8px">${m.u}</p><p class="note" style="margin:0">組成：${Object.entries(cnt).map(([e,k])=>`${e} ${k} 個`).join('、')}</p>`;
+  seenG.add(m.g);if(seenG.size>=4)Lab.done('#t52a');}
+showMol(MOL[0]);
+// 酯化
+let es=0,fEs=null;
+const ES=[['es1',1,'燒杯中加入乙醇和乙酸，兩者都是無色液體，分別有酒精和醋的氣味。'],['es2',2,'滴入幾滴濃硫酸作為催化劑，加快反應速率。'],['es3',3,'隔水加熱（不可直接加熱，酒精易燃）。'],['es4',4,'倒入冷水中，上層浮著一層油狀液體，聞起來有水果香味：生成了乙酸乙酯（酯類）。']];
+ES.forEach(([id,k,msg])=>$(id).onclick=()=>{if(es!==k-1){$('vEs').textContent=`請先完成步驟 ${es+1}。`;return;}es=k;Lab.anim(1800,f=>fEs=f,()=>{$('vEs').textContent=msg;if(k===4)Lab.done('#t52b');});});
+function drawEs(t){const c=$('cEs').getContext('2d');c.fillStyle=BG;c.fillRect(0,0,1600,420);const f=fEs||0;
+  if(es<4){if(es>=3){Lab.beaker(c,500,120,600,260,'rgba(255,140,90,.25)',0.6);Lab.flame(c,800,410,t,1);}
+    const lvl=es>=1?0.35:0;c.fillStyle='rgba(220,235,245,.4)';c.fillRect(706,330-180*lvl,188,180*lvl);c.strokeStyle='#dfe7ec';c.lineWidth=5;c.strokeRect(700,140,200,190);
+    if(es===2&&f<1){c.fillStyle='#f0e6a0';c.beginPath();c.arc(800,100+f*150,8,0,7);c.fill();}
+    if(es>=3)for(let i=0;i<10;i++){c.strokeStyle='rgba(255,255,255,.5)';c.beginPath();c.arc(720+(i*17)%160,320-((t*60+i*20)%(180*lvl)),4,0,7);c.stroke();}
+    txt(c,['空燒杯','乙醇＋乙酸','＋濃硫酸','隔水加熱中'][es],800,60,'#e4ebf0',26,'center',true);}
+  else{Lab.beaker(c,600,120,400,260,'rgba(120,180,240,.35)',0.7);c.fillStyle='rgba(255,230,140,.7)';c.fillRect(604,120+260*0.3,392,18);txt(c,'油狀的乙酸乙酯浮在水面',800,60,'#ffd166',26,'center',true);
+    for(let i=0;i<5;i++){c.fillStyle='rgba(255,180,200,.35)';c.beginPath();c.arc(760+i*20+Math.sin(t*2+i)*16,180-((t*40+i*30)%150),12,0,7);c.fill();}txt(c,'🍐 水果香味',1200,200,'#ffb0c8',30,'center',true);}}
+const FOS=[['煤','古代植物遺骸埋在地底，經高溫高壓作用形成。主要用於火力發電、煉鋼，燃燒會產生二氧化硫（酸雨成因之一）。'],['石油','古代海洋生物遺骸形成。經分餾可得汽油、柴油、液化石油氣、柏油，也是塑膠、合成纖維的原料。'],['天然氣','常與石油伴生，主要成分是甲烷，燃燒較完全、汙染較少。']];const fos=new Set();
+FOS.forEach(([n,d])=>{const b=document.createElement('button');b.className='btn';b.textContent=n;b.onclick=()=>{fos.add(n);$('vFos').textContent=`${n}：${d}`+(fos.size>=3?' 化石燃料燃燒產生大量二氧化碳，會加劇溫室效應，而且蘊藏量有限，要節約使用並發展再生能源。':'');if(fos.size>=3)Lab.done('#t52c');};$('fossil').appendChild(b);});
+
+/* ===== 5-3 皂化 ===== */
+let sp=0,fSp=null;
+const SP=[['sp1',1,'燒杯中加入油脂（例如沙拉油）。'],['sp2',2,'加入氫氧化鈉溶液。油脂和氫氧化鈉溶液不互溶，分成兩層。'],['sp3',3,'加熱並不斷攪拌，油層逐漸消失，溶液變得濃稠：發生皂化反應，生成肥皂和甘油。'],['sp4',4,'加入飽和食鹽水，肥皂溶解度降低而析出，浮在上層（鹽析）。撈起、壓模、晾乾就成了肥皂。']];
+SP.forEach(([id,k,msg])=>$(id).onclick=()=>{if(sp!==k-1){$('vSoap').textContent=`請先完成步驟 ${sp+1}。`;return;}sp=k;Lab.anim(2200,f=>fSp=f,()=>{$('vSoap').textContent=msg;if(k===4)Lab.done('#t53a');});});
+function drawSoap(t){const c=$('cSoap').getContext('2d');c.fillStyle=BG;c.fillRect(0,0,1600,420);const f=fSp||0;const x=600,y=90,w=400,h=280;
+  if(sp>=1){const oil=sp===3?1-f:sp>3?0:1;c.fillStyle='rgba(240,200,60,.7)';c.fillRect(x+4,y+h*0.45,w-8,h*0.12*oil);}
+  if(sp>=2){c.fillStyle='rgba(200,230,250,.4)';c.fillRect(x+4,y+h*0.57,w-8,h*0.43-4);}
+  if(sp>=3){c.fillStyle=`rgba(245,240,215,${sp===3?f*.6:.6})`;c.fillRect(x+4,y+h*0.5,w-8,h*0.5-4);if(sp===3&&f<1){Lab.flame(c,x+w/2,y+h+40,t,1.2);line(c,x+w/2+40,y-40,x+w/2-20+Math.sin(t*6)*40,y+h-30,'#cfd8dc',5);}}
+  if(sp>=4){const k=sp===4?f:1;c.fillStyle='#fff8e6';for(let i=0;i<14;i++){c.fillRect(x+20+i*26,y+h*0.5-k*50+(i%2)*6,22,18);}txt(c,'肥皂析出',x+w+60,y+h*0.4,'#ffd166',24,'left',true);}
+  Lab.beaker(c,x,y,w,h,'rgba(0,0,0,0)',0);txt(c,['空燒杯','油脂','油脂＋氫氧化鈉','加熱攪拌','鹽析'][sp],800,50,'#e4ebf0',26,'center',true);}
+// 去汙
+let wash=0,fW=null;const SOAPS=Array.from({length:18},(_,i)=>({a:i/18*Math.PI*2,x:200+Math.random()*1200,y:60+Math.random()*120}));
+$('addSoap').onclick=()=>{wash=1;Lab.anim(2500,f=>fW=f,()=>{$('vWash').textContent='肥皂分子的親油端（尾巴）鑽進油汙，親水端（頭）朝外向著水，把油汙團團包住。';Lab.done('#t53b');});};
+$('rub').onclick=()=>{if(wash<1){$('vWash').textContent='先加入肥皂。';return;}wash=2;Lab.anim(2500,f=>fW=f,()=>{$('vWash').textContent='搓洗後，被肥皂分子包住的油汙脫離衣物、分散在水中，再用水沖走。';});};
+$('soapReset').onclick=()=>{wash=0;fW=null;$('vWash').textContent='衣服上有一滴油汙，只用清水沖不掉。';};
+function soapMol(c,x,y,a){const hx=x+Math.cos(a)*0,hy=y;c.strokeStyle='#ffd166';c.lineWidth=4;c.beginPath();for(let k=0;k<6;k++){const px=x-Math.cos(a)*k*9+Math.sin(k*1.4)*Math.sin(a)*4,py=y-Math.sin(a)*k*9-Math.sin(k*1.4)*Math.cos(a)*4;k?c.lineTo(px,py):c.moveTo(px,py);}c.stroke();circle(c,x,y,9,'#4cc3d2','#111');}
+function drawWash(t){const c=$('cWash').getContext('2d');c.fillStyle='#103044';c.fillRect(0,0,1600,440);const f=fW||0;
+  c.fillStyle='#d8c8a8';c.fillRect(0,380,1600,60);txt(c,'衣物纖維',80,420,'#5a4a2a',22,'left',true);
+  const ox=800,oy=wash===2?380-f*190:350,R=60;c.fillStyle='rgba(240,190,50,.85)';c.beginPath();c.ellipse(ox,oy,R*1.5,R*(wash===2?0.9+f*0.2:0.6),0,0,7);c.fill();txt(c,'油汙',ox,oy+8,'#5a3a00',24,'center',true);
+  SOAPS.forEach((s,i)=>{let x=s.x,y=s.y,a=-Math.PI/2+Math.sin(t+i)*0.3;if(wash>=1){const e=wash===1?f:1;const tx=ox+Math.cos(s.a)*(R*1.5+30),ty=oy+Math.sin(s.a)*(R*0.6+30)*(wash===2?1+f*0.6:1);x=s.x+(tx-s.x)*e;y=s.y+(ty-s.y)*e;a=s.a+(Math.PI)*e;if(e<1)a=-Math.PI/2+(s.a+Math.PI/2+Math.PI)*e;}
+    if(wash===0)return;soapMol(c,x,y,wash===1?(-Math.PI/2)+(s.a+Math.PI/2)*f:s.a);}); // 親水端朝外、親油端朝向油汙
+  if(wash===0){txt(c,'只有水：油和水不互溶，沖不掉',800,120,'#cfe6ff',26,'center',true);}
+  // legend
+  circle(c,1330,40,9,'#4cc3d2','#111');txt(c,'親水端',1350,47,'#cfe6ff',20,'left');line(c,1440,40,1500,40,'#ffd166',4);txt(c,'親油端',1510,47,'#ffd166',20,'left');}
+$('readSoap').onclick=()=>Lab.done('#t53c');
+
+/* ===== 5-4 聚合物 ===== */
+let nP=1;$('link').onclick=()=>{nP=Math.min(30,nP+1);if(nP>=6)Lab.done('#t54a');};$('link10').onclick=()=>{nP=Math.min(30,nP+10);Lab.done('#t54a');};$('unlink').onclick=()=>nP=1;
+function drawPoly(t){const c=$('cPoly').getContext('2d');c.fillStyle=BG;c.fillRect(0,0,1600,300);const sp=48;
+  for(let i=0;i<nP;i++){const x=60+i*sp,y=130+Math.sin(i*0.6+t)*14;if(i>0)line(c,x-sp,130+Math.sin((i-1)*0.6+t)*14,x,y,'#cfd8dc',5);circle(c,x,y,16,'#555','#111');circle(c,x,y-26,8,'#f2f2f2','#111');circle(c,x,y+26,8,'#f2f2f2','#111');}
+  // free monomers
+  for(let k=0;k<4;k++){const x=1200+k*90,y=230+Math.sin(t*2+k)*10;circle(c,x-12,y,12,'#555','#111');circle(c,x+12,y,12,'#555','#111');line(c,x-12,y-4,x+12,y-4,'#cfd8dc',3);line(c,x-12,y+4,x+12,y+4,'#cfd8dc',3);}txt(c,'乙烯單體',1335,285,'#98a7b3',20,'center');
+  txt(c,`聚乙烯鏈：${nP} 個單體`,60,40,'#ffd166',26,'left',true);}
+const CODES=[['1','PET','寶特瓶','可回收再製成衣服纖維'],['2','HDPE','清潔劑瓶、牛奶瓶','可回收'],['3','PVC','水管、雨衣','含氯，燃燒可能產生戴奧辛'],['4','LDPE','塑膠袋、保鮮膜','可回收'],['5','PP','微波餐盒、吸管','耐熱，可回收'],['6','PS','保麗龍、免洗餐具','不耐熱，不可裝熱食'],['7','OTHER','其他類（如 PC 水壺）','依材質回收']];const cseen=new Set();
+CODES.forEach(([n,a,u,d])=>{const b=document.createElement('button');b.innerHTML=`<svg viewBox="0 0 56 56" aria-hidden="true"><path d="M28 6 L50 44 L6 44 Z" fill="none" stroke="currentColor" stroke-width="4"/><text x="28" y="38" text-anchor="middle" font-size="18" font-weight="700" fill="currentColor">${n}</text></svg><b class="mono">${a}</b>`;
+  b.onclick=()=>{$('vCode').textContent=`${n} 號 ${a}：${u}。${d}。`;cseen.add(n);if(cseen.size>=7)Lab.done('#t54b');};$('codes').appendChild(b);});
+const FIB=[['棉','天然纖維（纖維素）','燃燒快，有燒紙的氣味，灰燼為灰白色、細軟易碎','#f4f4f4'],['羊毛','天然纖維（蛋白質）','燃燒慢，有燒焦毛髮的臭味，灰燼為黑色、易壓碎','#e8dcc0'],['蠶絲','天然纖維（蛋白質）','燃燒時有燒焦毛髮的臭味，灰燼為黑色、易碎','#fff6e0'],['尼龍','合成纖維','遇火先熔化收縮，有塑膠味，冷卻後成硬球、不易壓碎','#cfe6ff'],['聚酯纖維','合成纖維','遇火熔化並冒黑煙，冷卻後成硬球、不易壓碎','#e0d0ff']];let fib=null,fF=null;const fseen=new Set();
+FIB.forEach(f=>{const b=document.createElement('button');b.className='btn';b.textContent=f[0];b.onclick=()=>{fib=f;[...$('fibers').children].forEach(x=>x.setAttribute('aria-pressed',x===b));Lab.anim(2800,q=>fF=q,()=>{$('vFib').textContent=`${f[0]}（${f[1]}）：${f[2]}。`;fseen.add(f[0]);if(fseen.size>=4)Lab.done('#t54c');});};$('fibers').appendChild(b);});
+function drawFib(t){const c=$('cFib').getContext('2d');c.fillStyle=BG;c.fillRect(0,0,1600,380);if(!fib){txt(c,'選一種纖維',800,190,'#98a7b3',28,'center');return;}const f=fF||0;const syn=fib[1]==='合成纖維',prot=fib[1].includes('蛋白質');
+  Lab.flame(c,800,330,t,1.6);line(c,500,120,760,190,'#cfd8dc',6);
+  const len=160*(1-f*0.85);if(syn&&f>0.3){circle(c,770,200,10+f*12,'#333','#111');}else{c.fillStyle=f>0.5?(prot?'#2a2a2a':'#bbb'):fib[3];c.fillRect(760,190,12,len*0.6);}
+  if(f>0.2&&f<1){for(let i=0;i<6;i++){c.fillStyle=syn?'rgba(40,40,40,.6)':'rgba(200,200,200,.3)';c.beginPath();c.arc(770+Math.sin(t*3+i)*20,170-((t*60+i*20)%120),12,0,7);c.fill();}}
+  if(f>=1){txt(c,syn?'熔成硬球':prot?'黑色灰燼，易碎':'灰白色灰燼，易碎',1180,170,'#ffd166',28,'center',true);txt(c,syn?'塑膠味':prot?'燒焦毛髮味':'燒紙味',1180,220,'#ffb0c8',26,'center',true);}
+  txt(c,fib[0],560,100,'#e4ebf0',26,'center',true);}
+const ACT54=['自備購物袋','自備環保杯和餐具','少用一次性吸管','垃圾分類、塑膠回收','選購包裝少的商品','重複使用塑膠容器'];const a54=new Set();
+ACT54.forEach(n=>{const b=document.createElement('button');b.className='btn';b.textContent=n;b.setAttribute('aria-pressed','false');b.onclick=()=>{a54.has(n)?a54.delete(n):a54.add(n);b.setAttribute('aria-pressed',a54.has(n));$('vAct').textContent=a54.size?`已選 ${a54.size} 項。塑膠不易分解，減量（Reduce）、重複使用（Reuse）、回收（Recycle）能減少塑膠汙染。`:'選出你做得到的行動。';if(a54.size>=3)Lab.done('#t54d');};$('acts54').appendChild(b);});
+
+Lab.quiz('quiz',[
+ {q:'有機化合物一定含有哪一種元素？',o:['氧','碳','氮'],a:1},
+ {q:'下列何者含碳卻屬於無機化合物？',o:['葡萄糖','二氧化碳','酒精'],a:1,w:'一氧化碳、二氧化碳、碳酸鹽類屬於無機化合物。'},
+ {q:'麵粉加熱後變黑，黑色物質是？',o:['碳','鐵','氧化銅'],a:0},
+ {q:'天然氣的主要成分是？',o:['丙烷','甲烷','乙醇'],a:1},
+ {q:'烷類只含有哪些元素？',o:['碳和氫','碳、氫、氧','碳和氧'],a:0,w:'烷類是碳氫化合物。'},
+ {q:'俗稱「酒精」的是？',o:['甲醇','乙醇','乙酸'],a:1,w:'甲醇有毒，不可飲用。'},
+ {q:'食醋的主要成分是？',o:['甲酸','乙酸','乙酸乙酯'],a:1},
+ {q:'乙酸和乙醇加熱（加濃硫酸）生成乙酸乙酯，這稱為？',o:['皂化反應','酯化反應','中和反應'],a:1},
+ {q:'酯類通常具有？',o:['刺鼻臭味','水果香味','沒有氣味'],a:1},
+ {q:'油脂和氫氧化鈉共熱生成肥皂和甘油，稱為？',o:['酯化反應','皂化反應','聚合反應'],a:1},
+ {q:'製肥皂時加入飽和食鹽水的目的是？',o:['增加香味','使肥皂析出（鹽析）','中和氫氧化鈉'],a:1},
+ {q:'肥皂分子的哪一端會鑽入油汙中？',o:['親水端','親油端','兩端都會'],a:1},
+ {q:'下列何者是天然聚合物？',o:['尼龍','澱粉','保麗龍'],a:1},
+ {q:'燃燒時有燒焦毛髮味的纖維是？',o:['棉','羊毛','尼龍'],a:1,w:'羊毛、蠶絲是蛋白質。'},
+ {q:'燃燒後熔成硬球、不易壓碎的纖維是？',o:['蠶絲','棉','聚酯纖維'],a:2,w:'合成纖維遇火熔化。'},
+ {q:'寶特瓶的回收編號是？',o:['1 號 PET','3 號 PVC','6 號 PS'],a:0},
+]);
+Lab.tasks('g9c5');Lab.tabs();
+Lab.loop((dt,t,a)=>{if(a==='p1')draw51(t);if(a==='p2')drawEs(t);if(a==='p3'){drawSoap(t);drawWash(t);}if(a==='p4'){drawPoly(t);drawFib(t);}});
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>氧化還原實驗室</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&family=JetBrains+Mono:wght@500;700&display=swap">
+<link rel="stylesheet" href="science-lab.css">
+<style>
+:root{--accent:#c2453f;--accent-soft:#fbe6e4;--accent-d:#ff8a80;--accent-soft-d:#3f1d1b;--tabs:4}
+.cards{display:flex;flex-wrap:wrap;gap:8px}
+.mcard{font:inherit;font-weight:700;font-size:1.15rem;min-width:84px;padding:12px;border-radius:12px;border:2px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer;display:grid;justify-items:center}
+.mcard small{font-weight:400;font-size:.8rem;color:var(--muted);font-family:var(--mono)}
+.mcard.used{opacity:.25;cursor:default}
+.mcard.wrong{border-color:var(--bad);animation:sh .3s}
+@keyframes sh{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.order{display:flex;flex-wrap:wrap;gap:6px;align-items:center;min-height:56px;padding:8px;border:2px dashed var(--line);border-radius:12px}
+.order span{background:var(--accent-soft);border-radius:8px;padding:6px 12px;font-weight:700}
+.order i{color:var(--muted);font-style:normal}
+.toggle{font:inherit;font-size:1.1rem;font-weight:700;padding:14px 18px;border-radius:12px;border:3px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer}
+.toggle[aria-pressed="true"]{border-color:var(--good);background:color-mix(in srgb,var(--good) 14%,var(--surface))}
+.toggle[aria-pressed="false"]{text-decoration:line-through;opacity:.7}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="unit">第 2 章</span><h1>氧化還原</h1>
+    <a class="home" href="index.html">← 回首頁</a>
+  </header>
+  <nav class="tabs" role="tablist">
+    <button role="tab" data-p="p1">2-1 燃燒與氧化<small>燃燒實驗・活性</small></button>
+    <button role="tab" data-p="p2">2-2 氧化與還原<small>得氧與失氧</small></button>
+    <button role="tab" data-p="p3">2-3 生活中的氧化還原<small>生鏽・漂白・食品</small></button>
+    <button role="tab" data-p="p4">測驗<small>觀念複習</small></button>
+  </nav>
+
+  <!-- ===== 2-1 ===== -->
+  <section class="page" id="p1">
+    <details class="goal" open><summary>2-1 燃燒與氧化 <span class="prog"></span></summary><div class="cols">
+      <div><h4>學習目標</h4><ol><li>了解常見金屬活性大小及其化合物。</li><li>了解常見非金屬活性大小及其化合物。</li><li>能了解氧化反應意義。</li><li>由燃燒實驗探討金屬對氧氣的活性。</li></ol></div>
+      <div><h4>學習內容</h4><ul><li><span class="code">Jc-IV-2</span>物質燃燒實驗認識氧化。</li><li><span class="code">Jc-IV-3</span>不同金屬元素燃燒實驗認識元素對氧氣的活性。</li></ul></div>
+      <div><h4>學習任務</h4><ul class="tasks"><li><label><input type="checkbox" id="t21a">操作燃燒三要素，說出三種滅火方法</label></li><li><label><input type="checkbox" id="t21b">完成 4 種金屬與 2 種非金屬的燃燒實驗</label></li><li><label><input type="checkbox" id="t21c">比較金屬氧化物與非金屬氧化物水溶液的酸鹼性</label></li><li><label><input type="checkbox" id="t21d">排出金屬對氧的活性大小</label></li></ul></div>
+    </div></details>
+
+    <div class="card"><h2>燃燒的三要素</h2><p class="lead">燃燒是物質與氧劇烈反應、發光發熱的現象。燃燒必須同時具備<b>可燃物、助燃物（氧氣）、溫度達到燃點</b>三個要素，缺少任何一個，火就會熄滅。點選下方按鈕移除一個要素。</p></div>
+    <div class="row"><button class="toggle" data-f="fuel" aria-pressed="true">🪵 可燃物</button><button class="toggle" data-f="oxy" aria-pressed="true">💨 助燃物（氧氣）</button><button class="toggle" data-f="heat" aria-pressed="true">🌡 溫度達燃點</button></div>
+    <div class="scene"><canvas id="cFire" width="1600" height="360"></canvas></div>
+    <div class="verdict" id="vFire"></div>
+
+    <div class="card"><h2>燃燒實驗：元素與氧的反應</h2><p class="lead">物質與氧結合的反應稱為氧化反應，燃燒是劇烈的氧化反應。選一種元素放在燃燒匙上加熱，觀察反應的劇烈程度與生成物；再把生成物放入水中，滴入石蕊試液檢驗酸鹼性。</p></div>
+    <div class="row" id="els"></div>
+    <div class="row"><button class="big" id="burn">🔥 加熱燃燒</button><button class="big" id="dissolve" style="background:var(--accent)">💧 生成物溶於水＋石蕊</button></div>
+    <div class="scene"><canvas id="cBurn" width="1600" height="440"></canvas></div>
+    <div class="verdict" id="vBurn">選一種元素開始。</div>
+    <div class="card tablebox"><h3>實驗紀錄</h3><table><thead><tr><th>元素</th><th>燃燒情形</th><th>生成物</th><th>水溶液＋石蕊</th></tr></thead><tbody id="tbBurn"></tbody></table></div>
+
+    <div class="card"><h2>金屬對氧的活性</h2><p class="lead">越容易和氧結合的金屬，對氧的活性越大，燃燒越劇烈，也越容易生鏽、越難從氧化物中還原出來。依照活性由大到小，依序點選下面的卡片（碳是常用的參考標準）。</p>
+      <div class="cards" id="act" style="margin-top:10px"></div>
+      <div class="order" id="actOrder" style="margin-top:10px"><i>由大到小：</i></div>
+      <div class="row" style="margin-top:8px"><button class="btn" id="actReset">重新排列</button><span id="actMsg" class="note"></span></div></div>
+
+    <div class="card"><h2>燃燒理論的發展</h2><div class="two">
+      <div><h3>燃素說（17 世紀）</h3><p style="margin:0">科學家認為可燃物含有「燃素」，燃燒就是燃素跑出來，所以燒完後應該變輕。但金屬燃燒後質量反而增加，燃素說無法解釋。</p></div>
+      <div><h3>拉瓦節的燃燒理論（18 世紀）</h3><p style="margin:0">拉瓦節用精確的定量實驗發現：燃燒是物質與空氣中的氧結合，金屬燃燒後增加的質量，正好等於消耗的氧的質量。從此確立燃燒的氧化理論。</p></div></div></div>
+  </section>
+
+  <!-- ===== 2-2 ===== -->
+  <section class="page" id="p2" hidden>
+    <details class="goal" open><summary>2-2 氧化與還原 <span class="prog"></span></summary><div class="cols">
+      <div><h4>學習目標</h4><ol><li>能了解還原反應的意義。</li><li>知道從金屬氧化物中還原出金屬元素的方法。</li><li>能以實驗說明還原作用就是氧化物失去氧。</li></ol></div>
+      <div><h4>學習內容</h4><ul><li><span class="code">Jc-IV-1</span>氧化與還原的狹義定義為：物質得到氧稱為氧化反應；失去氧稱為還原反應。</li></ul></div>
+      <div><h4>學習任務</h4><ul class="tasks"><li><label><input type="checkbox" id="t22a">完成「氧化銅＋碳」的實驗，說出哪個物質被氧化、哪個被還原</label></li><li><label><input type="checkbox" id="t22b">找出一組不會發生反應的組合，並用活性解釋</label></li><li><label><input type="checkbox" id="t22c">觀察鎂在二氧化碳中燃燒</label></li></ul></div>
+    </div></details>
+    <div class="card"><h2>氧化還原反應</h2><p class="lead">物質得到氧的反應稱為<b>氧化</b>，失去氧的反應稱為<b>還原</b>；氧化與還原同時發生。把活性較大的元素和活性較小元素的氧化物一起加熱，活性大的元素會把氧搶過來。選一種氧化物和一種元素，按「加熱」。</p></div>
+    <div class="row"><b>氧化物：</b><span class="row" id="oxs"></span></div>
+    <div class="row"><b>加入：</b><span class="row" id="reds"></span><button class="big" id="heat22">🔥 加熱</button></div>
+    <div class="scene"><canvas id="c22" width="1600" height="480"></canvas></div>
+    <div class="verdict" id="v22">選好後按「加熱」。</div>
+    <div class="card"><div class="eq" id="eq22"></div><p class="note" style="text-align:center;margin:0">活性：鎂 ＞ 碳 ＞ 鋅 ＞ 鐵 ＞ 銅</p></div>
+  </section>
+
+  <!-- ===== 2-3 ===== -->
+  <section class="page" id="p3" hidden>
+    <details class="goal" open><summary>2-3 生活中的氧化還原 <span class="prog"></span></summary><div class="cols">
+      <div><h4>學習目標</h4><ol><li>知道生活中常見的氧化與還原。</li></ol></div>
+      <div><h4>學習內容</h4><ul><li><span class="code">Jc-IV-4</span>生活中常見的氧化還原反應與應用。</li></ul></div>
+      <div><h4>學習任務</h4><ul class="tasks"><li><label><input type="checkbox" id="t23a">比較 4 支試管中鐵釘生鏽的情形，找出生鏽條件</label></li><li><label><input type="checkbox" id="t23b">說出 3 種防鏽方法的原理</label></li><li><label><input type="checkbox" id="t23c">說明抗氧化劑與脫氧劑如何保存食品</label></li></ul></div>
+    </div></details>
+    <div class="card"><h2>鐵生鏽的條件</h2><p class="lead">鐵生鏽是緩慢的氧化反應。拖動天數，比較四支試管中的鐵釘。</p></div>
+    <div class="row"><div class="slider"><label for="day">經過天數 <output id="dayO"></output></label><input type="range" id="day" min="0" max="7" step="1" value="0"></div></div>
+    <div class="scene"><canvas id="cRust" width="1600" height="460"></canvas></div>
+    <div class="verdict" id="vRust">拖動天數開始觀察。</div>
+    <div class="card"><h3>防鏽方法</h3><p class="note" style="margin:0 0 8px">點一個方法看原理。</p><div class="row" id="prevent"></div><div class="verdict" id="vPrev" style="margin-top:10px">防鏽的原則：讓鐵隔絕水和空氣（氧氣）。</div></div>
+
+    <div class="card"><h2>食品保存：抗氧化劑與脫氧劑</h2><p class="lead">切開的蘋果放久了會變褐色，是果肉中的物質被氧化。拖動時間，比較不同處理方式。</p></div>
+    <div class="row"><div class="slider"><label for="minute">經過時間 <output id="minO"></output></label><input type="range" id="minute" min="0" max="60" step="5" value="0"></div></div>
+    <div class="scene"><canvas id="cApple" width="1600" height="380"></canvas></div>
+    <div class="two">
+      <div class="card"><h3>抗氧化劑</h3><p style="margin:0">維生素 C、維生素 E 比食物更容易被氧化，會「代替」食物和氧反應，延緩食物變質。常加在果汁、油脂中。</p></div>
+      <div class="card"><h3>脫氧劑</h3><p style="margin:0">食品包裝裡的小包「脫氧劑」主要成分是鐵粉，鐵粉生鏽時消耗包裝內的氧氣，使食物不易氧化變質。</p></div>
+    </div>
+    <div class="card"><h2>漂白與殺菌</h2><p style="margin:0">漂白水、雙氧水等具有強氧化性的物質，能氧化破壞色素使顏色消失（漂白），也能破壞細菌的構造達到殺菌效果。<b>漂白水不可與酸性的清潔劑混用</b>，會產生有毒的氯氣。</p></div>
+  </section>
+
+  <section class="page" id="p4" hidden><div class="card" id="quiz"><h2>第 2 章觀念測驗</h2></div></section>
+</div>
+<script src="science-lab.js"></script>
+<script>
+(function(){
+const {$,txt,line,circle}=Lab;const BG='#0e1418';
+
+/* ===== 燃燒三要素 ===== */
+const F={fuel:true,oxy:true,heat:true};const removed=new Set();
+document.querySelectorAll('[data-f]').forEach(b=>b.addEventListener('click',()=>{const k=b.dataset.f;F[k]=!F[k];b.setAttribute('aria-pressed',F[k]);if(!F[k])removed.add(k);msgFire();if(removed.size>=3)Lab.done('#t21a');}));
+function msgFire(){const v=$('vFire');const off=Object.keys(F).filter(k=>!F[k]);
+  if(!off.length){v.className='verdict ok';v.textContent='三要素都具備，持續燃燒。';return;}
+  const M={fuel:'移除可燃物（例如：森林火災開闢防火巷、關閉瓦斯開關）',oxy:'隔絕助燃物（例如：用鍋蓋蓋住油鍋、用沙土或滅火器覆蓋）',heat:'使溫度降到燃點以下（例如：用水澆熄）'};
+  v.className='verdict no';v.textContent='火熄滅了！滅火方法：'+off.map(k=>M[k]).join('；')+'。';}
+function drawFire(t){const c=$('cFire').getContext('2d');c.fillStyle=BG;c.fillRect(0,0,1600,360);
+  const lit=F.fuel&&F.oxy&&F.heat;
+  if(F.fuel){c.fillStyle='#7a4a2a';c.save();c.translate(800,300);c.rotate(0.25);c.fillRect(-160,-18,320,36);c.rotate(-0.5);c.fillRect(-160,-18,320,36);c.restore();}else txt(c,'（沒有可燃物）',800,300,'#98a7b3',24,'center');
+  if(lit){Lab.flame(c,780,260,t,3);Lab.flame(c,840,270,t+1,2.4);}else if(F.fuel){c.fillStyle='rgba(180,180,180,.35)';for(let i=0;i<6;i++){c.beginPath();c.arc(800+Math.sin(t*2+i)*30,230-((t*40+i*30)%160),18,0,7);c.fill();}}
+  if(!F.oxy){c.strokeStyle='#cfd8dc';c.lineWidth=6;c.beginPath();c.arc(800,330,230,Math.PI,0);c.stroke();txt(c,'蓋住隔絕空氣',800,90,'#cfd8dc',22,'center');}
+  if(!F.heat){for(let i=0;i<20;i++){c.fillStyle='rgba(90,169,255,.7)';c.beginPath();c.arc(640+i*16,(t*300+i*53)%300,4,0,7);c.fill();}txt(c,'灑水降溫',800,40,'#9fd3ff',22,'center');}
+  txt(c,lit?'燃燒中':'熄滅',1300,180,lit?'#ffb000':'#98a7b3',40,'center',true);}
+msgFire();
+
+/* ===== 燃燒實驗 ===== */
+const EL=[
+ {s:'Mg',n:'鎂帶',m:true,col:'#c9d1d9',burn:'劇烈燃燒，發出強烈白光',fire:'#ffffff',prod:'氧化鎂（白色固體）',pc:'#f4f4f4',ac:'鹼性：石蕊變藍',lit:'#2f6fe0',rank:1},
+ {s:'Zn',n:'鋅粉',m:true,col:'#b8c2cc',burn:'燃燒，發出藍綠色火焰',fire:'#7fe0c8',prod:'氧化鋅（白色固體，加熱時呈黃色）',pc:'#f7f1d6',ac:'難溶於水，石蕊顏色幾乎不變',lit:'#8a5bd6',rank:2},
+ {s:'Fe',n:'鋼絲絨（鐵）',m:true,col:'#8e959c',burn:'燃燒，火星四射',fire:'#ffb347',prod:'氧化鐵（黑色固體）',pc:'#2b2b2b',ac:'難溶於水，石蕊顏色幾乎不變',lit:'#8a5bd6',rank:3},
+ {s:'Cu',n:'銅片',m:true,col:'#c87533',burn:'不燃燒，表面逐漸變黑',fire:null,prod:'氧化銅（黑色固體）',pc:'#1d1d1d',ac:'難溶於水，石蕊顏色幾乎不變',lit:'#8a5bd6',rank:4},
+ {s:'C',n:'木炭（碳）',m:false,col:'#333',burn:'燃燒發出紅光，產生無色氣體',fire:'#ff5a2a',prod:'二氧化碳（無色氣體）',pc:null,ac:'酸性：石蕊變紅',lit:'#e0453a'},
+ {s:'S',n:'硫粉',m:false,col:'#f1d32a',burn:'燃燒發出藍紫色火焰，產生刺激性氣味',fire:'#6d5bff',prod:'二氧化硫（有刺激性氣味的氣體）',pc:null,ac:'酸性：石蕊變紅',lit:'#e0453a'},
+];
+let el=EL[0],bf=null,df=null;const rec={};
+EL.forEach((e,i)=>{const b=document.createElement('button');b.className='btn';b.textContent=`${e.n} ${e.s}`;b.setAttribute('aria-pressed',i===0);b.onclick=()=>{el=e;bf=null;df=null;[...$('els').children].forEach(x=>x.setAttribute('aria-pressed',x===b));drawBurn(0);};$('els').appendChild(b);});
+function drawBurn(t){const c=$('cBurn').getContext('2d');c.fillStyle=BG;c.fillRect(0,0,1600,440);const e=el;
+  // 燃燒匙與集氣瓶
+  const x=520,y=240;c.strokeStyle='#cfd8dc';c.lineWidth=5;c.beginPath();c.moveTo(x,60);c.lineTo(x,y);c.stroke();c.fillStyle='#9aa4ac';c.beginPath();c.ellipse(x,y,40,14,0,0,Math.PI);c.fill();
+  const b=bf==null?0:bf;
+  const done=b>=1;c.fillStyle=done&&e.pc?e.pc:e.col;for(let i=0;i<8;i++){if(!e.m&&done)break;c.beginPath();c.arc(x-22+(i%4)*15,y+4-Math.floor(i/4)*8,7*(e.m||!done?1:0.6),0,7);c.fill();}
+  if(b>0&&b<1){if(e.fire){c.globalAlpha=.85;c.fillStyle=e.fire;c.beginPath();c.ellipse(x,y-30,40+Math.sin(t*20)*6,60,0,0,7);c.fill();c.globalAlpha=1;if(e.s==='Mg'){c.fillStyle='rgba(255,255,255,.25)';c.fillRect(0,0,800,440);}
+      if(e.s==='Fe'){for(let i=0;i<20;i++){const a=i*0.9+t*4,r=40+((t*200+i*30)%120);c.fillStyle='#ffd27a';c.beginPath();c.arc(x+r*Math.cos(a),y-30+r*Math.sin(a),3,0,7);c.fill();}}}
+    else{c.fillStyle='rgba(255,90,40,.5)';c.beginPath();c.arc(x,y,30,0,7);c.fill();}Lab.flame(c,x,y+90,t,1.2);}
+  txt(c,e.n,x,40,'#e4ebf0',26,'center',true);
+  // 溶於水＋石蕊
+  const bx=1080,by=120;const d=df==null?0:df;const water='rgba(200,170,230,.55)';const fin=e.lit==='#2f6fe0'?'rgba(70,120,230,.75)':e.lit==='#e0453a'?'rgba(230,80,70,.75)':'rgba(150,110,220,.6)';
+  c.fillStyle=d>0.5?fin:water;c.fillRect(bx+4,by+120,192,176);Lab.beaker(c,bx,by,200,300,'rgba(0,0,0,0)',0);
+  txt(c,'水＋紫色石蕊試液',bx+100,by-20,'#e4ebf0',22,'center',true);if(d>=1)txt(c,e.ac,bx+100,by+350,'#ffd166',22,'center',true);
+  if(done)txt(c,'生成物：'+e.prod,x+40,y+170,'#ffd166',24,'center',true);}
+$('burn').addEventListener('click',()=>{bf=0;df=null;Lab.anim(2600,f=>{bf=f;},()=>{rec[el.s]=rec[el.s]||{};rec[el.s].b=1;$('vBurn').textContent=`${el.n}：${el.burn}，生成${el.prod}。`;renderTb();});});
+$('dissolve').addEventListener('click',()=>{if(bf==null||bf<1){$('vBurn').textContent='先加熱燃燒，得到生成物。';return;}Lab.anim(1500,f=>{df=f;},()=>{rec[el.s].d=1;$('vBurn').textContent=`${el.prod}的水溶液：${el.ac}。`+(el.m?'能溶於水的金屬氧化物水溶液呈鹼性。':'非金屬氧化物的水溶液呈酸性。');renderTb();
+  const m=EL.filter(e=>e.m&&rec[e.s]&&rec[e.s].d).length,n=EL.filter(e=>!e.m&&rec[e.s]&&rec[e.s].d).length;if(rec.Mg&&rec.Mg.d&&n>=1)Lab.done('#t21c');});});
+function renderTb(){$('tbBurn').innerHTML=EL.map(e=>{const r=rec[e.s]||{};return`<tr><td><b>${e.n}</b></td><td>${r.b?e.burn:'—'}</td><td>${r.b?e.prod:'—'}</td><td>${r.d?e.ac:'—'}</td></tr>`;}).join('');
+  if(EL.filter(e=>e.m&&rec[e.s]&&rec[e.s].b).length>=4&&EL.filter(e=>!e.m&&rec[e.s]&&rec[e.s].b).length>=2)Lab.done('#t21b');}
+renderTb();
+// 活性排序
+const ACT=[['鉀','K'],['鈉','Na'],['鈣','Ca'],['鎂','Mg'],['鋁','Al'],['碳','C'],['鋅','Zn'],['鐵','Fe'],['銅','Cu'],['銀','Ag'],['金','Au']];let pos=0;
+function buildAct(){pos=0;$('act').innerHTML='';$('actOrder').innerHTML='<i>由大到小：</i>';$('actMsg').textContent='';
+  [...ACT].sort(()=>Math.random()-.5).forEach(([n,s])=>{const b=document.createElement('button');b.className='mcard';b.innerHTML=`${n}<small>${s}</small>`;
+    b.onclick=()=>{if(b.classList.contains('used'))return;if(ACT[pos][1]===s){b.classList.add('used');const sp=document.createElement('span');sp.textContent=n;$('actOrder').appendChild(sp);pos++;Lab.beep(500+pos*40,0.12);
+      if(pos===ACT.length){$('actMsg').textContent='完成！鉀、鈉活性大到會和冷水劇烈反應；金、銀活性小，不易生鏽，常做成飾品。';Lab.done('#t21d');}else if(pos<ACT.length)$('actOrder').appendChild(Object.assign(document.createElement('i'),{textContent:'＞'}));}
+      else{b.classList.remove('wrong');void b.offsetWidth;b.classList.add('wrong');$('actMsg').textContent=`不對喔，下一個應該比「${n}」活性更大。提示：剛才燃燒最劇烈的是鎂，銅幾乎不燃燒。`;}};$('act').appendChild(b);});}
+$('actReset').onclick=buildAct;buildAct();
+
+/* ===== 2-2 ===== */
+const RANK={Mg:1,C:2,Zn:3,Fe:4,Cu:5};
+const OX=[{k:'CuO',n:'氧化銅',m:'Cu',mn:'銅',mc:'#d4884b',oc:'#1d1d1d',coef:2},{k:'ZnO',n:'氧化鋅',m:'Zn',mn:'鋅',mc:'#b8c2cc',oc:'#f4f4f4',coef:2},{k:'MgO',n:'氧化鎂',m:'Mg',mn:'鎂',mc:'#c9d1d9',oc:'#f4f4f4',coef:2},{k:'CO2',n:'二氧化碳',m:'C',mn:'碳',mc:'#222',oc:null,coef:1,o2:true}];
+const RED=[{k:'C',n:'碳粉',c:'#333'},{k:'Mg',n:'鎂',c:'#c9d1d9'}];
+let ox=OX[0],rd=RED[0],f22=null,seen22=new Set();
+OX.forEach((o,i)=>{const b=document.createElement('button');b.className='btn';b.textContent=`${o.n} ${Lab.sub(o.k)}`;b.setAttribute('aria-pressed',i===0);b.onclick=()=>{ox=o;f22=null;[...$('oxs').children].forEach(x=>x.setAttribute('aria-pressed',x===b));draw22();};$('oxs').appendChild(b);});
+RED.forEach((r,i)=>{const b=document.createElement('button');b.className='btn';b.textContent=`${r.n} ${r.k}`;b.setAttribute('aria-pressed',i===0);b.onclick=()=>{rd=r;f22=null;[...$('reds').children].forEach(x=>x.setAttribute('aria-pressed',x===b));draw22();};$('reds').appendChild(b);});
+function can(){if(ox.m===rd.k)return false;return RANK[rd.k]<RANK[ox.m];}
+function eq22(){if(ox.m===rd.k)return'';const o=ox.k,r=rd.k;const T={'CuO|C':'2CuO + C → 2Cu + CO2','ZnO|C':'2ZnO + C → 2Zn + CO2','CuO|Mg':'CuO + Mg → Cu + MgO','ZnO|Mg':'ZnO + Mg → Zn + MgO','MgO|C':'MgO + C → 不反應','CO2|Mg':'2Mg + CO2 → 2MgO + C'};return Lab.sub(T[o+'|'+r]||'');}
+function draw22(){const c=$('c22').getContext('2d');c.fillStyle=BG;c.fillRect(0,0,1600,480);const f=f22==null?0:f22,t=performance.now()/1000;const ok=can();
+  // 左：試管實驗示意；右：粒子模型
+  const tx=240,ty=150;c.save();c.translate(tx,ty);c.rotate(-0.15);c.strokeStyle='#dfe7ec';c.lineWidth=5;c.strokeRect(0,0,300,60);
+  const mix=ox.oc?(ok&&f>0.6?ox.mc:ox.oc):'rgba(200,220,240,.2)';c.fillStyle=mix;c.fillRect(150,30,140,26);if(rd.k==='C'){c.fillStyle='#333';for(let i=0;i<10;i++)c.fillRect(160+i*12,40+(i%2)*6,6,6);}c.restore();
+  if(f>0&&f<1)Lab.flame(c,tx+230,ty+150,t,1.2);
+  if(ok&&ox.k!=='CO2'&&rd.k==='C'&&f>0.4){c.strokeStyle='#cfd8dc';c.lineWidth=4;c.beginPath();c.moveTo(tx,ty+20);c.lineTo(tx-80,ty+20);c.lineTo(tx-80,ty+180);c.stroke();c.fillStyle=`rgba(255,255,255,${0.5*Math.min(1,(f-0.4)*2)})`;c.fillRect(tx-130,ty+180,100,100);c.strokeStyle='#dfe7ec';c.strokeRect(tx-130,ty+150,100,130);txt(c,'石灰水變混濁',tx-80,ty+310,'#e4ebf0',18,'center');}
+  if(ox.k==='CO2'){txt(c,'把燃燒的鎂帶放入裝滿二氧化碳的集氣瓶',380,90,'#e4ebf0',20,'center');if(rd.k==='Mg'&&f>0&&f<1){c.fillStyle='rgba(255,255,255,.7)';c.beginPath();c.arc(tx+150,ty+30,50,0,7);c.fill();}}
+  // 粒子模型
+  const px=1000,py=240;txt(c,'粒子模型',px+150,60,'#98a7b3',22,'center');
+  const Om=(x,y,a)=>{c.globalAlpha=a;circle(c,x,y,16,'#e74c3c','#111');txt(c,'O',x,y+6,'#fff',16,'center',true);c.globalAlpha=1;};
+  const Mm=(x,y,col,s)=>{circle(c,x,y,22,col,'#111');txt(c,s,x,y+7,col==='#222'||col==='#333'?'#fff':'#222',18,'center',true);};
+  const e=ok?Math.min(1,Math.max(0,(f-0.3)/0.6)):0;
+  if(ox.k==='CO2'){// CO2 + 2Mg
+    Mm(px+150,py,'#222','C');[[-1],[1]].forEach(([s],i)=>{const sx=px+150+s*40,sy=py,ex=px+(i?380:-80)+26,ey=py+120;Om(sx+(ex-sx)*e,sy+(ey-sy)*e,1);});
+    [0,1].forEach(i=>Mm(px+(i?380:-80),py+120,'#c9d1d9','Mg'));}
+  else{Mm(px+80,py,ox.mc,ox.m);Mm(px+220,py,rd.c==='#333'?'#333':rd.c,rd.k);const sx=px+80+38,sy=py;const ex=px+220+38,ey=py;Om(sx+(ex-sx)*e,sy-(Math.sin(e*Math.PI)*60),1);}
+  if(f>=1){if(ok){txt(c,`${ox.n}失去氧 → 還原`,px+150,py+200,'#4cc3d2',26,'center',true);txt(c,ox.k==='CO2'?'鎂得到氧 → 氧化':`${rd.n}得到氧 → 氧化`,px+150,py+240,'#ffb000',26,'center',true);}
+    else txt(c,'沒有反應：氧沒有被搶走',px+150,py+220,'#ff8a80',26,'center',true);}
+  $('eq22').textContent=eq22();}
+$('heat22').addEventListener('click',()=>{if(ox.m===rd.k){$('v22').textContent='同一種元素，無法比較。';return;}Lab.anim(3200,f=>{f22=f;draw22();},()=>{const v=$('v22');
+  if(can()){v.className='verdict ok';
+    if(ox.k==='CuO'&&rd.k==='C'){v.textContent='黑色氧化銅變成紅色的銅，產生的氣體使石灰水混濁（二氧化碳）。氧化銅失去氧被還原，碳得到氧被氧化。';Lab.done('#t22a');}
+    else if(ox.k==='CO2'){v.textContent='鎂在二氧化碳中繼續燃燒，生成白色氧化鎂和黑色的碳。鎂的活性比碳大，能搶走二氧化碳中的氧：鎂被氧化，二氧化碳被還原。';Lab.done('#t22c');}
+    else v.textContent=`${rd.n}的活性比${ox.mn}大，搶走${ox.n}中的氧：${ox.n}被還原成${ox.mn}，${rd.n}被氧化。`;}
+  else{v.className='verdict no';v.textContent=`${rd.n}的活性比${ox.mn}小，搶不走${ox.n}中的氧，所以不反應。`;Lab.done('#t22b');}});});
+draw22();
+
+/* ===== 2-3 生鏽 ===== */
+const TUBES=[{n:'A 水＋空氣',w:true,a:true,r:0.6},{n:'B 煮沸過的水＋油封',w:true,a:false,r:0},{n:'C 乾燥空氣（加乾燥劑）',w:false,a:true,r:0},{n:'D 食鹽水＋空氣',w:true,a:true,r:1}];
+let day=0;
+function drawRust(){const c=$('cRust').getContext('2d');c.fillStyle=BG;c.fillRect(0,0,1600,460);
+  TUBES.forEach((T,i)=>{const x=170+i*380,y=60,w=110,h=300;const lvl=T.r*day/7;
+    if(T.w){c.fillStyle=i===3?'rgba(200,230,255,.45)':'rgba(120,180,240,.4)';c.fillRect(x+4,y+120,w-8,h-124);}
+    if(!T.a){c.fillStyle='rgba(240,200,80,.7)';c.fillRect(x+4,y+100,w-8,22);c.fillStyle='#8d5a3b';c.fillRect(x-4,y-24,w+8,26);}
+    if(!T.w){c.fillStyle='#f4f4f4';for(let k=0;k<14;k++){c.beginPath();c.arc(x+16+(k%7)*13,y+h-14-Math.floor(k/7)*12,6,0,7);c.fill();}c.fillStyle='#8d5a3b';c.fillRect(x-4,y-24,w+8,26);}
+    // nail
+    const nx=x+w/2;c.fillStyle='#9aa4ac';c.fillRect(nx-6,y+40,12,h-90);c.fillRect(nx-16,y+36,32,8);
+    if(lvl>0){c.fillStyle=`rgba(170,80,30,${Math.min(1,lvl*1.1)})`;for(let k=0;k<lvl*40;k++){c.beginPath();c.arc(nx-6+((k*7)%12),y+60+((k*37)%(h-120)),4+lvl*2,0,7);c.fill();}}
+    c.strokeStyle='#dfe7ec';c.lineWidth=4;c.beginPath();c.moveTo(x,y);c.lineTo(x,y+h-20);c.quadraticCurveTo(x,y+h,x+w/2,y+h);c.quadraticCurveTo(x+w,y+h,x+w,y+h-20);c.lineTo(x+w,y);c.stroke();
+    txt(c,T.n,x+w/2,y+h+40,'#e4ebf0',20,'center',true);txt(c,lvl>0.6?'嚴重生鏽':lvl>0?'生鏽':'沒有生鏽',x+w/2,y+h+70,lvl>0?'#ff8a4c':'#98a7b3',20,'center');});
+  $('dayO').textContent=day+' 天';
+  if(day>=3){$('vRust').textContent='只有同時接觸「水和空氣（氧氣）」的 A、D 生鏽，D 的食鹽水使生鏽更快；隔絕空氣的 B、沒有水的 C 都沒有生鏽。';Lab.done('#t23a');}else $('vRust').textContent=day?'繼續觀察……':'拖動天數開始觀察。';}
+$('day').addEventListener('input',e=>{day=+e.target.value;drawRust();});
+const PREV=[['塗油漆','在鐵的表面形成保護層，隔絕水和空氣（鐵門、鐵欄杆）。'],['塗油','隔絕水和空氣（腳踏車鏈條、機械零件）。'],['鍍鋅（白鐵）','鋅的活性比鐵大，鋅先和氧反應形成保護層，保護鐵不生鏽（鐵皮屋頂）。'],['鍍錫（馬口鐵）','錫不易生鏽，包覆在鐵表面隔絕水和空氣（罐頭）。'],['製成不鏽鋼','在鐵中加入鉻、鎳等製成合金，不易生鏽（餐具、水槽）。'],['保持乾燥','移除水分，鐵不易生鏽。']];const pv=new Set();
+PREV.forEach(([n,d])=>{const b=document.createElement('button');b.className='btn';b.textContent=n;b.onclick=()=>{$('vPrev').textContent=`${n}：${d}`;pv.add(n);if(pv.size>=3)Lab.done('#t23b');};$('prevent').appendChild(b);});
+// 蘋果
+let mins=0;const APP=[['不處理',1],['塗檸檬汁（含維生素 C）',0.2],['泡鹽水',0.45],['用保鮮膜密封',0.35]];
+function drawApple(){const c=$('cApple').getContext('2d');c.fillStyle=BG;c.fillRect(0,0,1600,380);
+  APP.forEach(([n,k],i)=>{const x=200+i*400,y=170;const b=Math.min(1,mins/60*k);c.fillStyle='#c0392b';c.beginPath();c.arc(x,y,120,0,7);c.fill();
+    const r=Math.round(250-120*b),g=Math.round(235-130*b),bl=Math.round(190-150*b);c.fillStyle=`rgb(${r},${g},${bl})`;c.beginPath();c.arc(x,y,104,0,7);c.fill();
+    c.fillStyle='#5a3a1a';c.beginPath();c.ellipse(x-20,y,6,12,0.3,0,7);c.ellipse(x+20,y,6,12,-0.3,0,7);c.fill();
+    txt(c,n,x,y+160,'#e4ebf0',20,'center',true);});
+  $('minO').textContent=mins+' 分鐘';if(mins>=30)Lab.done('#t23c');}
+$('minute').addEventListener('input',e=>{mins=+e.target.value;drawApple();});
+
+Lab.quiz('quiz',[
+ {q:'燃燒的三要素不包括下列何者？',o:['可燃物','助燃物','二氧化碳'],a:2,w:'三要素：可燃物、助燃物、溫度達燃點。'},
+ {q:'油鍋起火時蓋上鍋蓋，是破壞哪一個要素？',o:['可燃物','助燃物（氧氣）','燃點'],a:1,w:'蓋上鍋蓋隔絕空氣。'},
+ {q:'下列元素燃燒最劇烈、發出強烈白光的是？',o:['銅','鎂','鐵'],a:1,w:'鎂對氧的活性大。'},
+ {q:'硫燃燒的生成物溶於水，加入石蕊試液會呈現？',o:['紅色','藍色','紫色'],a:0,w:'非金屬氧化物水溶液呈酸性。'},
+ {q:'氧化鎂溶於水，水溶液呈？',o:['酸性','中性','鹼性'],a:2,w:'可溶於水的金屬氧化物水溶液呈鹼性。'},
+ {q:'金屬活性由大到小，下列何者正確？',o:['鎂＞鋅＞鐵＞銅','銅＞鐵＞鋅＞鎂','鐵＞鎂＞銅＞鋅'],a:0,w:'活性：鎂＞鋅＞鐵＞銅。'},
+ {q:'氧化銅和碳粉混合加熱，下列敘述何者正確？',o:['氧化銅被氧化','碳被還原','氧化銅被還原成銅'],a:2,w:'氧化銅失去氧被還原，碳得到氧被氧化。'},
+ {q:'物質失去氧的反應稱為？',o:['氧化','還原','燃燒'],a:1,w:'狹義定義：失去氧稱為還原。'},
+ {q:'碳粉能否把氧化鎂還原成鎂？',o:['能，碳的活性比鎂大','不能，碳的活性比鎂小','能，加熱就可以'],a:1,w:'活性：鎂＞碳。'},
+ {q:'鐵生鏽需要哪些條件？',o:['只要有水','只要有空氣','同時有水和空氣（氧氣）'],a:2,w:'需同時接觸水和氧氣。'},
+ {q:'食品包裝內的脫氧劑主要成分是？',o:['鐵粉','食鹽','糖'],a:0,w:'鐵粉生鏽消耗氧氣。'},
+ {q:'果汁中添加維生素 C 的目的是？',o:['增加甜味','作為抗氧化劑','當作漂白劑'],a:1,w:'維生素 C 較易被氧化，可延緩食物氧化。'},
+]);
+Lab.tasks('g9c2');Lab.tabs();
+Lab.onTab(p=>{if(p==='p2')draw22();if(p==='p3'){drawRust();drawApple();}});
+Lab.loop((dt,t,a)=>{if(a==='p1'){drawFire(t);drawBurn(t);}});
+drawRust();drawApple();
+})();
+</script>
+</body>
+</html>

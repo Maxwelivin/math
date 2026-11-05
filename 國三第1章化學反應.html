@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>化學反應實驗室</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&family=JetBrains+Mono:wght@500;700&display=swap">
+<link rel="stylesheet" href="science-lab.css">
+<style>
+:root{--accent:#16808a;--accent-soft:#dcf1f2;--accent-d:#55c7cf;--accent-soft-d:#143a3d;--tabs:5}
+.rx{display:flex;flex-wrap:wrap;gap:8px}
+.counter{display:grid;grid-template-columns:auto auto auto;align-items:center;gap:6px;justify-items:center}
+.counter b{font-size:1.6rem;font-family:var(--mono);min-width:1.6ch;text-align:center}
+.counter button{font:inherit;font-size:1.3rem;font-weight:700;width:48px;height:48px;border-radius:10px;border:2px solid var(--line);background:var(--bg);color:var(--fg);cursor:pointer}
+.counter .sp{grid-column:1/-1;font-family:var(--mono);font-size:1.4rem;font-weight:700}
+.eqrow{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center}
+.eqrow .op{font-size:1.8rem;font-weight:700;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="unit">第 1 章</span><h1>化學反應</h1>
+    <a class="home" href="index.html">← 回首頁</a>
+  </header>
+  <nav class="tabs" role="tablist">
+    <button role="tab" data-p="p1">1-1 認識化學反應<small>現象・吸熱放熱</small></button>
+    <button role="tab" data-p="p2">1-2 質量守恆<small>實驗 1-1</small></button>
+    <button role="tab" data-p="p3">1-3 化學反應的表示法<small>平衡反應式・係數比</small></button>
+    <button role="tab" data-p="p4">1-4 原子量與分子量<small>相對質量・莫耳</small></button>
+    <button role="tab" data-p="p5">測驗<small>觀念複習</small></button>
+  </nav>
+
+  <!-- ===== 1-1 ===== -->
+  <section class="page" id="p1">
+    <details class="goal" open><summary>1-1 認識化學反應 <span class="prog"></span></summary><div class="cols">
+      <div><h4>學習目標</h4><ol><li>了解化學反應發生時常見的現象。</li><li>了解化學反應的吸放熱。</li></ol></div>
+      <div><h4>學習內容</h4><ul><li><span class="code">Ba-IV-3</span>化學反應中的能量改變常以吸熱或放熱的形式發生。</li><li><span class="code">Ja-IV-3</span>化學反應中常伴隨沉澱、氣體、顏色及溫度變化等現象。</li></ul></div>
+      <div><h4>學習任務</h4><ul class="tasks"><li><label><input type="checkbox" id="t11a">觀察至少 4 種化學反應，說出伴隨的現象</label></li><li><label><input type="checkbox" id="t11b">比較硫酸銅加熱與加水，判斷吸熱或放熱</label></li></ul></div>
+    </div></details>
+    <div class="card"><h2>化學反應的現象</h2><p class="lead">物質發生化學變化時，原子重新排列組合生成新物質，稱為化學反應。常可觀察到顏色改變、產生沉澱、產生氣體、發光發熱或溫度變化等現象。選一個反應，按「開始反應」觀察。</p></div>
+    <div class="rx" id="rxBtns"></div>
+    <div class="row"><button class="big" id="rxGo">▶ 開始反應</button><span class="chips" id="rxChips"></span></div>
+    <div class="scene"><canvas id="c11" width="1600" height="460"></canvas></div>
+    <div class="verdict" id="v11">選一個反應開始。</div>
+  </section>
+
+  <!-- ===== 1-2 ===== -->
+  <section class="page" id="p2" hidden>
+    <details class="goal" open><summary>1-2 化學反應的質量守恆 <span class="prog"></span></summary><div class="cols">
+      <div><h4>學習目標</h4><ol><li>了解化學反應發生前後的質量關係。</li></ol><h4 style="margin-top:8px">教學重點</h4><ol><li>化學反應前後，反應物與生成物的總質量守恆。</li></ol></div>
+      <div><h4>學習內容</h4><ul><li><span class="code">Ja-IV-1</span>化學反應中的質量守恆定律。</li><li><span class="code">Ja-IV-2</span>化學反應是原子重新排列。</li><li><span class="code">Ja-IV-3</span>化學反應中常伴隨沉澱、氣體、顏色及溫度變化等現象。</li></ul></div>
+      <div><h4>學習任務</h4><ul class="tasks"><li><label><input type="checkbox" id="t12a">在開放容器中做有氣體產生的反應，記錄質量變化</label></li><li><label><input type="checkbox" id="t12b">在密閉容器中做同一反應，比較結果</label></li><li><label><input type="checkbox" id="t12c">用原子數目說明為什麼質量守恆</label></li></ul></div>
+    </div></details>
+    <div class="card"><h2>實驗 1-1：化學反應前後的質量關係</h2><p class="lead">把試管裡的溶液倒入錐形瓶混合，比較反應前後電子秤的讀數。有氣體產生時，容器是否密閉會影響測得的結果。</p></div>
+    <div class="row">
+      <b>反應：</b><button class="btn" data-r12="gas" aria-pressed="true">大理石＋稀鹽酸（產生氣體）</button><button class="btn" data-r12="ppt" aria-pressed="false">碘化鉀＋硝酸鉛（產生沉澱）</button>
+    </div>
+    <div class="row">
+      <b>容器：</b><button class="btn" data-c12="open" aria-pressed="true">開放（不加蓋）</button><button class="btn" data-c12="closed" aria-pressed="false">密閉（塞緊橡皮塞）</button>
+      <button class="big" id="mix12">⤵ 倒入混合</button><button class="btn" id="reset12">重設</button>
+    </div>
+    <div class="scene"><canvas id="c12" width="1600" height="520"></canvas></div>
+    <div class="verdict" id="v12">按「倒入混合」開始實驗。</div>
+    <div class="card"><h3>原子觀點：原子重新排列，種類和數目都不變</h3><div class="eq" id="eq12"></div><div class="tablebox"><table id="tb12"></table></div></div>
+  </section>
+
+  <!-- ===== 1-3 ===== -->
+  <section class="page" id="p3" hidden>
+    <details class="goal" open><summary>1-3 化學反應的表示法 <span class="prog"></span></summary><div class="cols">
+      <div><h4>學習目標</h4><ol><li>了解化學反應式的係數比所代表的意義。</li></ol></div>
+      <div><h4>學習內容</h4><ul><li><span class="code">Ja-IV-1</span>化學反應中的質量守恆定律。</li><li><span class="code">Ja-IV-2</span>化學反應是原子重新排列。</li><li><span class="code">Ja-IV-4</span>化學反應的表示法。</li></ul></div>
+      <div><h4>學習任務</h4><ul class="tasks"><li><label><input type="checkbox" id="t13a">平衡「氫＋氧→水」的反應式</label></li><li><label><input type="checkbox" id="t13b">再平衡另外 3 個反應式</label></li><li><label><input type="checkbox" id="t13c">說出係數比代表分子（粒子）的數目比</label></li></ul></div>
+    </div></details>
+    <div class="card"><h2>平衡化學反應式</h2><p class="lead">化學反應式用化學式表示反應物和生成物，中間以箭頭「→」連接。反應前後原子的種類和數目不變，所以要在化學式前加上係數，使箭頭兩邊各種原子的數目相等（係數 1 省略不寫）。<b>化學式本身不能改</b>，只能調整係數。</p></div>
+    <div class="row" id="rx13"></div>
+    <div class="card"><div class="eqrow" id="eq13"></div></div>
+    <div class="scene"><canvas id="c13" width="1600" height="400"></canvas></div>
+    <div class="two"><div class="card tablebox"><h3>原子數目檢查</h3><table id="tb13"></table></div><div class="verdict" id="v13"></div></div>
+  </section>
+
+  <!-- ===== 1-4 ===== -->
+  <section class="page" id="p4" hidden>
+    <details class="goal" open><summary>1-4 原子量與分子量 <span class="prog"></span></summary><div class="cols">
+      <div><h4>學習目標</h4><ol><li>了解原子量與分子量。</li><li>知道莫耳的概念。</li></ol></div>
+      <div><h4>學習內容</h4><ul><li><span class="code">Aa-IV-2</span>原子量與分子量是原子、分子之間的相對質量。</li></ul><p class="note" style="margin:6px 0 0">莫耳僅認識名稱，不涉及莫耳數換算。</p></div>
+      <div><h4>學習任務</h4><ul class="tasks"><li><label><input type="checkbox" id="t14a">用天平比較，找出 3 種元素的原子量</label></li><li><label><input type="checkbox" id="t14b">計算 3 種物質的分子量</label></li></ul></div>
+    </div></details>
+    <div class="card"><h2>原子量：和碳原子比一比</h2><p class="lead">原子非常小，無法直接秤重，科學家以碳原子的質量為 12 作為比較標準，其他原子和它比較得到的相對質量，稱為原子量（沒有單位）。選一種原子放在左盤，調整右盤碳原子的數目，讓天平平衡。</p></div>
+    <div class="row"><b>左盤原子：</b><span class="rx" id="atom14"></span></div>
+    <div class="row"><b>右盤碳原子：</b><button class="btn" id="cMinus">－ 1 個</button><span class="chip" id="cN"></span><button class="btn" id="cPlus">＋ 1 個</button><span class="note">（碳原子量 12）</span></div>
+    <div class="scene"><canvas id="c14" width="1600" height="440"></canvas></div>
+    <div class="verdict" id="v14"></div>
+    <div class="two">
+      <div class="card">
+        <h2>分子量</h2>
+        <p class="lead">分子量＝分子中所有原子的原子量總和。</p>
+        <div class="row" style="margin-top:8px"><select id="mw" aria-label="選擇物質"></select></div>
+        <div class="eq" id="mwEq" style="font-size:1.25rem;white-space:normal"></div>
+        <p class="note">原子量：H＝1、C＝12、N＝14、O＝16、Na＝23、Mg＝24、S＝32、Cl＝35.5、Ca＝40</p>
+      </div>
+      <div class="card">
+        <h2>莫耳：計算粒子數目的單位</h2>
+        <p style="margin:0">就像 1 打＝12 個，化學上用「莫耳」來計算大量的原子或分子：1 莫耳約有 6×10²³ 個粒子。1 莫耳物質的質量（公克），數值上就等於它的原子量或分子量，例如 1 莫耳的水約 18 公克。</p>
+        <p class="note">課綱只要求認識莫耳的名稱，不需要做莫耳數的換算。</p>
+      </div>
+    </div>
+    <div class="card"><h2>分子量練習</h2><p id="mq" style="font-size:1.2rem;margin:4px 0 10px"></p>
+      <form class="row" id="mf"><input id="mi" inputmode="decimal" autocomplete="off" aria-label="答案" style="font:inherit;font-size:1.3rem;width:8em;padding:8px 12px;border-radius:10px;border:2px solid var(--line);background:var(--bg);color:var(--fg)"><button class="big" type="submit">對答案</button><button class="btn" type="button" id="mn">下一題 →</button></form>
+      <div id="ms" style="margin-top:8px;font-weight:700"></div></div>
+  </section>
+
+  <!-- ===== 測驗 ===== -->
+  <section class="page" id="p5" hidden><div class="card" id="quiz"><h2>第 1 章觀念測驗</h2></div></section>
+</div>
+<script src="science-lab.js"></script>
+<script>
+(function(){
+const {$,txt,line,circle}=Lab;const BG='#0e1418';
+const AW={H:1,C:12,N:14,O:16,Na:23,Mg:24,S:32,Cl:35.5,Ca:40,K:39,Fe:56,Cu:63.5};
+const AC={H:'#f2f2f2',O:'#e74c3c',C:'#555',N:'#4a7bd9',Mg:'#b9c7d6',Ca:'#d9d2a0',Cl:'#2ecc71',Na:'#9b59b6',S:'#f1c40f',Cu:'#d4884b',Fe:'#b0703c',K:'#c39bd3'};
+const AR={H:9,O:13,C:13,N:13,Mg:15,Ca:16,Cl:15,Na:15,S:14,Cu:14,Fe:14,K:16};
+function atom(c,a,x,y,s){s=s||1;circle(c,x,y,(AR[a]||13)*s,AC[a],'#111');txt(c,a,x,y+6*s,a==='H'||a==='Mg'||a==='Ca'?'#222':'#fff',Math.round((a.length>1?12:15)*s),'center',true);}
+/* 依組成畫一個分子模型 */
+function mol(c,comp,x,y,s){const list=[];Object.entries(comp).forEach(([a,n])=>{for(let i=0;i<n;i++)list.push(a);});s=s||1;
+  if(list.length===1){atom(c,list[0],x,y,s);return;}
+  const heavy=list.filter(a=>a!=='H'),hs=list.filter(a=>a==='H');
+  if(heavy.length<=1){const ctr=heavy[0]||'H';const rest=heavy.length?hs:hs.slice(1);if(heavy.length)atom(c,ctr,x,y,s);else atom(c,'H',x-8*s,y,s);
+    rest.forEach((a,i)=>{const ang=heavy.length?(-Math.PI/2+i*2*Math.PI/rest.length):0;const d=heavy.length?20*s:0;atom(c,a,heavy.length?x+d*Math.cos(ang):x+8*s,heavy.length?y+d*Math.sin(ang):y,s);});return;}
+  // 鏈狀排列重原子，H 掛在旁邊
+  const w=(heavy.length-1)*22*s;heavy.forEach((a,i)=>atom(c,a,x-w/2+i*22*s,y,s));hs.forEach((a,i)=>{const k=i%heavy.length,up=Math.floor(i/heavy.length)%2?1:-1;atom(c,a,x-w/2+k*22*s,y+up*18*s,s*0.9);});}
+
+/* ================= 1-1 ================= */
+const RX=[
+ {k:'cuso4h',n:'硫酸銅晶體加熱',from:'#2f7fe0',to:'#f0f0f0',dish:true,heat:true,dT:0,ph:['顏色變化'],e:'吸熱',v:'藍色硫酸銅晶體加熱後逐漸變成白色粉末（顏色變化）。必須持續加熱反應才會進行，屬於吸熱反應。',task:'b'},
+ {k:'cuso4w',n:'無水硫酸銅加水',from:'#f0f0f0',to:'#2f7fe0',dish:false,drop:'#cfe8ff',dT:12,ph:['顏色變化','溫度上升'],e:'放熱',v:'白色無水硫酸銅加水後變回藍色，試管摸起來變熱，屬於放熱反應。',task:'b'},
+ {k:'lime',n:'二氧化碳通入石灰水',from:'#d9eef7',to:'#d9eef7',ppt:'#ffffff',bubbleIn:true,dT:0,ph:['產生沉澱'],e:'—',v:'二氧化碳使澄清石灰水變成白色混濁，這是生成了白色沉澱（碳酸鈣）。常用來檢驗二氧化碳。'},
+ {k:'pbi2',n:'碘化鉀＋硝酸鉛',from:'#eef4f7',to:'#eef4f7',ppt:'#ffd400',drop:'#eef4f7',dT:0,ph:['產生沉澱'],e:'—',v:'兩種無色溶液混合後，產生黃色沉澱（碘化鉛）。'},
+ {k:'caco3',n:'大理石＋稀鹽酸',from:'#eef4f7',to:'#eef4f7',gas:true,chunk:true,dT:0,ph:['產生氣體'],e:'—',v:'大理石（碳酸鈣）遇到稀鹽酸，產生大量氣泡（二氧化碳）。'},
+ {k:'mg',n:'鎂帶燃燒',burn:true,dT:0,ph:['發光','發熱'],e:'放熱',v:'鎂帶燃燒發出強烈白光並放出大量的熱，生成白色的氧化鎂。燃燒都是放熱反應。'},
+];
+let rx=RX[0],f11=null,seen=new Set();
+RX.forEach((r,i)=>{const b=document.createElement('button');b.className='btn';b.textContent=r.n;b.setAttribute('aria-pressed',i===0);b.onclick=()=>{rx=r;f11=null;[...$('rxBtns').children].forEach(x=>x.setAttribute('aria-pressed',x===b));draw11();};$('rxBtns').appendChild(b);});
+function mixCol(a,b,t){const p=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));const A=p(a),B=p(b);return`rgb(${A.map((v,i)=>Math.round(v+(B[i]-v)*t)).join(',')})`;}
+function draw11(){const c=$('c11').getContext('2d'),f=f11==null?0:f11,t=performance.now()/1000;c.fillStyle=BG;c.fillRect(0,0,1600,460);const r=rx;
+  if(r.burn){// 鎂帶
+    c.fillStyle='#b9c7d6';const len=360*(1-f*0.8);c.fillRect(520,200,len,16);c.fillStyle='#777';c.fillRect(500,190,30,36);txt(c,'坩堝鉗',515,260,'#9ab',20,'center');
+    if(f>0&&f<1){const x=520+len;c.fillStyle=`rgba(255,255,255,${0.5+0.4*Math.sin(t*30)})`;c.beginPath();c.arc(x,208,90,0,7);c.fill();c.fillStyle='rgba(255,255,255,.12)';c.fillRect(0,0,1600,460);}
+    if(f>0){c.fillStyle='#f4f4f4';for(let i=0;i<f*14;i++){c.beginPath();c.arc(560+i*20,330+Math.sin(i)*6,8,0,7);c.fill();}txt(c,'白色氧化鎂',700,380,'#e4ebf0',20,'center');}}
+  else if(r.dish){// 蒸發皿加熱
+    c.fillStyle='#e9eef1';c.beginPath();c.ellipse(800,240,170,50,0,0,Math.PI);c.fill();c.fillStyle=mixCol(r.from,r.to,f);for(let i=0;i<40;i++){c.beginPath();c.arc(680+(i*37)%240,250+(i*13)%22,9,0,7);c.fill();}
+    c.fillStyle='#555';c.fillRect(700,300,200,10);if(f>0&&f<1)Lab.flame(c,800,390,t,1.4);c.fillStyle='#777';c.fillRect(780,400,40,40);}
+  else{// 試管或燒杯
+    const x=740,y=80,w=120,h=300;const liq=r.chunk||r.bubbleIn?0.6:0.55;
+    c.fillStyle=mixCol(r.from,r.to,f);c.globalAlpha=.85;c.fillRect(x+4,y+h-h*liq,w-8,h*liq-4);c.globalAlpha=1;
+    if(r.ppt&&f>0){const cl=r.ppt;for(let i=0;i<f*90;i++){c.fillStyle=cl;c.globalAlpha=.85;const px=x+10+((i*53)%(w-20)),py=y+h-8-((i*29)%Math.max(10,f*h*liq*0.9));c.beginPath();c.arc(px,py+(r.k==='lime'?-((i*17)%120):0),4,0,7);c.fill();}c.globalAlpha=1;
+      if(r.k==='lime'){c.fillStyle=`rgba(255,255,255,${0.55*f})`;c.fillRect(x+4,y+h-h*liq,w-8,h*liq-4);}}
+    if(r.chunk){c.fillStyle='#e8e2d4';[[x+30,y+h-30],[x+70,y+h-24],[x+50,y+h-50]].forEach(([a,b])=>{c.beginPath();c.arc(a,b,16*(1-f*0.5),0,7);c.fill();});}
+    if((r.gas&&f>0&&f<1)||r.bubbleIn&&f>0&&f<1){for(let i=0;i<24;i++){const by=y+h-((t*160+i*41)%(h*liq));c.strokeStyle='rgba(255,255,255,.85)';c.lineWidth=2;c.beginPath();c.arc(x+20+(i*31)%(w-40),by,5+(i%3)*2,0,7);c.stroke();}}
+    if(r.bubbleIn){c.strokeStyle='#cfd8dc';c.lineWidth=6;c.beginPath();c.moveTo(x+w/2,y-40);c.lineTo(x+w/2,y+h-20);c.stroke();txt(c,'吹入二氧化碳',x+w/2,y-50,'#e4ebf0',20,'center');}
+    if(r.drop&&f<0.3){c.fillStyle=r.drop;c.beginPath();c.arc(x+w/2,y-20+f*400,10,0,7);c.fill();}
+    c.strokeStyle='#dfe7ec';c.lineWidth=5;c.beginPath();c.moveTo(x,y);c.lineTo(x,y+h-30);c.quadraticCurveTo(x,y+h,x+w/2,y+h);c.quadraticCurveTo(x+w,y+h,x+w,y+h-30);c.lineTo(x+w,y);c.stroke();}
+  // 溫度計
+  const T=25+(r.dT||0)*f+(r.burn?0:0);c.fillStyle='#f4efe8';c.fillRect(1180,80,16,300);const ty=380-(T/60)*300;c.fillStyle='#d62828';c.fillRect(1184,ty,8,380-ty);circle(c,1188,384,14,'#d62828');
+  txt(c,Lab.fmt(T)+' ℃',1188,66,'#ffd166',26,'center',true);txt(c,r.n,300,60,'#e4ebf0',30,'center',true);
+  if(f>=1)txt(c,'現象：'+r.ph.join('、')+(r.e!=='—'?'　'+r.e+'反應':''),300,420,'#ffd166',26,'center',true);}
+$('rxGo').addEventListener('click',()=>{const r=rx;Lab.anim(r.burn?2500:2800,f=>{f11=f;draw11();},()=>{seen.add(r.k);$('rxChips').innerHTML=r.ph.map(p=>`<span class="chip">${p}</span>`).join('')+(r.e!=='—'?`<span class="chip">${r.e}</span>`:'');
+  $('v11').textContent=r.v;if(seen.size>=4)Lab.done('#t11a');if(seen.has('cuso4h')&&seen.has('cuso4w'))Lab.done('#t11b');});});
+Lab.loop((dt,t,a)=>{if(a==='p1'&&f11!=null&&f11<1)return;});
+
+/* ================= 1-2 ================= */
+let r12='gas',c12='open',f12=null,did={};
+const R12={gas:{eq:'CaCO3 + 2HCl → CaCl2 + H2O + CO2',left:[['CaCO3',1],['HCl',2]],right:[['CaCl2',1],['H2O',1],['CO2',1]],loss:0.88},ppt:{eq:'2KI + Pb(NO3)2 → PbI2 + 2KNO3',left:[['KI',2],['Pb(NO3)2',1]],right:[['PbI2',1],['KNO3',2]],loss:0}};
+const COMP={CaCO3:{Ca:1,C:1,O:3},HCl:{H:1,Cl:1},CaCl2:{Ca:1,Cl:2},H2O:{H:2,O:1},CO2:{C:1,O:2},KI:{K:1,I:1},'Pb(NO3)2':{Pb:1,N:2,O:6},PbI2:{Pb:1,I:2},KNO3:{K:1,N:1,O:3}};
+function count(side){const t={};side.forEach(([s,n])=>Object.entries(COMP[s]).forEach(([a,k])=>t[a]=(t[a]||0)+k*n));return t;}
+function show12(){const R=R12[r12];$('eq12').textContent=Lab.sub(R.eq);const L=count(R.left),Rr=count(R.right);const ks=[...new Set([...Object.keys(L),...Object.keys(Rr)])];
+  $('tb12').innerHTML='<tr><th>原子</th>'+ks.map(k=>`<th class="mono">${k}</th>`).join('')+'</tr><tr><td>反應前</td>'+ks.map(k=>`<td>${L[k]||0}</td>`).join('')+'</tr><tr><td>反應後</td>'+ks.map(k=>`<td>${Rr[k]||0}</td>`).join('')+'</tr>';}
+function draw12(){const c=$('c12').getContext('2d'),f=f12==null?0:f12,t=performance.now()/1000;c.fillStyle=BG;c.fillRect(0,0,1600,520);const R=R12[r12];
+  // 電子秤
+  c.fillStyle='#3a4650';c.fillRect(520,430,560,60);c.fillStyle='#0b1a10';c.fillRect(700,446,200,34);
+  const m=150-(c12==='open'?R.loss*Math.min(1,f*1.2):0);txt(c,m.toFixed(2)+' g',800,474,'#7CFC9A',28,'center',true);
+  // 錐形瓶
+  const x=800,y=430;c.fillStyle=r12==='gas'?'rgba(220,235,240,.55)':(f>0.3?'rgba(255,220,60,.55)':'rgba(220,235,240,.55)');c.beginPath();c.moveTo(x-140,y-4);c.lineTo(x-50,y-180);c.lineTo(x+50,y-180);c.lineTo(x+140,y-4);c.fill();
+  if(r12==='ppt'&&f>0.3){c.fillStyle='#ffd400';for(let i=0;i<60*f;i++){c.beginPath();c.arc(x-110+(i*41)%220,y-12-(i*7)%30,4,0,7);c.fill();}}
+  if(r12==='gas'){c.fillStyle='#e8e2d4';[[x-50,y-20],[x+10,y-16],[x+50,y-26]].forEach(([a,b])=>{c.beginPath();c.arc(a,b,16*(1-f*0.4),0,7);c.fill();});
+    if(f>0&&f<1){for(let i=0;i<20;i++){const by=y-10-((t*120+i*29)%160);c.strokeStyle='rgba(255,255,255,.8)';c.beginPath();c.arc(x-90+(i*23)%180,by,5,0,7);c.stroke();}
+      if(c12==='open'){for(let i=0;i<10;i++){const gy=y-200-((t*90+i*37)%220);c.fillStyle='rgba(180,220,255,.5)';c.beginPath();c.arc(x-30+(i*13)%60+Math.sin(t*3+i)*20,gy,8,0,7);c.fill();}txt(c,'CO₂ 逸散到空氣中',x+160,y-330,'#9fd3ff',22,'left',true);}}
+    if(c12==='closed'&&f>0){c.fillStyle='rgba(180,220,255,.25)';c.fillRect(x-48,y-176,96,40);}}
+  c.strokeStyle='#dfe7ec';c.lineWidth=5;c.beginPath();c.moveTo(x-50,y-250);c.lineTo(x-50,y-180);c.lineTo(x-140,y-4);c.lineTo(x+140,y-4);c.lineTo(x+50,y-180);c.lineTo(x+50,y-250);c.stroke();
+  if(c12==='closed'){c.fillStyle='#8d5a3b';c.fillRect(x-56,y-270,112,34);txt(c,'橡皮塞',x+80,y-250,'#e4ebf0',20,'left');}
+  // 小試管（倒入）
+  c.save();c.translate(x+10,y-200);c.rotate(-0.2-f*1.6);c.fillStyle=r12==='gas'?'rgba(230,240,245,.7)':'rgba(230,240,245,.7)';if(f<0.5)c.fillRect(-14,-80,28,70*(1-f*2));c.strokeStyle='#dfe7ec';c.lineWidth=4;c.strokeRect(-16,-120,32,120);c.restore();
+  txt(c,r12==='gas'?'試管：稀鹽酸　瓶內：大理石':'試管：硝酸鉛溶液　瓶內：碘化鉀溶液',800,40,'#e4ebf0',24,'center',true);
+  txt(c,'反應前 150.00 g',260,474,'#e4ebf0',24,'center');}
+function verdict12(){const R=R12[r12],v=$('v12');
+  if(r12==='gas'&&c12==='open'){v.className='verdict no';v.textContent=`讀數減少 ${R.loss} g：生成的二氧化碳氣體逸散到空氣中，沒有被秤到，看起來質量「變少」了。`;Lab.done('#t12a');}
+  else if(r12==='gas'){v.className='verdict ok';v.textContent='密閉容器中，二氧化碳留在瓶內，反應前後總質量相等（150.00 g）：質量守恆。';Lab.done('#t12b');}
+  else{v.className='verdict ok';v.textContent='產生黃色沉澱，沒有氣體逸散，不論開放或密閉，反應前後總質量都相等。';}
+  if(did.open&&did.closed)Lab.done('#t12c');}
+$('mix12').addEventListener('click',()=>{Lab.anim(3200,f=>{f12=f;draw12();},()=>{if(r12==='gas')did[c12]=1;verdict12();});});
+$('reset12').addEventListener('click',()=>{f12=null;draw12();$('v12').className='verdict';$('v12').textContent='按「倒入混合」開始實驗。';});
+Lab.seg('[data-r12]',b=>{r12=b.dataset.r12;f12=null;show12();draw12();});Lab.seg('[data-c12]',b=>{c12=b.dataset.c12;f12=null;draw12();});
+show12();
+
+/* ================= 1-3 ================= */
+const EQ=[
+ {n:'氫＋氧→水',L:[['H2',{H:2}],['O2',{O:2}]],R:[['H2O',{H:2,O:1}]],ans:[2,1,2]},
+ {n:'碳燃燒',L:[['C',{C:1}],['O2',{O:2}]],R:[['CO2',{C:1,O:2}]],ans:[1,1,1]},
+ {n:'鎂燃燒',L:[['Mg',{Mg:1}],['O2',{O:2}]],R:[['MgO',{Mg:1,O:1}]],ans:[2,1,2]},
+ {n:'氮＋氫→氨',L:[['N2',{N:2}],['H2',{H:2}]],R:[['NH3',{N:1,H:3}]],ans:[1,3,2]},
+ {n:'雙氧水分解',L:[['H2O2',{H:2,O:2}]],R:[['H2O',{H:2,O:1}],['O2',{O:2}]],ans:[2,2,1]},
+ {n:'甲烷燃燒',L:[['CH4',{C:1,H:4}],['O2',{O:2}]],R:[['CO2',{C:1,O:2}],['H2O',{H:2,O:1}]],ans:[1,2,1,2]},
+];
+let eq=EQ[0],co=[1,1,1],solved=new Set();
+EQ.forEach((e,i)=>{const b=document.createElement('button');b.className='btn';b.textContent=e.n;b.setAttribute('aria-pressed',i===0);b.onclick=()=>{eq=e;co=[...e.L,...e.R].map(()=>1);[...$('rx13').children].forEach(x=>x.setAttribute('aria-pressed',x===b));build13();};$('rx13').appendChild(b);});
+function build13(){const box=$('eq13');box.innerHTML='';const all=[...eq.L,...eq.R];
+  all.forEach((sp,i)=>{if(i>0){const o=document.createElement('span');o.className='op';o.textContent=i===eq.L.length?'→':'＋';box.appendChild(o);}
+    const d=document.createElement('div');d.className='counter';d.innerHTML=`<span class="sp"><span class="cf"></span>${Lab.sub(sp[0])}</span><button aria-label="減少係數">－</button><b></b><button aria-label="增加係數">＋</button>`;
+    const [m,p]=d.querySelectorAll('button');m.onclick=()=>{co[i]=Math.max(1,co[i]-1);upd13();};p.onclick=()=>{co[i]=Math.min(6,co[i]+1);upd13();};box.appendChild(d);});upd13();}
+function tally(side,off){const t={};side.forEach(([s,comp],i)=>Object.entries(comp).forEach(([a,k])=>t[a]=(t[a]||0)+k*co[off+i]));return t;}
+function upd13(){const box=$('eq13');[...box.querySelectorAll('.counter')].forEach((d,i)=>{d.querySelector('b').textContent=co[i];d.querySelector('.cf').textContent=co[i]>1?co[i]:'';});
+  const L=tally(eq.L,0),R=tally(eq.R,eq.L.length),ks=[...new Set([...Object.keys(L),...Object.keys(R)])];const ok=ks.every(k=>L[k]===R[k]);
+  $('tb13').innerHTML='<tr><th>原子</th><th>左邊</th><th>右邊</th><th></th></tr>'+ks.map(k=>`<tr><td class="mono"><b>${k}</b></td><td>${L[k]||0}</td><td>${R[k]||0}</td><td>${L[k]===R[k]?'✔':'✘'}</td></tr>`).join('');
+  // 是否為最簡整數比
+  const g=(a,b)=>b?g(b,a%b):a;const gg=co.reduce((a,b)=>g(a,b));const v=$('v13');
+  if(ok&&gg===1){v.className='verdict ok';v.innerHTML=`平衡了！係數比 ${co.join('：')} 表示參與反應的分子（粒子）數目比。例如每 ${co[0]} 個 ${Lab.sub(eq.L[0][0])} 分子反應，就生成 ${co[eq.L.length]} 個 ${Lab.sub(eq.R[0][0])} 分子。`;solved.add(eq.n);
+    if(eq.n==='氫＋氧→水')Lab.done('#t13a');if(solved.size>=4)Lab.done('#t13b');Lab.done('#t13c');}
+  else if(ok){v.className='verdict';v.textContent=`原子數目相等了，但係數要化成最簡單的整數比（都除以 ${gg}）。`;}
+  else{v.className='verdict no';v.textContent='左右兩邊的原子數目還不相等，調整係數試試看（化學式不能改）。';}
+  draw13();}
+function draw13(){const c=$('c13').getContext('2d');c.fillStyle=BG;c.fillRect(0,0,1600,400);const all=[...eq.L,...eq.R];const n=all.length;const W=1600/n;
+  all.forEach(([s,comp],i)=>{const cx=W*i+W/2;for(let k=0;k<co[i];k++){const col=k%3,row=Math.floor(k/3);mol(c,comp,cx-80+col*80,110+row*110,1.4);}
+    txt(c,(co[i]>1?co[i]:'')+Lab.sub(s),cx,380,'#e4ebf0',28,'center',true);if(i===eq.L.length-1)txt(c,'→',W*(i+1),220,'#ffd166',48,'center',true);else if(i<n-1)txt(c,'＋',W*(i+1),220,'#98a7b3',40,'center',true);});}
+build13();
+
+/* ================= 1-4 ================= */
+const EL14=[['H','氫',1],['He','氦',4],['N','氮',14],['O','氧',16],['Mg','鎂',24],['S','硫',32],['Ca','鈣',40]];
+let el14=EL14[4],nC=1,found=new Set();AC.He='#f29fb5';AR.He=11;
+EL14.forEach((e,i)=>{const b=document.createElement('button');b.className='btn';b.textContent=`${e[1]} ${e[0]}`;b.setAttribute('aria-pressed',i===4);b.onclick=()=>{el14=e;[...$('atom14').children].forEach(x=>x.setAttribute('aria-pressed',x===b));draw14();};$('atom14').appendChild(b);});
+$('cMinus').onclick=()=>{nC=Math.max(0,nC-1);draw14();};$('cPlus').onclick=()=>{nC=Math.min(4,nC+1);draw14();};
+function draw14(){const c=$('c14').getContext('2d');c.fillStyle=BG;c.fillRect(0,0,1600,440);const [sym,name,w]=el14;
+  // 左盤：若原子量小於 12，放多顆讓比較好看
+  const nL=w<12?(12/w===Math.round(12/w)?12/w:1):1;const L=w*nL,R=12*nC;const tilt=Math.max(-0.18,Math.min(0.18,(L-R)/80));
+  c.save();c.translate(800,200);c.fillStyle='#8a96a0';c.fillRect(-10,0,20,200);c.fillRect(-120,190,240,20);c.rotate(tilt);c.fillStyle='#cfd8dc';c.fillRect(-520,-8,1040,16);
+  [[-480,'L'],[480,'R']].forEach(([px,s])=>{c.strokeStyle='#cfd8dc';c.lineWidth=3;c.beginPath();c.moveTo(px,0);c.lineTo(px-90,110);c.moveTo(px,0);c.lineTo(px+90,110);c.stroke();c.fillStyle='#cfd8dc';c.fillRect(px-110,110,220,10);});
+  for(let i=0;i<nL;i++)atom(c,sym==='He'?'He':sym,-480-((nL-1)*30)/2+i*30,85,nL>1?1.1:2.2);
+  for(let i=0;i<nC;i++)atom(c,'C',480-((nC-1)*44)/2+i*44,85,1.8);c.restore();
+  txt(c,`左盤：${nL} 個${name}原子`,320,430,'#e4ebf0',24,'center',true);txt(c,`右盤：${nC} 個碳原子（${R}）`,1280,430,'#e4ebf0',24,'center',true);
+  $('cN').textContent=nC+' 個';const v=$('v14');
+  if(Math.abs(L-R)<0.01){v.className='verdict ok';v.textContent=nL>1?`平衡了！${nL} 個${name}原子 ＝ 1 個碳原子（12），所以${name}的原子量 ＝ 12 ÷ ${nL} ＝ ${w}。`:`平衡了！1 個${name}原子 ＝ ${nC} 個碳原子，原子量 ＝ 12 × ${nC} ＝ ${w}。`;found.add(sym);if(found.size>=3)Lab.done('#t14a');}
+  else if(Number.isInteger(w/12*1)===false&&w>12&&nC>0&&Math.abs(L-R)<12){v.className='verdict';v.textContent=`${name}原子量 ${w} 不是 12 的整數倍，天平無法剛好平衡。實際上原子量是用精密儀器比較得到的：${name}原子的質量約為碳原子的 ${Lab.fmt(w/12,2)} 倍，原子量 ＝ ${w}。`;found.add(sym);if(found.size>=3)Lab.done('#t14a');}
+  else{v.className='verdict';v.textContent=L>R?'左盤較重，增加碳原子。':'右盤較重，減少碳原子。';}}
+const MW=[['H2O',{H:2,O:1},'水'],['CO2',{C:1,O:2},'二氧化碳'],['O2',{O:2},'氧氣'],['NH3',{N:1,H:3},'氨'],['CH4',{C:1,H:4},'甲烷'],['NaCl',{Na:1,Cl:1},'氯化鈉'],['CaCO3',{Ca:1,C:1,O:3},'碳酸鈣'],['C6H12O6',{C:6,H:12,O:6},'葡萄糖'],['H2SO4',{H:2,S:1,O:4},'硫酸'],['MgO',{Mg:1,O:1},'氧化鎂']];
+MW.forEach(([f,c,n],i)=>{const o=document.createElement('option');o.value=i;o.textContent=`${n}（${Lab.sub(f)}）`;$('mw').appendChild(o);});
+const mwOf=c=>Object.entries(c).reduce((s,[a,n])=>s+AW[a]*n,0);let mwSeen=new Set();
+function showMW(){const [f,c,n]=MW[+$('mw').value];$('mwEq').textContent=`${Lab.sub(f)} ＝ `+Object.entries(c).map(([a,k])=>`${a} ${AW[a]}${k>1?' × '+k:''}`).join(' ＋ ')+` ＝ ${mwOf(c)}`;mwSeen.add(f);if(mwSeen.size>=3)Lab.done('#t14b');}
+$('mw').addEventListener('change',showMW);
+let mq=null;function nextMQ(){mq=MW[Math.floor(Math.random()*MW.length)];$('mq').innerHTML=`${mq[2]}（<span class="mono">${Lab.sub(mq[0])}</span>）的分子量是多少？`;$('mi').value='';$('ms').textContent='';}
+$('mf').addEventListener('submit',e=>{e.preventDefault();const v=parseFloat($('mi').value),a=mwOf(mq[1]);const ok=Math.abs(v-a)<0.01;$('ms').style.color=ok?'var(--good)':'var(--bad)';
+  $('ms').textContent=(ok?'✔ 正確！':'✘ 再算一次。')+`　${Object.entries(mq[1]).map(([x,k])=>`${AW[x]}${k>1?'×'+k:''}`).join('＋')}＝${a}`;if(ok){mwSeen.add(mq[0]);if(mwSeen.size>=3)Lab.done('#t14b');}});
+$('mn').addEventListener('click',nextMQ);nextMQ();
+
+/* ================= 測驗 ================= */
+Lab.quiz('quiz',[
+ {q:'下列何者是化學變化？',o:['冰融化成水','鐵生鏽','酒精揮發'],a:1,w:'鐵生鏽產生了新物質（氧化鐵）。'},
+ {q:'二氧化碳通入澄清石灰水，會觀察到？',o:['產生黃色沉澱','白色混濁','溶液變藍'],a:1,w:'生成白色碳酸鈣沉澱。'},
+ {q:'藍色硫酸銅晶體加熱變成白色，這是？',o:['吸熱反應','放熱反應','沒有能量變化'],a:0,w:'需持續加熱，屬吸熱反應。'},
+ {q:'燃燒屬於哪一種反應？',o:['吸熱反應','放熱反應','物理變化'],a:1,w:'燃燒會放出熱與光。'},
+ {q:'在開放容器中讓大理石與鹽酸反應，反應後讀數變小的原因是？',o:['質量被消滅了','二氧化碳逸散到空氣中','鹽酸蒸發'],a:1,w:'氣體逸散沒被秤到；密閉容器中總質量不變。'},
+ {q:'化學反應前後，下列何者不會改變？',o:['分子的種類','原子的種類與數目','物質的性質'],a:1,w:'化學反應是原子重新排列。'},
+ {q:'2H₂ ＋ O₂ → 2H₂O 中，係數比 2：1：2 代表？',o:['質量比','分子數目比','原子大小比'],a:1,w:'係數比代表分子（粒子）數目比。'},
+ {q:'平衡反應式時可以改變什麼？',o:['化學式右下角的數字','化學式前的係數','元素符號'],a:1,w:'只能調整係數，化學式不能改。'},
+ {q:'原子量是以哪一種原子為比較標準？',o:['氫原子＝1','碳原子＝12','氧原子＝16'],a:1,w:'以碳原子質量 12 為標準。'},
+ {q:'CO₂ 的分子量是多少？（C＝12，O＝16）',o:['28','44','32'],a:1,w:'12＋16×2＝44。'},
+ {q:'原子量有沒有單位？',o:['有，單位是公克','沒有，是相對質量','有，單位是莫耳'],a:1,w:'原子量是相對質量，沒有單位。'},
+ {q:'「莫耳」是用來計算什麼的單位？',o:['溫度','粒子的數目','體積'],a:1,w:'1 莫耳約 6×10²³ 個粒子。'},
+]);
+Lab.tasks('g9c1');Lab.tabs();
+Lab.onTab(p=>{if(p==='p1')draw11();if(p==='p2')draw12();if(p==='p3')draw13();if(p==='p4'){draw14();showMW();}});
+draw11();draw12();draw14();showMW();
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{draw11();draw12();draw13();draw14();});
+})();
+</script>
+</body>
+</html>

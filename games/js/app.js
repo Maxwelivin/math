@@ -21,7 +21,7 @@
   }
   function route(){
     const id = location.hash.slice(1); const gm = GAMES.find(x => x.id === id);
-    if(!gm){ if(ctx){ ctx.stop(); ctx = null; } $('stage').innerHTML=''; $('player').hidden = true; $('hub').hidden = false; document.title = '200 個小遊戲'; return; }
+    if(!gm){ if(ctx){ ctx.stop(); ctx = null; } $('stage').innerHTML=''; $('player').hidden = true; $('hub').hidden = false; document.title = '260 個小遊戲'; return; }
     cur = gm; $('hub').hidden = true; $('player').hidden = false;
     $('gname').textContent = gm.icon + ' ' + gm.name; $('gdesc').textContent = gm.desc; document.title = gm.name;
     scrollTo(0,0); start();

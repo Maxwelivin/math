@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>溫度與熱實驗室</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&display=swap">
+<style>
+/* Layout: 章標題 → 大分頁列（各節）→ 每頁「說明卡 + 畫布 + 控制列 + 讀數」；為電子白板放大字級與按鈕 */
+:root{
+  --bg:#f6f2ee; --surface:#ffffff; --fg:#2a1d17; --muted:#6d5d55; --line:#e4d9d1;
+  --accent:#c2410c; --accent-soft:#fdebdf; --cool:#1c6fb8; --good:#15803d; --bad:#c92a2a;
+  --display:"Noto Serif TC","Songti TC",serif; --body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#18120f; --surface:#231a16; --fg:#f1e7e1; --muted:#b3a197; --line:#3a2c25;
+  --accent:#ff8a4c; --accent-soft:#3f2416; --cool:#6cb6ff; --good:#4ade80; --bad:#ff6b6b; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#18120f; --surface:#231a16; --fg:#f1e7e1; --muted:#b3a197; --line:#3a2c25;
+  --accent:#ff8a4c; --accent-soft:#3f2416; --cool:#6cb6ff; --good:#4ade80; --bad:#ff6b6b; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:17px;line-height:1.7}
+.wrap{max-width:1400px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:18px}
+header{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.unit{font-family:var(--display);font-weight:900;font-size:2.4rem;color:var(--accent);line-height:1}
+h1{font-family:var(--display);font-weight:900;font-size:2.1rem;margin:0;line-height:1.2}
+.home{margin-left:auto;color:var(--accent);font-weight:700;text-decoration:none}
+nav.tabs{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+@media (max-width:900px){nav.tabs{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:520px){nav.tabs{grid-template-columns:repeat(2,minmax(0,1fr))}}
+nav.tabs button{font:inherit;font-size:1.05rem;font-weight:700;padding:12px 8px;border-radius:10px;border:2px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer;line-height:1.3}
+nav.tabs button small{display:block;font-weight:400;font-size:.82rem;color:var(--muted)}
+nav.tabs button[aria-selected="true"]{border-color:var(--accent);background:var(--accent);color:#fff}
+nav.tabs button[aria-selected="true"] small{color:#ffe9dc}
+section.page{display:grid;gap:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+h2{font-family:var(--display);font-size:1.45rem;margin:0 0 6px}
+h3{font-size:1.15rem;margin:0 0 8px}
+.lead{margin:0;color:var(--muted);max-width:72ch}
+.scene{background:#140f0d;border-radius:10px;overflow:hidden;touch-action:none}
+.scene canvas{display:block;width:100%;height:auto}
+.row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.big{font:inherit;font-size:1.15rem;font-weight:700;padding:12px 22px;border-radius:10px;border:0;background:var(--accent);color:#fff;cursor:pointer;min-height:52px}
+.big.cool{background:var(--cool)}
+.btn{font:inherit;font-size:1rem;padding:10px 16px;border-radius:10px;border:2px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer;min-height:48px}
+.btn[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);font-weight:700}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.slider{flex:1 1 280px;display:grid;gap:2px}
+.slider label{display:flex;justify-content:space-between;font-weight:700}
+.slider output{color:var(--accent);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;height:36px;accent-color:var(--accent)}
+select,.num{font:inherit;padding:8px 10px;border-radius:10px;border:2px solid var(--line);background:var(--surface);color:var(--fg);min-height:46px}
+.num{width:7em;font-variant-numeric:tabular-nums}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+.stat span{font-size:.9rem;color:var(--muted)}
+.stat b{display:block;font-size:1.5rem;font-variant-numeric:tabular-nums;line-height:1.3}
+.verdict{border-radius:12px;padding:12px 16px;font-weight:700;font-size:1.12rem;background:var(--accent-soft)}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+@media (max-width:900px){.two{grid-template-columns:minmax(0,1fr)}}
+.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+@media (max-width:900px){.three{grid-template-columns:minmax(0,1fr)}}
+.note{font-size:.95rem;color:var(--muted)}
+.formula{font-size:1.5rem;font-weight:700;font-variant-numeric:tabular-nums;text-align:center;padding:8px}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+td,th{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left}
+.tablebox{overflow-x:auto}
+.q{border-top:1px solid var(--line);padding-top:12px;margin-top:12px}
+.q:first-of-type{border:0;margin:0;padding:0}
+.q p{margin:0 0 8px;font-weight:500}
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.opts button{font:inherit;border:2px solid var(--line);background:var(--bg);color:var(--fg);border-radius:8px;padding:8px 14px;cursor:pointer}
+.opts button.ok{border-color:var(--good);color:var(--good);font-weight:700}
+.opts button.no{border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.fb{font-size:.95rem;margin-top:6px;min-height:1.3em}
+.prob{font-size:1.25rem;font-weight:500;margin:6px 0 12px;max-width:60ch}
+.ans{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.ans input{font:inherit;font-size:1.3rem;width:9em;padding:8px 12px;border-radius:10px;border:2px solid var(--line);background:var(--bg);color:var(--fg)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="unit">第 5 章</span><h1>溫度與熱</h1>
+    <a class="home" href="index.html">← 回首頁</a>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" data-p="p1" aria-selected="true">5-1 溫度與溫度計<small>攝氏・華氏</small></button>
+    <button role="tab" data-p="p2" aria-selected="false">5-2 熱量<small>加熱不同水量</small></button>
+    <button role="tab" data-p="p3" aria-selected="false">5-3 比熱<small>H＝m×S×ΔT・熱平衡</small></button>
+    <button role="tab" data-p="p4" aria-selected="false">5-4 熱對物質的影響<small>熱脹冷縮</small></button>
+    <button role="tab" data-p="p5" aria-selected="false">5-5 熱的傳播<small>傳導・對流・輻射</small></button>
+    <button role="tab" data-p="p6" aria-selected="false">練習與測驗<small>計算・觀念</small></button>
+  </nav>
+
+  <!-- ================= 5-1 ================= -->
+  <section class="page" id="p1">
+    <div class="card">
+      <h2>溫度與溫標</h2>
+      <p class="lead">溫度是描述物體冷熱程度的物理量。溫度計利用液體熱脹冷縮的原理：遇熱液面上升，遇冷液面下降。攝氏溫標把水結冰定為 0 ℃、沸騰定為 100 ℃；華氏溫標則分別定為 32 ℉ 和 212 ℉。</p>
+    </div>
+    <div class="row">
+      <div class="slider"><label for="tc">溫度 <output id="tcOut"></output></label><input type="range" id="tc" min="-20" max="120" step="1" value="25"></div>
+      <button class="btn" data-preset="0">結冰 0 ℃</button><button class="btn" data-preset="37">體溫 37 ℃</button><button class="btn" data-preset="100">沸騰 100 ℃</button>
+    </div>
+    <div class="two">
+      <div class="scene"><canvas id="cTh" width="800" height="640"></canvas></div>
+      <div class="card" style="display:grid;gap:10px;align-content:start">
+        <h3>攝氏 ↔ 華氏</h3>
+        <div class="formula">℉ ＝ ℃ × 9/5 ＋ 32</div>
+        <div class="formula" id="conv"></div>
+        <p class="note" style="margin:0">兩種溫標的冰點到沸點，攝氏分成 100 格、華氏分成 180 格，所以 1 ℃ 的變化等於 1.8 ℉ 的變化。</p>
+        <div class="tablebox"><table><thead><tr><th>水的狀態</th><th>攝氏 ℃</th><th>華氏 ℉</th></tr></thead><tbody><tr><td>結冰時</td><td>0</td><td>32</td></tr><tr><td>沸騰時</td><td>100</td><td>212</td></tr></tbody></table></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 5-2 ================= -->
+  <section class="page" id="p2" hidden>
+    <div class="card">
+      <h2>探討活動：影響水溫上升的因素</h2>
+      <p class="lead">用同一個熱源加熱不同質量的水。熱源每分鐘提供相同的熱量；加熱時間越長，吸收的熱量越多，溫度上升越多。相同加熱時間下，水量越多，溫度上升越少。可以連續做幾次，把圖線疊在一起比較。</p>
+    </div>
+    <div class="row">
+      <b>水的質量：</b>
+      <button class="btn" data-m="50" aria-pressed="false">50 g</button>
+      <button class="btn" data-m="100" aria-pressed="true">100 g</button>
+      <button class="btn" data-m="200" aria-pressed="false">200 g</button>
+      <button class="big" id="heat2">🔥 開始加熱 5 分鐘</button>
+      <button class="btn" id="clear2">清除圖線</button>
+    </div>
+    <div class="two">
+      <div class="scene"><canvas id="cB2" width="800" height="560"></canvas></div>
+      <div class="scene"><canvas id="cG2" width="800" height="560"></canvas></div>
+    </div>
+    <div class="stats">
+      <div class="stat"><span>加熱時間</span><b id="t2">0.0 分</b></div>
+      <div class="stat"><span>上升溫度 ΔT</span><b id="d2">0.0 ℃</b></div>
+      <div class="stat"><span>吸收熱量（熱源 360 卡/分）</span><b id="h2">0 卡</b></div>
+      <div class="stat"><span>質量 × 上升溫度</span><b id="mx2">0</b></div>
+    </div>
+    <div class="verdict">1 公克的水上升 1 ℃ 所需的熱量定義為 1 卡（cal）；1000 卡＝1 千卡（kcal，又稱大卡）。所以水吸收的熱量＝質量 × 上升溫度。</div>
+  </section>
+
+  <!-- ================= 5-3 ================= -->
+  <section class="page" id="p3" hidden>
+    <div class="card">
+      <h2>實驗：物體受熱後溫度上升的比較</h2>
+      <p class="lead">同質量的不同物質，用相同熱源加熱相同時間，溫度上升不同。比熱（S）描述物質溫度改變的難易程度：比熱越小，溫度越容易升降；比熱越大，溫度越難升降。水的比熱是 1 卡／公克．℃，在常見物質中最大。</p>
+    </div>
+    <div class="row">
+      <label>物質 A <select id="sA"></select></label>
+      <label>物質 B <select id="sB"></select></label>
+      <span class="note">各 50 g，熱源各 360 卡/分</span>
+      <button class="big" id="heat3">🔥 同時加熱</button>
+    </div>
+    <div class="two">
+      <div class="scene"><canvas id="cB3" width="800" height="560"></canvas></div>
+      <div class="scene"><canvas id="cG3" width="800" height="560"></canvas></div>
+    </div>
+    <div class="verdict" id="v3">按「同時加熱」比較兩種物質。</div>
+    <div class="two">
+      <div class="card tablebox"><h3>表 5-1　常見物質的比熱（卡／公克．℃）</h3><table id="tblS"></table></div>
+      <div class="card">
+        <h3>熱量計算機</h3>
+        <div class="formula">H ＝ m × S × ΔT</div>
+        <div class="row">
+          <label>求 <select id="solve"><option value="H">熱量 H</option><option value="m">質量 m</option><option value="S">比熱 S</option><option value="T">溫度變化 ΔT</option></select></label>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <label id="lH">H（卡）<input class="num" id="iH" value="1000" inputmode="decimal"></label>
+          <label id="lm">m（g）<input class="num" id="im" value="100" inputmode="decimal"></label>
+          <label id="lS">S <input class="num" id="iS" value="1" inputmode="decimal"></label>
+          <label id="lT">ΔT（℃）<input class="num" id="iT" value="10" inputmode="decimal"></label>
+        </div>
+        <div class="verdict" id="calcOut" style="margin-top:10px"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>熱平衡</h2>
+      <p class="lead">兩個溫度不同的物體接觸時，熱量由高溫處流向低溫處，直到兩者溫度相同。高溫物體放出的熱量＝低溫物體吸收的熱量（不計散失）。</p>
+      <div class="row" style="margin-top:8px">
+        <label>放入的物體 <select id="hotS"></select></label>
+        <label>質量 <input class="num" id="hotM" value="100" inputmode="decimal"> g</label>
+        <label>溫度 <input class="num" id="hotT" value="80" inputmode="decimal"> ℃</label>
+        <span>→ 放入</span>
+        <label>水 <input class="num" id="coldM" value="100" inputmode="decimal"> g</label>
+        <label>溫度 <input class="num" id="coldT" value="20" inputmode="decimal"> ℃</label>
+        <button class="big" id="mix">混合</button>
+      </div>
+    </div>
+    <div class="scene"><canvas id="cMix" width="1600" height="420"></canvas></div>
+    <div class="verdict" id="vMix"></div>
+  </section>
+
+  <!-- ================= 5-4 ================= -->
+  <section class="page" id="p4" hidden>
+    <div class="card">
+      <h2>熱脹冷縮</h2>
+      <p class="lead">多數物質受熱時體積膨脹、遇冷時體積收縮。相同溫度變化下，體積改變的程度：氣體＞液體＞固體。下圖的變化量已經放大，方便觀察。</p>
+    </div>
+    <div class="row"><div class="slider"><label for="t4">溫度 <output id="t4Out"></output></label><input type="range" id="t4" min="0" max="100" step="1" value="20"></div></div>
+    <div class="scene"><canvas id="c4" width="1600" height="520"></canvas></div>
+    <div class="two">
+      <div class="card"><h3>生活應用</h3>
+        <ul style="margin:0;padding-left:1.2em"><li>凹陷的乒乓球泡熱水，裡面的空氣受熱膨脹，球殼恢復原狀。</li><li>橋樑、鐵軌預留伸縮縫，避免夏天受熱膨脹而擠壓變形。</li><li>電線在夏天較鬆、冬天較緊。</li><li>溫度計利用液體熱脹冷縮來測量溫度。</li></ul></div>
+      <div class="card"><h3>粒子觀點</h3><p style="margin:0">溫度越高，粒子運動越劇烈，粒子之間的距離變大，物質的體積就變大；但粒子本身的大小和數量都沒有改變，所以質量不變。</p></div>
+    </div>
+  </section>
+
+  <!-- ================= 5-5 ================= -->
+  <section class="page" id="p5" hidden>
+    <div class="card">
+      <h2>熱的傳播方式</h2>
+      <p class="lead">熱會由高溫處傳到低溫處。傳播方式有三種：<b>傳導</b>（透過接觸，在物體間或物體內傳遞）、<b>對流</b>（液體或氣體受熱後流動，把熱帶到別處）、<b>輻射</b>（不需要介質，例如太陽的熱傳到地球）。</p>
+    </div>
+    <div class="row">
+      <button class="btn" data-hm="cond" aria-pressed="true">熱傳導</button>
+      <button class="btn" data-hm="conv" aria-pressed="false">熱對流</button>
+      <button class="btn" data-hm="rad" aria-pressed="false">熱輻射</button>
+    </div>
+    <div class="row" id="ctlCond">
+      <b>棒子材質：</b><button class="btn" data-rod="metal" aria-pressed="true">銅棒（良導體）</button><button class="btn" data-rod="wood" aria-pressed="false">木棒（不良導體）</button>
+      <button class="big" id="go5">🔥 開始加熱</button>
+    </div>
+    <div class="row" id="ctlConv" hidden>
+      <b>加熱位置：</b><button class="btn" data-cv="bottom" aria-pressed="true">從底部加熱</button><button class="btn" data-cv="middle" aria-pressed="false">從中間加熱</button>
+      <button class="big" id="go5b">🔥 開始加熱</button>
+    </div>
+    <div class="row" id="ctlRad" hidden>
+      <button class="big" id="go5c">💡 打開燈</button>
+    </div>
+    <div class="scene"><canvas id="c5" width="1600" height="560"></canvas></div>
+    <div class="verdict" id="v5"></div>
+    <div class="tablebox card"><table>
+      <thead><tr><th></th><th>熱傳導</th><th>熱對流</th><th>熱輻射</th></tr></thead>
+      <tbody><tr><td>說明</td><td>透過接觸傳熱</td><td>液體、氣體流動傳熱</td><td>不需介質傳熱</td></tr>
+      <tr><td>例子</td><td>金屬湯匙放進熱湯，手把變燙</td><td>冷氣裝高處、暖氣裝低處</td><td>曬太陽、烤火覺得溫暖</td></tr>
+      <tr><td>重點</td><td>良導體：多數金屬；不良導體：木頭、塑膠、空氣</td><td>熱的流體上升、冷的流體下降</td><td>深色物體較易吸收輻射熱</td></tr></tbody></table></div>
+  </section>
+
+  <!-- ================= 練習 ================= -->
+  <section class="page" id="p6" hidden>
+    <div class="card">
+      <h2>計算練習</h2>
+      <p class="note" style="margin:0">答對 <b id="sc">0</b> 題／作答 <b id="tr">0</b> 題</p>
+      <p class="prob" id="prob"></p>
+      <form class="ans" id="ansF"><input id="ansI" inputmode="decimal" autocomplete="off" aria-label="你的答案"><span id="unit"></span><button class="big" type="submit">對答案</button><button class="btn" type="button" id="nextP">下一題 →</button></form>
+      <div id="sol" style="margin-top:10px;font-size:1.05rem;min-height:1.5em"></div>
+    </div>
+    <div class="card" id="quiz"><h2>觀念測驗</h2></div>
+  </section>
+</div>
+
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+const BG='#140f0d';
+function seg(sel,cb){const bs=document.querySelectorAll(sel);bs.forEach(b=>b.addEventListener('click',()=>{bs.forEach(x=>x.setAttribute('aria-pressed',x===b));cb(b);}));}
+function txt(c,s,x,y,col,size,align,bold){c.fillStyle=col||'#f1e7e1';c.font=`${bold?'bold ':''}${size||22}px "Noto Sans TC",sans-serif`;c.textAlign=align||'left';c.fillText(s,x,y);}
+function line(c,x1,y1,x2,y2,col,w,dash){c.strokeStyle=col;c.lineWidth=w||2;c.setLineDash(dash||[]);c.beginPath();c.moveTo(x1,y1);c.lineTo(x2,y2);c.stroke();c.setLineDash([]);}
+function heatCol(t){// 0..1 -> blue..red
+  t=Math.max(0,Math.min(1,t));const r=Math.round(60+195*t),g=Math.round(120+60*Math.sin(Math.PI*t)-60*t),b=Math.round(230-200*t);return`rgb(${r},${g},${b})`;}
+const fmt=(x,d=1)=>(Math.round(x*Math.pow(10,d))/Math.pow(10,d)).toString();
+
+let active='p1';
+document.querySelectorAll('nav.tabs button').forEach(b=>b.addEventListener('click',()=>{active=b.dataset.p;
+  document.querySelectorAll('nav.tabs button').forEach(x=>x.setAttribute('aria-selected',x===b));
+  document.querySelectorAll('section.page').forEach(s=>s.hidden=s.id!==active);drawAll();}));
+
+/* ================= 5-1 溫度計 ================= */
+const cTh=$('cTh'),xTh=cTh.getContext('2d');let TC=25;
+function drawTh(){const c=xTh;c.fillStyle=BG;c.fillRect(0,0,800,640);
+  const x=400,top=60,bot=520,y=t=>bot-(t+20)/140*(bot-top);
+  c.fillStyle='#f4efe8';c.beginPath();c.roundRect(x-26,top-30,52,bot-top+60,26);c.fill();c.beginPath();c.arc(x,bot+50,48,0,7);c.fill();
+  c.fillStyle='#d62828';c.beginPath();c.arc(x,bot+50,38,0,7);c.fill();c.fillRect(x-10,y(TC),20,bot+20-y(TC));
+  for(let t=-20;t<=120;t+=10){const yy=y(t);line(c,x-26,yy,x-46,yy,'#f1e7e1',2);txt(c,t+'',x-54,yy+8,'#f1e7e1',22,'right');}
+  for(let f=0;f<=240;f+=20){const t=(f-32)*5/9;if(t<-20||t>120)continue;const yy=y(t);line(c,x+26,yy,x+46,yy,'#ffd2b0',2);txt(c,f+'',x+54,yy+8,'#ffd2b0',22,'left');}
+  txt(c,'℃',x-90,top-10,'#f1e7e1',28,'center',true);txt(c,'℉',x+90,top-10,'#ffd2b0',28,'center',true);
+  const F=TC*9/5+32;line(c,x-180,y(TC),x+180,y(TC),'#ffd166',3,[8,6]);
+  txt(c,TC+' ℃',x-200,y(TC)+8,'#ffd166',30,'right',true);txt(c,fmt(F)+' ℉',x+200,y(TC)+8,'#ffd166',30,'left',true);
+  $('tcOut').textContent=TC+' ℃';$('conv').textContent=`${TC} × 9/5 ＋ 32 ＝ ${fmt(F)} ℉`;}
+$('tc').addEventListener('input',e=>{TC=+e.target.value;drawTh();});
+document.querySelectorAll('[data-preset]').forEach(b=>b.addEventListener('click',()=>{TC=+b.dataset.preset;$('tc').value=TC;drawTh();}));
+
+/* ================= 共用：燒杯加熱 ================= */
+const RATE=360; // 卡/分
+const SUBS=[['水',1.0,'#4c9be8'],['甘油',0.58,'#d9c27a'],['酒精',0.57,'#a3d8f4'],['冰',0.55,'#cfe9ff'],['鋁',0.217,'#b8c2cc'],['鐵',0.113,'#8a8f96'],['銅',0.093,'#c87533']];
+function beaker(c,x,y,w,h,fill,level,T,label,flame){
+  if(flame){const t=performance.now()/120;c.fillStyle='#4a4a4a';c.fillRect(x+w/2-50,y+h+30,100,16);
+    for(let i=0;i<3;i++){c.fillStyle=['#ff6a00','#ffb000','#ffe36e'][i];c.beginPath();c.ellipse(x+w/2,y+h+14-i*2,22-i*6+Math.sin(t+i)*3,26-i*6,0,0,7);c.fill();}}
+  c.strokeStyle='#e9e2da';c.lineWidth=5;c.beginPath();c.moveTo(x,y);c.lineTo(x,y+h);c.lineTo(x+w,y+h);c.lineTo(x+w,y);c.stroke();
+  c.fillStyle=fill;c.fillRect(x+3,y+h-h*level,w-6,h*level-3);
+  // thermometer
+  const tx=x+w-40;c.fillStyle='#f4efe8';c.fillRect(tx-6,y-80,12,h+60);c.beginPath();c.arc(tx,y+h-14,12,0,7);c.fill();
+  const ty=y+h-14-(Math.min(110,T)/110)*(h+40);c.fillStyle='#d62828';c.fillRect(tx-3,ty,6,y+h-14-ty);c.beginPath();c.arc(tx,y+h-14,8,0,7);c.fill();
+  txt(c,fmt(T)+' ℃',tx,y-92,'#ffd166',26,'center',true);txt(c,label,x+w/2,y+h+80,'#f1e7e1',22,'center',true);}
+function graph(c,W,H,tMax,dMax,series,xl,yl){c.fillStyle=BG;c.fillRect(0,0,W,H);const L=90,R=W-30,T=30,B=H-80,X=t=>L+(R-L)*t/tMax,Y=d=>B-(B-T)*d/dMax;
+  for(let d=0;d<=dMax;d+=dMax/5){line(c,L,Y(d),R,Y(d),'rgba(255,255,255,.08)',1);txt(c,fmt(d,0),L-10,Y(d)+7,'#b3a197',20,'right');}
+  for(let t=0;t<=tMax;t++){txt(c,t+'',X(t),B+30,'#b3a197',20,'center');}
+  line(c,L,B,R,B,'#b3a197',2);line(c,L,B,L,T,'#b3a197',2);txt(c,xl,(L+R)/2,H-20,'#f1e7e1',22,'center');
+  c.save();c.translate(26,(T+B)/2);c.rotate(-Math.PI/2);txt(c,yl,0,0,'#f1e7e1',22,'center');c.restore();
+  series.forEach(s=>{c.strokeStyle=s.col;c.lineWidth=4;c.beginPath();s.pts.forEach(([t,d],i)=>{const x=X(t),y=Y(Math.min(dMax,d));i?c.lineTo(x,y):c.moveTo(x,y);});c.stroke();
+    const p=s.pts[s.pts.length-1];if(p)txt(c,s.name,Math.min(R-10,X(p[0])+8),Math.max(T+20,Y(Math.min(dMax,p[1]))-10),s.col,22,'left',true);});}
+
+/* ================= 5-2 熱量 ================= */
+let m2=100,run2=null,series2=[],cur2={t:0,T:25};const T0=25;
+const C2={50:'#ffb000',100:'#4c9be8',200:'#2ecc71'};
+function draw2(){const c=$('cB2').getContext('2d');c.fillStyle=BG;c.fillRect(0,0,800,560);
+  beaker(c,250,140,260,280,'rgba(76,155,232,.55)',0.25+0.5*m2/200,cur2.T,`水 ${m2} g`,!!run2);
+  graph($('cG2').getContext('2d'),800,560,5,80,series2,'加熱時間（分）','上升溫度（℃）');
+  const d=cur2.T-T0;$('t2').textContent=fmt(cur2.t)+' 分';$('d2').textContent=fmt(d)+' ℃';$('h2').textContent=Math.round(RATE*cur2.t)+' 卡';$('mx2').textContent=`${m2} × ${fmt(d)} ＝ ${Math.round(m2*d)}`;}
+seg('[data-m]',b=>{if(run2)return;m2=+b.dataset.m;cur2={t:0,T:T0};draw2();});
+$('heat2').addEventListener('click',()=>{if(run2)return;const s={name:m2+' g',col:C2[m2],pts:[[0,0]]};series2=series2.filter(x=>x.name!==s.name);series2.push(s);
+  const t0=performance.now(),id={};run2=id;(function step(n){if(run2!==id)return;const t=Math.min(5,Math.max(0,(n-t0)/1000/1.4));cur2={t,T:Math.min(100,T0+RATE*t/m2)};s.pts.push([t,cur2.T-T0]);draw2();
+    if(t<5&&cur2.T<100)requestAnimationFrame(step);else{run2=null;draw2();}})(t0);});
+$('clear2').addEventListener('click',()=>{if(run2)return;series2=[];cur2={t:0,T:T0};draw2();});
+
+/* ================= 5-3 比熱 ================= */
+['sA','sB','hotS'].forEach((id,k)=>{const s=$(id);SUBS.forEach(([n,S],i)=>{if(id==='hotS'&&n==='冰')return;const o=document.createElement('option');o.value=i;o.textContent=`${n}（${S}）`;s.appendChild(o);});});
+$('sA').value=0;$('sB').value=1;$('hotS').value=6;
+$('tblS').innerHTML='<tr>'+SUBS.map(s=>`<th>${s[0]}</th>`).join('')+'</tr><tr>'+SUBS.map(s=>`<td>${s[1]}</td>`).join('')+'</tr>';
+let run3=null,ser3=[],cur3=[25,25],t3=0;
+function draw3(){const c=$('cB3').getContext('2d');c.fillStyle=BG;c.fillRect(0,0,800,560);
+  [$('sA').value,$('sB').value].forEach((v,k)=>{const s=SUBS[v];const solid=['冰','鋁','鐵','銅'].includes(s[0]);
+    if(solid){const x=80+k*360;beaker(c,x,140,240,280,'rgba(0,0,0,0)',0,cur3[k],`${s[0]} 50 g`,!!run3);c.fillStyle=s[2];c.fillRect(x+40,330,130,80);}
+    else beaker(c,80+k*360,140,240,280,s[2]+'99',0.45,cur3[k],`${s[0]} 50 g`,!!run3);});
+  graph($('cG3').getContext('2d'),800,560,3,80,ser3,'加熱時間（分）','上升溫度（℃）');}
+$('heat3').addEventListener('click',()=>{if(run3)return;const ids=[+$('sA').value,+$('sB').value];
+  ser3=ids.map((i,k)=>({name:SUBS[i][0],col:k?'#ffb000':'#4c9be8',pts:[[0,0]]}));cur3=[25,25];
+  const t0=performance.now(),id={};run3=id;(function step(n){if(run3!==id)return;const t=Math.min(3,Math.max(0,(n-t0)/1000/1.3));
+    ids.forEach((i,k)=>{const d=Math.min(75,RATE*t/(50*SUBS[i][1]));cur3[k]=25+d;ser3[k].pts.push([t,d]);});draw3();
+    if(t<3)requestAnimationFrame(step);else{run3=null;draw3();
+      const [a,b]=ids.map(i=>SUBS[i]);const da=RATE/(50*a[1]),db=RATE/(50*b[1]);
+      $('v3').textContent=a[1]===b[1]?'兩者比熱相同，溫度上升一樣快。':`每分鐘${a[0]}上升約 ${fmt(da)} ℃、${b[0]}上升約 ${fmt(db)} ℃。${a[1]<b[1]?a[0]:b[0]}的比熱較小，溫度較容易上升。`+(Math.max(da,db)*3>75?'（溫度過高的部分圖上不再畫出）':'');}})(t0);});
+['sA','sB'].forEach(id=>$(id).addEventListener('change',()=>{if(!run3){ser3=[];cur3=[25,25];draw3();}}));
+// calculator
+function calc(){const k=$('solve').value;['H','m','S','T'].forEach(x=>{$('i'+x).disabled=x===k;$('l'+x).style.opacity=x===k?.45:1;});
+  const H=+$('iH').value,m=+$('im').value,S=+$('iS').value,T=+$('iT').value;let r,out;
+  if(k==='H'){r=m*S*T;out=`H ＝ ${m} × ${S} × ${T} ＝ <b>${fmt(r,2)} 卡</b>`;}
+  if(k==='m'){r=H/(S*T);out=`m ＝ H ÷ (S × ΔT) ＝ ${H} ÷ (${S} × ${T}) ＝ <b>${fmt(r,2)} 公克</b>`;}
+  if(k==='S'){r=H/(m*T);out=`S ＝ H ÷ (m × ΔT) ＝ ${H} ÷ (${m} × ${T}) ＝ <b>${fmt(r,3)} 卡／公克．℃</b>`;}
+  if(k==='T'){r=H/(m*S);out=`ΔT ＝ H ÷ (m × S) ＝ ${H} ÷ (${m} × ${S}) ＝ <b>${fmt(r,2)} ℃</b>`;}
+  $('i'+k).value=isFinite(r)?fmt(r,3):'';$('calcOut').innerHTML=isFinite(r)?out:'請輸入不為 0 的數字。';}
+['solve','iH','im','iS','iT'].forEach(id=>$(id).addEventListener('input',calc));$('solve').addEventListener('change',calc);
+// mixing
+let mixRun=null,mixT=[80,20];
+function drawMix(f){const c=$('cMix').getContext('2d');c.fillStyle=BG;c.fillRect(0,0,1600,420);
+  const s=SUBS[+$('hotS').value];
+  c.strokeStyle='#e9e2da';c.lineWidth=5;c.beginPath();c.moveTo(500,80);c.lineTo(500,360);c.lineTo(1100,360);c.lineTo(1100,80);c.stroke();
+  c.fillStyle='rgba(76,155,232,.45)';c.fillRect(503,170,594,187);
+  const solid=!['水','甘油','酒精'].includes(s[0]);const bx=solid?700:700,by=solid?230:170;
+  c.fillStyle=solid?s[2]:heatCol((mixT[0]-20)/70);if(solid)c.fillRect(bx-60,by,160,100);else{c.globalAlpha=.6;c.fillRect(503,170,280,187);c.globalAlpha=1;}
+  // arrows of heat flow
+  if(f!=null&&f<1){for(let i=0;i<4;i++){const xx=bx+130+i*60+((performance.now()/8)%60);txt(c,'→',xx,by+60,'#ff8a4c',36,'center',true);}txt(c,'熱量由高溫流向低溫',900,130,'#ff8a4c',24,'center',true);}
+  const th=(x,T,lab)=>{c.fillStyle='#f4efe8';c.fillRect(x-8,60,16,300);const yy=360-(Math.min(100,T)/100)*290;c.fillStyle='#d62828';c.fillRect(x-4,yy,8,360-yy);txt(c,fmt(T)+' ℃',x,46,'#ffd166',26,'center',true);txt(c,lab,x,400,'#f1e7e1',22,'center');};
+  th(300,mixT[0],s[0]);th(1300,mixT[1],'水');}
+$('mix').addEventListener('click',()=>{const s=SUBS[+$('hotS').value],m1=+$('hotM').value,T1=+$('hotT').value,m2=+$('coldM').value,T2=+$('coldT').value;
+  if(!(m1>0&&m2>0)){$('vMix').textContent='質量要大於 0。';return;}
+  const Tf=(m1*s[1]*T1+m2*1*T2)/(m1*s[1]+m2);const t0=performance.now(),id={};mixRun=id;
+  (function step(n){if(mixRun!==id)return;const f=Math.min(1,Math.max(0,(n-t0)/2500));const e=1-Math.pow(1-f,3);mixT=[T1+(Tf-T1)*e,T2+(Tf-T2)*e];drawMix(f);if(f<1)requestAnimationFrame(step);})(t0);
+  const Hout=m1*s[1]*Math.abs(T1-Tf),Hin=m2*Math.abs(Tf-T2);
+  $('vMix').innerHTML=`最後溫度 ＝ <b>${fmt(Tf,1)} ℃</b>。${s[0]}${T1>T2?'放出':'吸收'} ${m1} × ${s[1]} × ${fmt(Math.abs(T1-Tf),1)} ≈ ${Math.round(Hout)} 卡；水${T1>T2?'吸收':'放出'} ${m2} × 1 × ${fmt(Math.abs(Tf-T2),1)} ≈ ${Math.round(Hin)} 卡，兩者相等。`+(s[1]<1?` ${s[0]}的比熱比水小，所以溫度變化比水大很多。`:'');});
+['hotS','hotM','hotT','coldM','coldT'].forEach(id=>$(id).addEventListener('input',()=>{mixRun=null;mixT=[+$('hotT').value,+$('coldT').value];drawMix(null);}));
+
+/* ================= 5-4 熱脹冷縮 ================= */
+let T4=20;
+function draw4(t){const c=$('c4').getContext('2d');c.fillStyle=BG;c.fillRect(0,0,1600,520);const d=T4-20;
+  // solid rod
+  txt(c,'固體（金屬棒）',40,60,'#f1e7e1',24,'left',true);const L=360*(1+d*0.0006);c.fillStyle=heatCol(T4/100);c.fillRect(60,90,L,40);line(c,420,80,420,140,'#ffd166',2,[6,6]);txt(c,`長度 +${fmt(d*0.06,2)}%`,60,170,'#b3a197',20);
+  // liquid
+  txt(c,'液體（燒瓶＋細管）',560,60,'#f1e7e1',24,'left',true);c.strokeStyle='#e9e2da';c.lineWidth=4;c.beginPath();c.arc(680,380,90,0,7);c.stroke();c.strokeRect(668,90,24,210);
+  c.fillStyle='rgba(214,40,40,.75)';c.beginPath();c.arc(680,380,86,0,7);c.fill();const lh=60+d*1.8;c.fillRect(671,296-lh,18,lh+10);line(c,660,236,700,236,'#ffd166',2,[6,6]);txt(c,'20 ℃ 液面',710,242,'#ffd166',18);
+  // gas
+  txt(c,'氣體（氣球）',1060,60,'#f1e7e1',24,'left',true);const r=90*(1+d*0.006);c.fillStyle='rgba(255,138,76,.75)';c.beginPath();c.ellipse(1220,290,r*0.9,r,0,0,7);c.fill();c.strokeStyle='#e9e2da';c.strokeRect(1205,290+r,30,90);
+  c.strokeStyle='#ffd166';c.setLineDash([6,6]);c.lineWidth=2;c.beginPath();c.ellipse(1220,290,81,90,0,0,7);c.stroke();c.setLineDash([]);
+  txt(c,'虛線：20 ℃ 時的大小',1220,500,'#ffd166',18,'center');
+  // particles strip
+  const n=6,amp=1+T4/14,sp=24+T4*0.08;for(let i=0;i<n;i++)for(let j=0;j<3;j++){const x=80+i*sp+Math.sin((t||0)*8+i*3+j)*amp,y=300+j*sp+Math.cos((t||0)*9+i+j*2)*amp;c.fillStyle=heatCol(T4/100);c.beginPath();c.arc(x,y,9,0,7);c.fill();}
+  txt(c,'固體粒子：溫度越高振動越劇烈、間距變大',60,440,'#b3a197',20);
+  $('t4Out').textContent=T4+' ℃';}
+$('t4').addEventListener('input',e=>{T4=+e.target.value;});
+
+/* ================= 5-5 熱的傳播 ================= */
+let hm='cond',rod='metal',on5=false,start5=0,condAcc=0;let rodT=new Array(30).fill(20),pins=[],flow=[],radT=[25,25];
+function reset5(){on5=false;rodT=new Array(30).fill(20);pins=Array.from({length:6},(_,i)=>({i:4+i*5,y:0,fall:false}));flow=Array.from({length:260},()=>({x:Math.random(),y:Math.random(),T:20}));radT=[25,25];
+  $('go5').textContent='🔥 開始加熱';$('go5b').textContent='🔥 開始加熱';$('go5c').textContent='💡 打開燈';msg5();}
+function msg5(){const v=$('v5');
+  if(hm==='cond')v.textContent=rod==='metal'?'銅是熱的良導體：熱很快沿著棒子傳開，蠟融化、迴紋針依序掉落。':'木頭是熱的不良導體：熱傳得很慢，遠端的迴紋針不容易掉下來。';
+  if(hm==='conv')v.textContent=cv==='bottom'?'底部的水受熱後上升，上方較冷的水下降，形成循環的對流，整杯水一起變熱。':'從中間加熱時，熱水上升、不易下降到底部，只有上半部形成對流；要加熱的水量較少，上半部會較快沸騰。';
+  if(hm==='rad')v.textContent='燈泡的熱以輻射方式傳出，不需要介質。深色布料較容易吸收輻射熱，溫度上升較快；淺色布料較不容易吸收。';}
+let cv='bottom';
+seg('[data-hm]',b=>{hm=b.dataset.hm;$('ctlCond').hidden=hm!=='cond';$('ctlConv').hidden=hm!=='conv';$('ctlRad').hidden=hm!=='rad';reset5();});
+seg('[data-rod]',b=>{rod=b.dataset.rod;reset5();});seg('[data-cv]',b=>{cv=b.dataset.cv;reset5();});
+['go5','go5b','go5c'].forEach(id=>$(id).addEventListener('click',()=>{if(on5){reset5();return;}on5=true;start5=performance.now();$(id).textContent='↺ 重來';}));
+function step5(dt){if(!on5)return;
+  if(hm==='cond'){const a=rod==='metal'?0.45:0.03;condAcc+=dt*60;while(condAcc>=1){condAcc--;const n=rodT.slice();n[0]=200;for(let i=1;i<29;i++)n[i]=rodT[i]+a*(rodT[i-1]-2*rodT[i]+rodT[i+1])-0.002*(rodT[i]-20);n[29]=n[28];rodT=n;}
+    pins.forEach(p=>{if(rodT[p.i]>60)p.fall=true;if(p.fall)p.y=Math.min(300,p.y+500*dt);});}
+  if(hm==='conv'){flow.forEach(p=>{const y0=cv==='bottom'?0:0.5;// circulation in [y0,1]
+      // 兩個對流環：中央熱水上升、兩側冷水下降（流線函數 ψ = sin2πx·sinπy）
+      if(p.y>=y0){const yy=(p.y-y0)/(1-y0),k=0.08;p.x+=k*dt*Math.PI*Math.sin(2*Math.PI*p.x)*Math.cos(Math.PI*yy);p.y+=k*dt*(-2*Math.PI*Math.cos(2*Math.PI*p.x)*Math.sin(Math.PI*yy))*(1-y0);}
+      p.x=Math.min(0.99,Math.max(0.01,p.x));p.y=Math.min(0.99,Math.max(0.01,p.y));
+      const heater=cv==='bottom'?(p.y<0.08&&Math.abs(p.x-0.5)<0.2):(Math.abs(p.y-0.5)<0.05&&Math.abs(p.x-0.5)<0.2);
+      if(heater)p.T=Math.min(100,p.T+80*dt);else p.T=Math.max(20,p.T-3*dt);});}
+  if(hm==='rad'){radT[0]+=dt*2.4*(1-(radT[0]-25)/45);radT[1]+=dt*0.9*(1-(radT[1]-25)/45);}}
+function draw5(t){const c=$('c5').getContext('2d');c.fillStyle=BG;c.fillRect(0,0,1600,560);
+  if(hm==='cond'){const x0=300,w=1100;for(let i=0;i<30;i++){const h=(rodT[i]-20)/120;c.fillStyle=rod==='metal'?heatCol(h):`rgb(${Math.round(140+110*Math.min(1,h))},${Math.round(95-40*Math.min(1,h))},${Math.round(55-30*Math.min(1,h))})`;c.fillRect(x0+i*w/30,200,w/30+1,50);}
+    c.strokeStyle='#e9e2da';c.lineWidth=2;c.strokeRect(x0,200,w,50);
+    if(on5){for(let i=0;i<3;i++){c.fillStyle=['#ff6a00','#ffb000','#ffe36e'][i];c.beginPath();c.ellipse(x0+10,290-i*4,28-i*8+Math.sin(t*9+i)*3,40-i*8,0,0,7);c.fill();}}
+    c.fillStyle='#4a4a4a';c.fillRect(x0-30,330,80,20);
+    pins.forEach(p=>{const x=x0+(p.i+0.5)*w/30;c.fillStyle='#f4efe8';c.beginPath();c.ellipse(x,262+p.y,10,8,0,0,7);c.fill();c.strokeStyle='#bfc6cc';c.lineWidth=4;c.strokeRect(x-6,270+p.y,12,40);});
+    txt(c,'用蠟把迴紋針黏在棒子下方',x0,170,'#b3a197',22);txt(c,`已掉落 ${pins.filter(p=>p.fall).length} / ${pins.length} 個`,x0+w,170,'#ffd166',24,'right',true);
+    txt(c,rod==='metal'?'銅棒':'木棒',x0+w/2,520,'#f1e7e1',24,'center',true);}
+  if(hm==='conv'){const X=500,Y=80,W=600,H=420;c.fillStyle='rgba(76,155,232,.18)';c.fillRect(X,Y,W,H);c.strokeStyle='#e9e2da';c.lineWidth=5;c.beginPath();c.moveTo(X,Y-20);c.lineTo(X,Y+H);c.lineTo(X+W,Y+H);c.lineTo(X+W,Y-20);c.stroke();
+    flow.forEach(p=>{c.fillStyle=heatCol((p.T-20)/80);c.beginPath();c.arc(X+p.x*W,Y+H-p.y*H,7,0,7);c.fill();});
+    const hy=cv==='bottom'?Y+H+30:Y+H/2;if(on5){if(cv==='bottom'){for(let i=0;i<3;i++){c.fillStyle=['#ff6a00','#ffb000','#ffe36e'][i];c.beginPath();c.ellipse(X+W/2,hy-i*3,30-i*8,30-i*8,0,0,7);c.fill();}}else{c.fillStyle='#ff6a00';c.fillRect(X+W*0.3,hy-6,W*0.4,12);txt(c,'加熱線圈',X+W/2,hy-14,'#ffb000',20,'center');}}
+    const avgTop=flow.filter(p=>p.y>0.5).reduce((s,p)=>s+p.T,0)/Math.max(1,flow.filter(p=>p.y>0.5).length),avgBot=flow.filter(p=>p.y<=0.5).reduce((s,p)=>s+p.T,0)/Math.max(1,flow.filter(p=>p.y<=0.5).length);
+    txt(c,`上半部平均 ${fmt(avgTop,0)} ℃`,X+W+30,Y+80,'#ffd166',24,'left',true);txt(c,`下半部平均 ${fmt(avgBot,0)} ℃`,X+W+30,Y+H-60,'#ffd166',24,'left',true);
+    txt(c,'紅色：熱水　藍色：冷水',X,Y-30,'#b3a197',20);}
+  if(hm==='rad'){c.fillStyle='#ffe36e';c.beginPath();c.arc(800,140,50,0,7);c.fill();txt(c,'燈泡',800,230,'#f1e7e1',22,'center');
+    if(on5){for(let k=0;k<10;k++){const a=Math.PI*(0.15+0.7*k/9);c.strokeStyle='rgba(255,170,60,.7)';c.lineWidth=3;c.beginPath();for(let s=0;s<200;s+=4){const r=60+((s+t*120)%240);const xx=800+Math.cos(a)*r+Math.sin(s/6)*4,yy=140+Math.sin(a)*r;s?c.lineTo(xx,yy):c.moveTo(xx,yy);}c.stroke();}}
+    [[520,'#1d1d1d','深色布料'],[1080,'#f2f2f2','淺色布料']].forEach(([x,col,l],k)=>{c.fillStyle='#f4efe8';c.fillRect(x-8,250,16,220);c.fillStyle=col;c.fillRect(x-30,400,60,80);
+      const yy=395-((radT[k]-20)/50)*140;c.fillStyle='#d62828';c.fillRect(x-4,yy,8,400-yy);txt(c,fmt(radT[k])+' ℃',x,240,'#ffd166',28,'center',true);txt(c,l,x,520,'#f1e7e1',22,'center',true);});
+    txt(c,'輻射不需要介質：太陽的熱經過真空的太空傳到地球',800,40,'#b3a197',22,'center');}}
+
+/* ================= 練習 ================= */
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const GEN=[
+  ()=>{const m=pick([50,100,200,250,500]),d=pick([5,10,20,30,40]);return{q:`把 ${m} 公克的水從 20 ℃ 加熱到 ${20+d} ℃，需要多少熱量？`,u:'卡',a:m*d,s:`H ＝ m × S × ΔT ＝ ${m} × 1 × ${d} ＝ ${m*d} 卡`};},
+  ()=>{const [n,S]=pick([['銅',0.093],['鐵',0.113],['鋁',0.217],['甘油',0.58]]),m=pick([100,200,500]),d=pick([10,20,50]);const a=m*S*d;return{q:`${m} 公克的${n}（比熱 ${S}）溫度上升 ${d} ℃，需吸收多少熱量？`,u:'卡',a,s:`H ＝ ${m} × ${S} × ${d} ＝ ${fmt(a,2)} 卡`};},
+  ()=>{const m=pick([100,200,400]),H=pick([2000,4000,8000]);const a=H/m;return{q:`${m} 公克的水吸收 ${H} 卡的熱量，溫度上升多少 ℃？`,u:'℃',a,s:`ΔT ＝ H ÷ (m × S) ＝ ${H} ÷ (${m} × 1) ＝ ${fmt(a,2)} ℃`};},
+  ()=>{const C=pick([0,10,20,25,30,37,40,100]);const a=C*9/5+32;return{q:`${C} ℃ 等於多少 ℉？`,u:'℉',a,s:`℉ ＝ ${C} × 9/5 ＋ 32 ＝ ${fmt(a,1)} ℉`};},
+  ()=>{const F=pick([32,50,68,86,104,212]);const a=(F-32)*5/9;return{q:`${F} ℉ 等於多少 ℃？`,u:'℃',a,s:`℃ ＝ (${F} − 32) × 5/9 ＝ ${fmt(a,1)} ℃`};},
+  ()=>{const m=pick([100,200]),H=pick([1160,2320,580]);const S=0.58,a=H/(m*S);return{q:`${m} 公克的某物質吸收 ${H} 卡後溫度上升 ${fmt(a,1)} ℃，它的比熱是多少？`,u:'卡／公克．℃',a:S,s:`S ＝ H ÷ (m × ΔT) ＝ ${H} ÷ (${m} × ${fmt(a,1)}) ＝ 0.58 卡／公克．℃（甘油）`};},
+  ()=>{const m1=pick([100,200]),T1=pick([60,80,90]),m2=pick([100,200,300]),T2=pick([10,20]);const a=(m1*T1+m2*T2)/(m1+m2);return{q:`${m1} 公克 ${T1} ℃ 的熱水與 ${m2} 公克 ${T2} ℃ 的冷水混合（不計熱量散失），最後溫度是多少？`,u:'℃',a,s:`熱水放熱＝冷水吸熱：${m1}(${T1}−T)＝${m2}(T−${T2})，T ＝ ${fmt(a,2)} ℃`};},
+];
+let cur,sc=0,tr=0,answered=false;
+function nextP(){cur=pick(GEN)();answered=false;$('prob').textContent=cur.q;$('unit').textContent=cur.u;$('ansI').value='';$('sol').textContent='';}
+$('ansF').addEventListener('submit',e=>{e.preventDefault();const v=parseFloat($('ansI').value);if(isNaN(v)){$('sol').textContent='請先輸入數字。';return;}
+  const ok=Math.abs(v-cur.a)<=Math.max(Math.abs(cur.a)*0.01,0.051);if(!answered){tr++;if(ok)sc++;answered=true;}$('sc').textContent=sc;$('tr').textContent=tr;
+  $('sol').style.color=ok?'var(--good)':'var(--bad)';$('sol').textContent=(ok?'✔ 正確！':`✘ 正確答案約 ${fmt(cur.a,2)} ${cur.u}。`)+'　'+cur.s;});
+$('nextP').addEventListener('click',nextP);nextP();
+const Q=[
+  {q:'溫度計的原理是？',o:['液體熱脹冷縮','光的折射','熱輻射'],a:0,w:'溫度升高液體膨脹、液面上升。'},
+  {q:'水結冰時是幾 ℉？',o:['0 ℉','32 ℉','100 ℉'],a:1,w:'攝氏 0 ℃＝華氏 32 ℉。'},
+  {q:'1 卡的定義是？',o:['1 公克的水上升 1 ℃ 所需的熱量','1 公斤的水上升 1 ℃ 所需的熱量','1 公克的水沸騰所需的熱量'],a:0,w:'1 卡＝1 公克的水上升 1 ℃ 所需熱量。'},
+  {q:'同一熱源加熱相同時間，50 g 的水和 100 g 的水，何者溫度上升較多？',o:['50 g','100 g','一樣多'],a:0,w:'吸收熱量相同，質量越小，溫度上升越多。'},
+  {q:'同質量的水和銅吸收相同熱量，何者溫度上升較多？',o:['水','銅','一樣'],a:1,w:'銅的比熱（0.093）比水小很多，溫度容易上升。'},
+  {q:'海邊白天陸地比海水熱，主要原因是？',o:['水的比熱比沙大','沙的比熱比水大','水會反射陽光'],a:0,w:'水的比熱大，溫度難升難降。'},
+  {q:'相同溫度變化下，何者體積變化最大？',o:['固體','液體','氣體'],a:2,w:'氣體＞液體＞固體。'},
+  {q:'橋樑預留伸縮縫是為了？',o:['排水','避免熱脹冷縮造成損壞','減少噪音'],a:1,w:'夏天受熱膨脹，伸縮縫提供空間。'},
+  {q:'冷氣機通常裝在高處，這是利用？',o:['熱傳導','熱對流','熱輻射'],a:1,w:'冷空氣較重會下降，形成對流。'},
+  {q:'太陽的熱傳到地球是哪一種方式？',o:['傳導','對流','輻射'],a:2,w:'太空接近真空，只能靠輻射。'},
+  {q:'下列何者是熱的良導體？',o:['銅','木頭','塑膠'],a:0,w:'多數金屬是熱的良導體。'},
+  {q:'夏天穿淺色衣服較涼爽，因為淺色？',o:['較易吸收輻射熱','較不易吸收輻射熱','導熱較快'],a:1,w:'深色較易吸收輻射熱。'},
+];
+let qs=0;const qz=$('quiz');const scoreP=document.createElement('p');scoreP.className='note';scoreP.innerHTML='答對 <b id="qsc">0</b> 題';qz.appendChild(scoreP);
+Q.forEach((it,i)=>{const d=document.createElement('div');d.className='q';d.innerHTML=`<p>${i+1}. ${it.q}</p><div class="opts"></div><div class="fb" aria-live="polite"></div>`;
+  const ops=d.querySelector('.opts'),fb=d.querySelector('.fb');let done=false;
+  it.o.forEach((t,j)=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.onclick=()=>{
+    if(j===it.a){b.className='ok';fb.textContent='正確！'+it.w;fb.style.color='var(--good)';if(!done){qs++;$('qsc').textContent=qs;}done=true;}
+    else{b.className='no';fb.textContent='再想想看。';fb.style.color='var(--bad)';done=true;}};ops.appendChild(b);});qz.appendChild(d);});
+
+/* ---------- 初始與動畫 ---------- */
+function drawAll(){drawTh();draw2();draw3();calc();mixT=[+$('hotT').value,+$('coldT').value];drawMix(null);draw4(0);draw5(0);}
+reset5();drawAll();if(document.fonts&&document.fonts.ready)document.fonts.ready.then(drawAll);
+let last=performance.now();(function loop(n){const dt=Math.min(0.05,Math.max(0,(n-last)/1000));last=n;const t=n/1000;
+  if(active==='p4')draw4(t);if(active==='p5'){step5(dt);draw5(t);}
+  requestAnimationFrame(loop);})(last);
+})();
+</script>
+</body>
+</html>

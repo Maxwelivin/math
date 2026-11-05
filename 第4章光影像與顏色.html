@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>光影像與顏色實驗室</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&display=swap">
+<style>
+/* Layout: 章標題 → 大分頁列（各節）→ 每頁「說明卡 + 畫布 + 控制列 + 讀數」；為電子白板放大字級與按鈕 */
+:root{
+  --bg:#f1f2f8; --surface:#ffffff; --fg:#191c2e; --muted:#5b6078; --line:#d8dbe8;
+  --accent:#5b4bb7; --accent-soft:#ebe8fb; --warm:#d9480f; --good:#15803d; --bad:#c92a2a;
+  --display:"Noto Serif TC","Songti TC",serif; --body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12131c; --surface:#1c1e2b; --fg:#e7e8f2; --muted:#9da1b8; --line:#2e3145;
+  --accent:#a99cf5; --accent-soft:#2a2550; --warm:#ff8a4c; --good:#4ade80; --bad:#ff6b6b; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12131c; --surface:#1c1e2b; --fg:#e7e8f2; --muted:#9da1b8; --line:#2e3145;
+  --accent:#a99cf5; --accent-soft:#2a2550; --warm:#ff8a4c; --good:#4ade80; --bad:#ff6b6b; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:17px;line-height:1.7}
+.wrap{max-width:1400px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:18px}
+header{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.unit{font-family:var(--display);font-weight:900;font-size:2.4rem;color:var(--accent);line-height:1}
+h1{font-family:var(--display);font-weight:900;font-size:2.1rem;margin:0;line-height:1.2}
+.home{margin-left:auto;color:var(--accent);font-weight:700;text-decoration:none}
+nav.tabs{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+@media (max-width:900px){nav.tabs{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:520px){nav.tabs{grid-template-columns:repeat(2,minmax(0,1fr))}}
+nav.tabs button{font:inherit;font-size:1.05rem;font-weight:700;padding:12px 8px;border-radius:10px;border:2px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer;line-height:1.3}
+nav.tabs button small{display:block;font-weight:400;font-size:.82rem;color:var(--muted)}
+nav.tabs button[aria-selected="true"]{border-color:var(--accent);background:var(--accent);color:#fff}
+nav.tabs button[aria-selected="true"] small{color:#efedff}
+section.page{display:grid;gap:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+h2{font-family:var(--display);font-size:1.45rem;margin:0 0 6px}
+h3{font-size:1.15rem;margin:0 0 8px}
+.lead{margin:0;color:var(--muted);max-width:72ch}
+.scene{background:#0d0f18;border-radius:10px;overflow:hidden;touch-action:none}
+.scene canvas{display:block;width:100%;height:auto}
+.row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.big{font:inherit;font-size:1.15rem;font-weight:700;padding:12px 22px;border-radius:10px;border:0;background:var(--warm);color:#fff;cursor:pointer;min-height:52px}
+.btn{font:inherit;font-size:1rem;padding:10px 16px;border-radius:10px;border:2px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer;min-height:48px}
+.btn[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);font-weight:700}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.slider{flex:1 1 300px;display:grid;gap:2px}
+.slider label{display:flex;justify-content:space-between;font-weight:700}
+.slider output{color:var(--accent);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;height:36px;accent-color:var(--accent)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+.stat span{font-size:.9rem;color:var(--muted)}
+.stat b{display:block;font-size:1.5rem;font-variant-numeric:tabular-nums;line-height:1.3}
+.verdict{border-radius:12px;padding:12px 16px;font-weight:700;font-size:1.12rem;background:var(--accent-soft)}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+@media (max-width:900px){.two{grid-template-columns:minmax(0,1fr)}}
+.note{font-size:.95rem;color:var(--muted)}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+td,th{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left}
+tr.on td{background:var(--accent-soft);font-weight:700}
+.tablebox{overflow-x:auto}
+.q{border-top:1px solid var(--line);padding-top:12px;margin-top:12px}
+.q:first-of-type{border:0;margin:0;padding:0}
+.q p{margin:0 0 8px;font-weight:500}
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.opts button{font:inherit;border:2px solid var(--line);background:var(--bg);color:var(--fg);border-radius:8px;padding:8px 14px;cursor:pointer}
+.opts button.ok{border-color:var(--good);color:var(--good);font-weight:700}
+.opts button.no{border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.fb{font-size:.95rem;margin-top:6px;min-height:1.3em}
+.swatch{display:inline-block;width:1.1em;height:1.1em;border-radius:4px;vertical-align:-3px;border:1px solid var(--line);margin-right:4px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="unit">第 4 章</span><h1>光、影像與顏色</h1>
+    <a class="home" href="index.html">← 回首頁</a>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" data-p="p1" aria-selected="true">4-1 光的傳播<small>光速・影子</small></button>
+    <button role="tab" data-p="p2" aria-selected="false">4-2 光的反射<small>反射定律・面鏡</small></button>
+    <button role="tab" data-p="p3" aria-selected="false">4-3 光的折射<small>偏折・杯底變淺</small></button>
+    <button role="tab" data-p="p4" aria-selected="false">4-4 透鏡成像<small>凸透鏡・凹透鏡</small></button>
+    <button role="tab" data-p="p5" aria-selected="false">4-5 色散與顏色<small>三原色・物體顏色</small></button>
+    <button role="tab" data-p="p6" aria-selected="false">測驗<small>觀念複習</small></button>
+  </nav>
+
+  <!-- ================= 4-1 ================= -->
+  <section class="page" id="p1">
+    <div class="card">
+      <h2>光速比一比</h2>
+      <p class="lead">光不需要介質也能傳播。光在不同物質中的傳播速率不同：真空＞空氣＞水＞玻璃。按「起跑」比較光通過同樣長度的真空、水和玻璃。</p>
+    </div>
+    <div class="row"><button class="big" id="race">▶ 起跑</button><span class="note">動畫已大幅放慢；真實光速約每秒 30 萬公里，太陽光到地球約 8 分 20 秒。</span></div>
+    <div class="scene"><canvas id="cRace" width="1600" height="360"></canvas></div>
+
+    <div class="card">
+      <h2>影子的大小</h2>
+      <p class="lead">光照射到不透明物體，物體後方光線照不到的地方形成影子，這也是光直線前進的證據。拖動物體（或用滑桿）改變物體與光源的距離，觀察牆上影子的大小。</p>
+    </div>
+    <div class="row">
+      <div class="slider"><label for="objX">物體與光源的距離 <output id="objXOut"></output></label><input type="range" id="objX" min="180" max="1300" step="5" value="500"></div>
+      <button class="btn" id="bigLight" aria-pressed="false">改用大光源（燈泡）</button>
+    </div>
+    <div class="scene"><canvas id="cShadow" width="1600" height="440"></canvas></div>
+    <div class="verdict" id="shadowV"></div>
+    <p class="note">想看光的直進性另一個證據？<a href="針孔成像實驗室.html">針孔成像實驗室 →</a></p>
+  </section>
+
+  <!-- ================= 4-2 ================= -->
+  <section class="page" id="p2" hidden>
+    <div class="card">
+      <h2>光的反射與面鏡</h2>
+      <p class="lead" id="mirLead"></p>
+    </div>
+    <div class="row">
+      <button class="btn" data-mir="law" aria-pressed="true">反射定律</button>
+      <button class="btn" data-mir="plane" aria-pressed="false">平面鏡成像</button>
+      <button class="btn" data-mir="concave" aria-pressed="false">凹面鏡</button>
+      <button class="btn" data-mir="convex" aria-pressed="false">凸面鏡</button>
+    </div>
+    <div class="row" id="lawCtl">
+      <div class="slider"><label for="inc">入射角 <output id="incOut"></output></label><input type="range" id="inc" min="0" max="80" step="1" value="35"></div>
+    </div>
+    <div class="scene"><canvas id="cMir" width="1600" height="600"></canvas></div>
+    <div class="verdict" id="mirV"></div>
+  </section>
+
+  <!-- ================= 4-3 ================= -->
+  <section class="page" id="p3" hidden>
+    <div class="card">
+      <h2>光的折射</h2>
+      <p class="lead">光從一種物質進入另一種物質時，前進方向會偏折，稱為折射。光由快到慢（例如空氣進入水）時偏向法線，入射角＞折射角；光由慢到快時偏離法線，入射角＜折射角。光的路徑可逆。</p>
+    </div>
+    <div class="row">
+      <button class="btn" data-ref="0" aria-pressed="true">空氣 → 水</button>
+      <button class="btn" data-ref="1" aria-pressed="false">空氣 → 玻璃</button>
+      <button class="btn" data-ref="2" aria-pressed="false">水 → 空氣</button>
+      <button class="btn" data-ref="3" aria-pressed="false">玻璃 → 空氣</button>
+      <div class="slider"><label for="rinc">入射角 <output id="rincOut"></output></label><input type="range" id="rinc" min="0" max="80" step="1" value="40"></div>
+    </div>
+    <div class="scene"><canvas id="cRef" width="1600" height="560"></canvas></div>
+    <div class="stats">
+      <div class="stat"><span>入射角</span><b id="rI"></b></div>
+      <div class="stat"><span>折射角</span><b id="rR"></b></div>
+      <div class="stat"><span>光速變化</span><b id="rS"></b></div>
+    </div>
+    <div class="verdict" id="refV"></div>
+
+    <div class="card">
+      <h2>探討活動：水把杯底變淺了？</h2>
+      <p class="lead">眼睛的位置不動，原本被杯緣擋住、看不到杯底的硬幣；加水後光線在水面折射，就能看見硬幣，而且硬幣看起來比實際位置淺。</p>
+    </div>
+    <div class="row"><button class="big" id="water">💧 加水</button></div>
+    <div class="scene"><canvas id="cCup" width="1600" height="620"></canvas></div>
+    <div class="verdict" id="cupV"></div>
+  </section>
+
+  <!-- ================= 4-4 ================= -->
+  <section class="page" id="p4" hidden>
+    <div class="card">
+      <h2>透鏡成像</h2>
+      <p class="lead">凸透鏡中央厚、能會聚光線；凹透鏡中央薄、會使光線發散。拖動左邊的物體（蠟燭箭頭）改變物距，觀察像的位置、大小、正倒立與虛實。實線是真正的光線，虛線是光線的反向延長線。</p>
+    </div>
+    <div class="row">
+      <button class="btn" data-lens="convex" aria-pressed="true">凸透鏡</button>
+      <button class="btn" data-lens="concave" aria-pressed="false">凹透鏡</button>
+      <div class="slider"><label for="px">物距 <output id="pxOut"></output></label><input type="range" id="px" min="40" max="720" step="1" value="520"></div>
+      <div class="slider" style="flex-basis:220px"><label for="fl">焦距 <output id="flOut"></output></label><input type="range" id="fl" min="120" max="220" step="10" value="160"></div>
+    </div>
+    <div class="scene"><canvas id="cLens" width="1600" height="600"></canvas></div>
+    <div class="verdict" id="lensV"></div>
+    <div class="card tablebox">
+      <h3>凸透鏡成像整理</h3>
+      <table><thead><tr><th>物體位置</th><th>正／倒立</th><th>大小</th><th>虛／實</th><th>應用</th></tr></thead>
+      <tbody id="lensT">
+        <tr data-k="out2f"><td>2 倍焦距外</td><td>倒立</td><td>縮小</td><td>實像</td><td>照相機、眼睛</td></tr>
+        <tr data-k="at2f"><td>2 倍焦距上</td><td>倒立</td><td>相等</td><td>實像</td><td>—</td></tr>
+        <tr data-k="f2f"><td>1～2 倍焦距間</td><td>倒立</td><td>放大</td><td>實像</td><td>投影機</td></tr>
+        <tr data-k="atf"><td>焦點上</td><td colspan="3">不成像（光線平行射出）</td><td>探照燈</td></tr>
+        <tr data-k="inf"><td>焦點至透鏡間</td><td>正立</td><td>放大</td><td>虛像</td><td>放大鏡、矯正遠視</td></tr>
+        <tr data-k="concave"><td>凹透鏡（任何位置）</td><td>正立</td><td>縮小</td><td>虛像</td><td>矯正近視</td></tr>
+      </tbody></table>
+    </div>
+  </section>
+
+  <!-- ================= 4-5 ================= -->
+  <section class="page" id="p5" hidden>
+    <div class="card">
+      <h2>色散</h2>
+      <p class="lead">陽光（白光）經過三稜鏡折射後，分散成紅、橙、黃、綠、藍、靛、紫等色光，稱為色散。不同色光偏折的程度不同，紫光偏折最多、紅光最少。雨後的彩虹也是色散現象。</p>
+    </div>
+    <div class="scene"><canvas id="cPrism" width="1600" height="420"></canvas></div>
+
+    <div class="two">
+      <div class="card">
+        <h2>色光三原色</h2>
+        <p class="lead">紅、綠、藍是色光三原色，依不同亮度組合可得到各種顏色的光。三種都全亮時是白光。</p>
+        <div class="row" style="margin-top:10px">
+          <div class="slider"><label for="cr"><span><span class="swatch" style="background:#f33"></span>紅光</span><output id="crO"></output></label><input type="range" id="cr" min="0" max="255" value="255"></div>
+          <div class="slider"><label for="cg"><span><span class="swatch" style="background:#3c3"></span>綠光</span><output id="cgO"></output></label><input type="range" id="cg" min="0" max="255" value="255"></div>
+          <div class="slider"><label for="cb"><span><span class="swatch" style="background:#36f"></span>藍光</span><output id="cbO"></output></label><input type="range" id="cb" min="0" max="255" value="0"></div>
+        </div>
+      </div>
+      <div class="scene"><canvas id="cRGB" width="800" height="520"></canvas></div>
+    </div>
+
+    <div class="card">
+      <h2>物體的顏色</h2>
+      <p class="lead">不透明物體的顏色由它反射的色光決定；透明物體（如玻璃紙）的顏色由能穿透的色光決定。選光源、玻璃紙和物體，看看眼睛會看到什麼顏色。</p>
+      <div class="row" style="margin-top:10px"><b>光源：</b><span id="selLight"></span></div>
+      <div class="row" style="margin-top:6px"><b>玻璃紙：</b><span id="selFilter"></span></div>
+      <div class="row" style="margin-top:6px"><b>物體：</b><span id="selObj"></span></div>
+    </div>
+    <div class="scene"><canvas id="cObj" width="1600" height="420"></canvas></div>
+    <div class="verdict" id="objV"></div>
+  </section>
+
+  <!-- ================= 測驗 ================= -->
+  <section class="page" id="p6" hidden>
+    <div class="card" id="quiz"><h2>第 4 章觀念測驗</h2><p class="note" style="margin:0">答對 <b id="qs">0</b> 題</p></div>
+  </section>
+</div>
+
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+const DEG=Math.PI/180;
+function pt(cv,e){const r=cv.getBoundingClientRect();return{x:(e.clientX-r.left)*cv.width/r.width,y:(e.clientY-r.top)*cv.height/r.height};}
+function seg(sel,cb){const bs=document.querySelectorAll(sel);bs.forEach(b=>b.addEventListener('click',()=>{bs.forEach(x=>x.setAttribute('aria-pressed',x===b));cb(b);}));}
+function line(c,x1,y1,x2,y2,col,w,dash){c.strokeStyle=col;c.lineWidth=w||3;c.setLineDash(dash||[]);c.beginPath();c.moveTo(x1,y1);c.lineTo(x2,y2);c.stroke();c.setLineDash([]);}
+function arrowHead(c,x1,y1,x2,y2,col){const a=Math.atan2(y2-y1,x2-x1),mx=(x1+x2)/2,my=(y1+y2)/2;c.fillStyle=col;c.beginPath();c.moveTo(mx+12*Math.cos(a),my+12*Math.sin(a));c.lineTo(mx-10*Math.cos(a)+8*Math.sin(a),my-10*Math.sin(a)-8*Math.cos(a));c.lineTo(mx-10*Math.cos(a)-8*Math.sin(a),my-10*Math.sin(a)+8*Math.cos(a));c.fill();}
+function ray(c,x1,y1,x2,y2,col,w){line(c,x1,y1,x2,y2,col,w);arrowHead(c,x1,y1,x2,y2,col);}
+function txt(c,s,x,y,col,size,align,bold){c.fillStyle=col||'#e7e8f2';c.font=`${bold?'bold ':''}${size||22}px "Noto Sans TC",sans-serif`;c.textAlign=align||'left';c.fillText(s,x,y);}
+const BG='#0d0f18';
+
+let active='p1';
+document.querySelectorAll('nav.tabs button').forEach(b=>b.addEventListener('click',()=>{active=b.dataset.p;
+  document.querySelectorAll('nav.tabs button').forEach(x=>x.setAttribute('aria-selected',x===b));
+  document.querySelectorAll('section.page').forEach(s=>s.hidden=s.id!==active);drawAll();}));
+
+/* ================= 4-1 光速 ================= */
+const cRace=$('cRace'),xR=cRace.getContext('2d');
+const LANES=[{n:'真空（空氣近似）',v:1,s:'3.0 × 10⁸ m/s',col:'#ffe066'},{n:'水',v:1/1.33,s:'約 2.25 × 10⁸ m/s',col:'#4cc3d2'},{n:'玻璃',v:1/1.5,s:'約 2.0 × 10⁸ m/s',col:'#a99cf5'}];
+let raceT=null;
+function drawRace(t){const c=xR;c.fillStyle=BG;c.fillRect(0,0,1600,360);const X0=330,X1=1520;
+  LANES.forEach((L,i)=>{const y=70+i*110;c.fillStyle=i?(i===1?'rgba(76,195,210,.15)':'rgba(169,156,245,.15)'):'rgba(255,255,255,.04)';c.fillRect(X0,y-36,X1-X0,72);
+    txt(c,L.n,20,y-4,'#e7e8f2',24,'left',true);txt(c,L.s,20,y+26,'#9da1b8',20);
+    const p=t==null?0:Math.min(1,t*L.v/2.2);const x=X0+p*(X1-X0);
+    const g=c.createRadialGradient(x,y,0,x,y,30);g.addColorStop(0,L.col);g.addColorStop(1,'rgba(0,0,0,0)');c.fillStyle=g;c.beginPath();c.arc(x,y,30,0,7);c.fill();
+    c.strokeStyle=L.col;c.lineWidth=4;c.beginPath();c.moveTo(X0,y);c.lineTo(x,y);c.stroke();
+    if(p>=1)txt(c,'抵達！'+(2.2/L.v).toFixed(2)+' 單位時間',X1-10,y-42,L.col,20,'right',true);});
+  line(c,X1,20,X1,340,'#ff6b6b',3,[10,8]);txt(c,'終點',X1,350,'#ff6b6b',18,'center');}
+$('race').addEventListener('click',()=>{const t0=performance.now(),id={};raceT=id;(function s(n){if(raceT!==id)return;const t=Math.max(0,(n-t0)/1000);drawRace(t);if(t<3.6)requestAnimationFrame(s);})(t0);});
+
+/* ================= 4-1 影子 ================= */
+const cSh=$('cShadow'),xS=cSh.getContext('2d');let objX=500,bigL=false,dragSh=false;
+const LX=110,CY=220,SX=1500,OH=70;
+function proj(ly,ox,oy){return ly+(oy-ly)*(SX-LX)/(ox-LX);}
+function drawShadow(){const c=xS;c.fillStyle=BG;c.fillRect(0,0,1600,440);
+  // wall
+  c.fillStyle='#d9d4c2';c.fillRect(SX,20,40,400);
+  const Lt=bigL?CY-45:CY,Lb=bigL?CY+45:CY,Ot=CY-OH,Ob=CY+OH;
+  // light cone
+  c.fillStyle='rgba(255,236,150,.10)';c.beginPath();c.moveTo(LX,CY);c.lineTo(SX,0);c.lineTo(SX,440);c.fill();
+  // shadow region in space
+  const pTop=proj(Lt,objX,Ot),pBot=proj(Lb,objX,Ob);
+  c.fillStyle='rgba(0,0,0,.55)';c.beginPath();c.moveTo(objX,Ot);c.lineTo(SX,pTop);c.lineTo(SX,pBot);c.lineTo(objX,Ob);c.fill();
+  // wall shading
+  c.fillStyle='#d9d4c2';c.fillRect(SX,20,40,400);
+  const cl=(y)=>Math.max(20,Math.min(420,y));
+  if(bigL){const pt1=proj(Lb,objX,Ot),pt2=proj(Lt,objX,Ot),pb1=proj(Lb,objX,Ob),pb2=proj(Lt,objX,Ob);
+    c.fillStyle='#8c8778';c.fillRect(SX,cl(pt1),40,cl(pt2)-cl(pt1));c.fillRect(SX,cl(pb1),40,cl(pb2)-cl(pb1));
+    c.fillStyle='#2b2a26';c.fillRect(SX,cl(pt2),40,cl(pb1)-cl(pt2));
+    line(c,LX,Lb,SX,pt1,'rgba(255,224,102,.5)',2,[8,6]);line(c,LX,Lt,SX,pb2,'rgba(255,224,102,.5)',2,[8,6]);
+    txt(c,'半影',SX-10,(cl(pt1)+cl(pt2))/2+8,'#ffd166',20,'right');txt(c,'本影',SX-10,(cl(pt2)+cl(pb1))/2+8,'#ffd166',20,'right');}
+  else{c.fillStyle='#2b2a26';c.fillRect(SX,cl(pTop),40,cl(pBot)-cl(pTop));}
+  line(c,LX,Lt,SX,pTop,'rgba(255,224,102,.85)',2);line(c,LX,Lb,SX,pBot,'rgba(255,224,102,.85)',2);
+  // light
+  c.fillStyle='#ffe066';if(bigL){c.beginPath();c.ellipse(LX,CY,26,48,0,0,7);c.fill();}else{c.beginPath();c.arc(LX,CY,14,0,7);c.fill();}
+  // object
+  c.fillStyle='#7d8bd6';c.fillRect(objX-10,Ot,20,OH*2);txt(c,'拖動物體',objX,Ot-14,'#cfd3ff',20,'center');
+  txt(c,'光源',LX,CY+80,'#e7e8f2',22,'center');txt(c,'牆',SX+20,438,'#e7e8f2',20,'center');
+  const H=(pBot-pTop)/(OH*2);$('objXOut').textContent=Math.round(objX-LX)+' 單位';
+  $('shadowV').textContent=`影子高度約為物體的 ${H.toFixed(1)} 倍。物體離光源越近，影子越大；離光源越遠（越靠近牆），影子越小。`+(bigL?' 大光源會形成全黑的本影和較淡的半影。':'');}
+$('objX').addEventListener('input',e=>{objX=+e.target.value;drawShadow();});
+$('bigLight').addEventListener('click',e=>{bigL=!bigL;e.currentTarget.setAttribute('aria-pressed',bigL);drawShadow();});
+cSh.addEventListener('pointerdown',e=>{const p=pt(cSh,e);if(Math.abs(p.x-objX)<60){dragSh=true;cSh.setPointerCapture(e.pointerId);}});
+cSh.addEventListener('pointermove',e=>{if(!dragSh)return;objX=Math.max(180,Math.min(1300,pt(cSh,e).x));$('objX').value=objX;drawShadow();});
+cSh.addEventListener('pointerup',()=>dragSh=false);
+
+/* ================= 4-2 反射 ================= */
+const cM=$('cMir'),xM=cM.getContext('2d');let mir='law',inc=35,pObj={x:450,y:330},pEye={x:300,y:150},dragM=null;
+const LEADS={law:'光照射到物體表面後返回原介質，稱為反射。反射定律：入射角＝反射角；入射線、反射線在法線兩側，且三者在同一平面上。拖動滑桿改變入射角。',
+  plane:'平面鏡的像與物大小相等、左右相反（對稱），物距＝像距。像無法呈現在紙屏上，是虛像。拖動物體或眼睛，觀察光線怎麼從物體反射進入眼睛，以及眼睛「以為」光從哪裡來。',
+  concave:'凹面鏡的鏡面向內凹，平行光照射後會反射會聚於一點（焦點）。應用：化妝鏡、手電筒、探照燈。',
+  convex:'凸面鏡的鏡面向外凸，平行光照射後反射發散，反向延長線交於鏡後一點。可以看到更大的範圍。應用：汽車後照鏡、道路轉角反射鏡。'};
+function drawMir(){const c=xM;c.fillStyle=BG;c.fillRect(0,0,1600,600);$('mirLead').textContent=LEADS[mir];$('lawCtl').hidden=mir!=='law';
+  if(mir==='law'){const hx=800,hy=470,L=420;
+    c.fillStyle='#9fb3c8';c.fillRect(300,hy,1000,14);for(let x=300;x<1300;x+=24)line(c,x,hy+14,x-14,hy+34,'#56677a',2);
+    line(c,hx,hy,hx,60,'#cfd3ff',2,[10,8]);txt(c,'法線',hx+10,80,'#cfd3ff',22);
+    const sx=hx-L*Math.sin(inc*DEG),sy=hy-L*Math.cos(inc*DEG),rx=hx+L*Math.sin(inc*DEG),ry=sy;
+    ray(c,sx,sy,hx,hy,'#ff5a5a',5);ray(c,hx,hy,rx,ry,'#ff5a5a',5);
+    c.fillStyle='#ff5a5a';c.fillRect(sx-30,sy-14,40,28);
+    c.strokeStyle='#ffd166';c.lineWidth=3;c.beginPath();c.arc(hx,hy,90,-Math.PI/2-inc*DEG,-Math.PI/2);c.stroke();c.strokeStyle='#4cc3d2';c.beginPath();c.arc(hx,hy,110,-Math.PI/2,-Math.PI/2+inc*DEG);c.stroke();
+    txt(c,'入射角 '+inc+'°',hx-30,hy-130,'#ffd166',24,'right',true);txt(c,'反射角 '+inc+'°',hx+30,hy-130,'#4cc3d2',24,'left',true);
+    txt(c,'入射線',sx+20,sy+40,'#ffb0b0',20);txt(c,'反射線',rx-90,ry+40,'#ffb0b0',20);
+    $('incOut').textContent=inc+'°';$('mirV').textContent=`入射角 ${inc}° ＝ 反射角 ${inc}°`+(inc===0?'：光垂直射向鏡面，會沿原路反射回去。':'');return;}
+  if(mir==='plane'){const MX=800;c.fillStyle='#9fb3c8';c.fillRect(MX-6,60,12,480);for(let y=60;y<540;y+=24)line(c,MX+6,y,MX+26,y-14,'#56677a',2);
+    const img={x:2*MX-pObj.x,y:pObj.y};
+    // object (candle) & image
+    const drawCandle=(x,y,al,lab)=>{c.globalAlpha=al;c.fillStyle='#f1e3c6';c.fillRect(x-12,y,24,90);c.fillStyle='#ffb347';c.beginPath();c.ellipse(x,y-18,10,20,0,0,7);c.fill();c.globalAlpha=1;txt(c,lab,x,y+120,'#e7e8f2',20,'center');};
+    drawCandle(pObj.x,pObj.y,1,'物體（拖動）');drawCandle(img.x,img.y,0.45,'像（虛像）');
+    // ray: object flame -> mirror -> eye
+    const fy=pObj.y-18,iy=img.y-18;const t=(MX-img.x)/(pEye.x-img.x);const my=iy+(pEye.y-iy)*t;
+    if(my>60&&my<540&&pEye.x<MX){ray(c,pObj.x,fy,MX,my,'#ffd166',4);ray(c,MX,my,pEye.x,pEye.y,'#ffd166',4);line(c,MX,my,img.x,iy,'rgba(255,209,102,.6)',3,[10,8]);}
+    // eye
+    c.fillStyle='#fff';c.beginPath();c.ellipse(pEye.x,pEye.y,28,16,0,0,7);c.fill();c.fillStyle='#222';c.beginPath();c.arc(pEye.x+8,pEye.y,8,0,7);c.fill();txt(c,'眼睛（拖動）',pEye.x,pEye.y-28,'#e7e8f2',20,'center');
+    line(c,pObj.x,pObj.y+100,MX,pObj.y+100,'#4cc3d2',2);line(c,MX,img.y+100,img.x,img.y+100,'#a99cf5',2);
+    txt(c,'物距 '+Math.round(MX-pObj.x),(pObj.x+MX)/2,pObj.y+96,'#4cc3d2',20,'center');txt(c,'像距 '+Math.round(img.x-MX),(img.x+MX)/2,img.y+96,'#a99cf5',20,'center');
+    $('mirV').textContent=`物距 ${Math.round(MX-pObj.x)} ＝ 像距 ${Math.round(img.x-MX)}。虛線是反射光的反向延長線，大腦以為光是從鏡子後方的像發出的。`;return;}
+  // curved mirrors
+  const R=700,cy=300,hs=[-200,-150,-100,-50,0,50,100,150,200];
+  if(mir==='concave'){const cx=500;c.strokeStyle='#9fb3c8';c.lineWidth=12;c.beginPath();c.arc(cx,cy,R,-0.33,0.33);c.stroke();
+    hs.forEach(h=>{const px=cx+Math.sqrt(R*R-h*h),py=cy+h;const nx=(px-cx)/R,ny=(py-cy)/R;const d=nx;const rx=1-2*d*nx,ry=-2*d*ny;
+      ray(c,60,py,px,py,'#ffd166',3);line(c,px,py,px+rx*900,py+ry*900,'#ffd166',3);});
+    const F=cx+R/2;c.fillStyle='#ff6b6b';c.beginPath();c.arc(F,cy,9,0,7);c.fill();txt(c,'焦點',F,cy+40,'#ff6b6b',22,'center',true);
+    line(c,40,cy,1580,cy,'rgba(255,255,255,.25)',1,[6,6]);
+    $('mirV').textContent='平行光射向凹面鏡，反射後會聚於焦點；反過來把燈泡放在焦點，反射光就成為平行光（手電筒）。';}
+  else{const cx=1500;c.strokeStyle='#9fb3c8';c.lineWidth=12;c.beginPath();c.arc(cx,cy,R,Math.PI-0.33,Math.PI+0.33);c.stroke();
+    hs.forEach(h=>{const px=cx-Math.sqrt(R*R-h*h),py=cy+h;const nx=(px-cx)/R,ny=(py-cy)/R;const d=nx;const rx=1-2*d*nx,ry=-2*d*ny;
+      ray(c,60,py,px,py,'#ffd166',3);line(c,px,py,px+rx*800,py+ry*800,'#ffd166',3);line(c,px,py,px-rx*360,py-ry*360,'rgba(255,209,102,.45)',2,[8,8]);});
+    const F=cx-R/2;c.fillStyle='#ff6b6b';c.beginPath();c.arc(F,cy,9,0,7);c.fill();txt(c,'虛焦點（鏡後）',F,cy+40,'#ff6b6b',22,'center',true);
+    line(c,40,cy,1580,cy,'rgba(255,255,255,.25)',1,[6,6]);
+    $('mirV').textContent='平行光射向凸面鏡，反射後向外發散，看起來像從鏡後的一點發出。凸面鏡的像是正立縮小的虛像，能看到較大的範圍。';}}
+seg('[data-mir]',b=>{mir=b.dataset.mir;drawMir();});
+$('inc').addEventListener('input',e=>{inc=+e.target.value;drawMir();});
+cM.addEventListener('pointerdown',e=>{if(mir!=='plane')return;const p=pt(cM,e);
+  if(Math.hypot(p.x-pObj.x,p.y-(pObj.y+30))<80)dragM='obj';else if(Math.hypot(p.x-pEye.x,p.y-pEye.y)<70)dragM='eye';if(dragM)cM.setPointerCapture(e.pointerId);});
+cM.addEventListener('pointermove',e=>{if(!dragM)return;const p=pt(cM,e);const o=dragM==='obj'?pObj:pEye;o.x=Math.max(80,Math.min(740,p.x));o.y=Math.max(dragM==='obj'?120:60,Math.min(dragM==='obj'?420:540,p.y-(dragM==='obj'?30:0)));drawMir();});
+cM.addEventListener('pointerup',()=>dragM=null);
+
+/* ================= 4-3 折射 ================= */
+const cRf=$('cRef'),xF=cRf.getContext('2d');
+const MED=[['空氣',1,'水',1.33],['空氣',1,'玻璃',1.5],['水',1.33,'空氣',1],['玻璃',1.5,'空氣',1]];let mi=0,ri=40;
+const MCOL={空氣:'rgba(255,255,255,.03)',水:'rgba(76,150,220,.30)',玻璃:'rgba(169,200,230,.28)'};
+function drawRef(){const c=xF,[a,n1,b,n2]=MED[mi],hx=800,hy=280,L=330;c.fillStyle=BG;c.fillRect(0,0,1600,560);
+  c.fillStyle=MCOL[a];c.fillRect(0,0,1600,hy);c.fillStyle=MCOL[b];c.fillRect(0,hy,1600,560-hy);line(c,0,hy,1600,hy,'#cfd3ff',2);
+  txt(c,a,30,50,'#e7e8f2',28,'left',true);txt(c,b,30,hy+50,'#e7e8f2',28,'left',true);
+  line(c,hx,20,hx,540,'#cfd3ff',2,[10,8]);txt(c,'法線',hx+10,40,'#cfd3ff',20);
+  const i=ri*DEG,sx=hx-L*Math.sin(i),sy=hy-L*Math.cos(i);ray(c,sx,sy,hx,hy,'#ff5a5a',5);
+  const s=n1/n2*Math.sin(i);
+  // weak reflection
+  line(c,hx,hy,hx+L*Math.sin(i)*0.7,hy-L*Math.cos(i)*0.7,'rgba(255,90,90,.28)',3);
+  c.strokeStyle='#ffd166';c.lineWidth=3;c.beginPath();c.arc(hx,hy,80,-Math.PI/2-i,-Math.PI/2);c.stroke();txt(c,'入射角',hx-90,hy-90,'#ffd166',20,'right');
+  if(s>1){txt(c,'入射角太大：光全部反射回來（全反射）',hx+40,hy+120,'#ff8a4c',26,'left',true);line(c,hx,hy,hx+L*Math.sin(i),hy-L*Math.cos(i),'#ff5a5a',5);
+    $('rR').textContent='—';$('refV').textContent='光從水或玻璃射向空氣、入射角太大時，光無法折射出去而全部反射，稱為全反射（光纖就是利用這個原理）。';}
+  else{const r=Math.asin(s);ray(c,hx,hy,hx+L*Math.sin(r),hy+L*Math.cos(r),'#ff5a5a',5);
+    c.strokeStyle='#4cc3d2';c.lineWidth=3;c.beginPath();c.arc(hx,hy,100,Math.PI/2-r,Math.PI/2);c.stroke();txt(c,'折射角',hx+60,hy+130,'#4cc3d2',20);
+    // dashed: undeviated path
+    line(c,hx,hy,hx+L*Math.sin(i),hy+L*Math.cos(i),'rgba(255,255,255,.25)',2,[6,8]);
+    $('rR').textContent=(r/DEG).toFixed(0)+'°';
+    const tow=n2>n1;$('refV').textContent=ri===0?'光垂直射入時，方向不改變（但速率仍會改變）。':tow?`光由快到慢（${a}→${b}），偏向法線：入射角 ${ri}° ＞ 折射角 ${(r/DEG).toFixed(0)}°。`:`光由慢到快（${a}→${b}），偏離法線：入射角 ${ri}° ＜ 折射角 ${(r/DEG).toFixed(0)}°。`;}
+  $('rincOut').textContent=ri+'°';$('rI').textContent=ri+'°';$('rS').textContent=n2>n1?'變慢':'變快';}
+seg('[data-ref]',b=>{mi=+b.dataset.ref;drawRef();});$('rinc').addEventListener('input',e=>{ri=+e.target.value;drawRef();});
+
+/* 杯底變淺 */
+const cC=$('cCup'),xC=cC.getContext('2d');let watered=false,waterLevel=0,waterAnim=null;
+const COIN={x:600,y:540},EYE={x:1350,y:60},RIM={x:1000,y:200},WS=205,NW=1.33;
+function solveS(ws){const f=xs=>{const a=xs-COIN.x,b=ws-COIN.y,c=EYE.x-xs,d=EYE.y-ws;return NW*a/Math.hypot(a,b)-c/Math.hypot(c,d);};let lo=COIN.x,hi=EYE.x;for(let i=0;i<60;i++){const m=(lo+hi)/2;f(m)>0?hi=m:lo=m;}return lo;}
+function drawCup(){const c=xC;c.fillStyle=BG;c.fillRect(0,0,1600,620);
+  const ws=560-(560-WS)*waterLevel;
+  if(waterLevel>0){c.fillStyle='rgba(76,150,220,.35)';c.fillRect(400,ws,600,560-ws);line(c,400,ws,1000,ws,'#7fb8f0',2);}
+  c.strokeStyle='#cfd3ff';c.lineWidth=10;c.beginPath();c.moveTo(400,RIM.y);c.lineTo(400,560);c.lineTo(1000,560);c.lineTo(1000,RIM.y);c.stroke();
+  c.fillStyle='#e8b923';c.beginPath();c.ellipse(COIN.x,COIN.y,40,10,0,0,7);c.fill();txt(c,'硬幣',COIN.x,COIN.y+50,'#e7e8f2',20,'center');
+  c.fillStyle='#fff';c.beginPath();c.ellipse(EYE.x,EYE.y,30,16,0,0,7);c.fill();c.fillStyle='#222';c.beginPath();c.arc(EYE.x-8,EYE.y,8,0,7);c.fill();txt(c,'眼睛（位置固定）',EYE.x,EYE.y+50,'#e7e8f2',20,'center');
+  if(waterLevel<1){// direct line blocked
+    const yr=COIN.y+(EYE.y-COIN.y)*(RIM.x-COIN.x)/(EYE.x-COIN.x);line(c,COIN.x,COIN.y,RIM.x,yr,'rgba(255,209,102,.8)',3);line(c,RIM.x,yr,EYE.x,EYE.y,'rgba(255,255,255,.25)',2,[8,8]);
+    c.fillStyle='#ff6b6b';c.beginPath();c.arc(RIM.x,yr,10,0,7);c.fill();txt(c,'被杯壁擋住',RIM.x+20,yr+8,'#ff6b6b',22,'left',true);
+    $('cupV').textContent='沒有水時，硬幣射出的光沿直線前進，被杯壁擋住，眼睛看不到硬幣。';}
+  else{const xs=solveS(WS);ray(c,COIN.x,COIN.y,xs,WS,'#ffd166',4);ray(c,xs,WS,EYE.x,EYE.y,'#ffd166',4);
+    const app=WS+(WS-EYE.y)*(xs-COIN.x)/(EYE.x-xs);line(c,xs,WS,COIN.x,app,'rgba(255,209,102,.6)',3,[10,8]);
+    c.globalAlpha=.55;c.fillStyle='#e8b923';c.beginPath();c.ellipse(COIN.x,app,40,10,0,0,7);c.fill();c.globalAlpha=1;txt(c,'看起來的硬幣（較淺）',COIN.x-60,app-20,'#ffd166',22,'right',true);
+    $('cupV').textContent='加水後，光從水射入空氣時偏離法線，繞過杯緣進入眼睛。大腦以為光沿直線而來（虛線），所以硬幣看起來比實際位置淺。';}}
+$('water').addEventListener('click',()=>{watered=!watered;$('water').textContent=watered?'↺ 倒掉水':'💧 加水';const from=waterLevel,to=watered?1:0,t0=performance.now(),id={};waterAnim=id;
+  (function s(n){if(waterAnim!==id)return;const f=Math.min(1,Math.max(0,(n-t0)/900));waterLevel=from+(to-from)*f;drawCup();if(f<1)requestAnimationFrame(s);})(t0);});
+
+/* ================= 4-4 透鏡 ================= */
+const cL=$('cLens'),xL=cL.getContext('2d');let lens='convex',P=520,F=160,dragL=false;const LX0=800,AY=300,OHt=90;
+function lensCase(){if(lens==='concave')return'concave';if(Math.abs(P-2*F)<=5)return'at2f';if(Math.abs(P-F)<=5)return'atf';if(P>2*F)return'out2f';if(P>F)return'f2f';return'inf';}
+function drawLens(){const c=xL;c.fillStyle=BG;c.fillRect(0,0,1600,600);line(c,0,AY,1600,AY,'rgba(255,255,255,.35)',2);
+  // lens shape
+  c.fillStyle='rgba(140,190,255,.25)';c.strokeStyle='#8cbfff';c.lineWidth=3;c.beginPath();
+  if(lens==='convex'){c.ellipse(LX0,AY,26,230,0,0,7);}else{c.moveTo(LX0-34,AY-230);c.lineTo(LX0+34,AY-230);c.quadraticCurveTo(LX0+4,AY,LX0+34,AY+230);c.lineTo(LX0-34,AY+230);c.quadraticCurveTo(LX0-4,AY,LX0-34,AY-230);}
+  c.fill();c.stroke();
+  [[-2,'2F'],[-1,'F'],[1,'F'],[2,'2F']].forEach(([k,l])=>{const x=LX0+k*F;c.fillStyle='#ff6b6b';c.beginPath();c.arc(x,AY,7,0,7);c.fill();txt(c,l,x,AY+34,'#ff9b9b',22,'center',true);});
+  const ox=LX0-P,oy=AY-OHt;
+  const arrow=(x,h,col,dash)=>{line(c,x,AY,x,AY-h,col,6,dash);c.fillStyle=col;c.beginPath();const s=Math.sign(h)||1;c.moveTo(x,AY-h);c.lineTo(x-14,AY-h+18*s);c.lineTo(x+14,AY-h+18*s);c.fill();};
+  arrow(ox,OHt,'#ffd166');txt(c,'物體（拖動）',ox,AY+70,'#ffd166',20,'center');
+  const k=lensCase();
+  if(lens==='convex'){
+    // ray 1: parallel -> through F'
+    ray(c,ox,oy,LX0,oy,'#ff8a4c',3);const s1=(AY-oy)/F;line(c,LX0,oy,1600,oy+s1*(1600-LX0),'#ff8a4c',3);
+    // ray 2: through center
+    const s2=(AY-oy)/(LX0-ox);line(c,ox,oy,1600,oy+s2*(1600-ox),'#4cc3d2',3);
+    if(k==='atf'){$('lensV').textContent='物體在焦點上：光線經凸透鏡後平行射出，不會相交，所以不成像。';}
+    else{const q=1/(1/F-1/P),m=-q/P,ix=LX0+q,ih=OHt*m;
+      if(q>0){arrow(ix,ih,'#a99cf5');txt(c,'實像',ix,AY+(ih<0?-ih+40:70),'#a99cf5',22,'center',true);}
+      else{line(c,LX0,oy,ix,AY-ih,'rgba(255,138,76,.5)',2,[8,8]);line(c,ox,oy,ix,AY-ih,'rgba(76,195,210,.5)',2,[8,8]);arrow(ix,ih,'rgba(169,156,245,.65)',[8,6]);txt(c,'虛像',ix,AY-ih-20,'#a99cf5',22,'center',true);}
+      const D={out2f:'倒立縮小實像',at2f:'倒立等大實像',f2f:'倒立放大實像',inf:'正立放大虛像（從透鏡右側往左看才看得到）'}[k];
+      $('lensV').textContent=`物距 ${P}、焦距 ${F}：${D}。像距 ${Math.abs(Math.round(q))}${q<0?'（與物體同側）':''}，像的大小是物體的 ${Math.abs(m).toFixed(2)} 倍。`;}}
+  else{// concave: parallel -> diverge from F (left)
+    ray(c,ox,oy,LX0,oy,'#ff8a4c',3);const fx=LX0-F,s1=(oy-AY)/(LX0-fx);line(c,LX0,oy,1600,oy+s1*(1600-LX0),'#ff8a4c',3);line(c,LX0,oy,fx,AY,'rgba(255,138,76,.5)',2,[8,8]);
+    const s2=(AY-oy)/(LX0-ox);line(c,ox,oy,1600,oy+s2*(1600-ox),'#4cc3d2',3);
+    const q=1/(-1/F-1/P),m=-q/P,ix=LX0+q,ih=OHt*m;arrow(ix,ih,'rgba(169,156,245,.65)',[8,6]);txt(c,'虛像',ix,AY-ih-20,'#a99cf5',22,'center',true);
+    $('lensV').textContent=`凹透鏡：不論物體在哪裡，都形成正立縮小的虛像（像在物體同側，焦點以內）。像的大小是物體的 ${m.toFixed(2)} 倍。`;}
+  document.querySelectorAll('#lensT tr').forEach(r=>r.classList.toggle('on',r.dataset.k===k));
+  $('pxOut').textContent=P+'（'+(P/F).toFixed(2)+' 倍焦距）';$('flOut').textContent=F;}
+seg('[data-lens]',b=>{lens=b.dataset.lens;drawLens();});
+$('px').addEventListener('input',e=>{P=+e.target.value;drawLens();});$('fl').addEventListener('input',e=>{F=+e.target.value;drawLens();});
+cL.addEventListener('pointerdown',e=>{const p=pt(cL,e);if(Math.abs(p.x-(LX0-P))<60&&p.y<AY+40){dragL=true;cL.setPointerCapture(e.pointerId);}});
+cL.addEventListener('pointermove',e=>{if(!dragL)return;let v=Math.round(LX0-pt(cL,e).x);v=Math.max(40,Math.min(720,v));
+  [F,2*F].forEach(s=>{if(Math.abs(v-s)<8)v=s;});P=v;$('px').value=P;drawLens();});
+cL.addEventListener('pointerup',()=>dragL=false);
+
+/* ================= 4-5 色散 ================= */
+const cP=$('cPrism'),xP=cP.getContext('2d');
+const SPEC=['#ff2b2b','#ff8c1a','#ffe31a','#2fd14f','#2f8bff','#4b3cff','#a63cff'],SPN=['紅','橙','黃','綠','藍','靛','紫'];
+function drawPrism(t){const c=xP;c.fillStyle=BG;c.fillRect(0,0,1600,420);
+  const A={x:700,y:60},B={x:540,y:360},C={x:860,y:360};c.fillStyle='rgba(180,210,255,.18)';c.strokeStyle='#cfe3ff';c.lineWidth=3;c.beginPath();c.moveTo(A.x,A.y);c.lineTo(B.x,B.y);c.lineTo(C.x,C.y);c.closePath();c.fill();c.stroke();
+  const hit={x:625,y:200};line(c,40,250,hit.x,hit.y,'#ffffff',8);txt(c,'白光（陽光）',60,290,'#e7e8f2',22);
+  const ex={x:775,y:215};
+  SPEC.forEach((col,i)=>{line(c,hit.x,hit.y,ex.x,ex.y+i*3,col,3);const ang=0.04+i*0.045;const L=640;const x2=ex.x+L*Math.cos(ang),y2=ex.y+i*3+L*Math.sin(ang);
+    const pulse=t==null?1:0.7+0.3*Math.sin(t*3+i);c.globalAlpha=pulse;line(c,ex.x,ex.y+i*3,x2,y2,col,6);c.globalAlpha=1;
+    txt(c,SPN[i],x2+10,y2+8,col,22,'left',true);});
+  txt(c,'三稜鏡',A.x,A.y-14,'#cfe3ff',22,'center');txt(c,'紅光偏折最少、紫光偏折最多',1560,60,'#e7e8f2',24,'right',true);}
+
+const cG=$('cRGB'),xG=cG.getContext('2d');
+function nameRGB(r,g,b){const on=v=>v>40;const k=(on(r)?'R':'')+(on(g)?'G':'')+(on(b)?'B':'');
+  return{'':'黑色（沒有光）',R:'紅光',G:'綠光',B:'藍光',RG:'黃光',RB:'洋紅光（紫紅）',GB:'青光（藍綠）',RGB:'白光'}[k];}
+function drawRGB(){const r=+$('cr').value,g=+$('cg').value,b=+$('cb').value,c=xG;c.globalCompositeOperation='source-over';c.fillStyle='#000';c.fillRect(0,0,800,520);
+  c.globalCompositeOperation='lighter';[[r,0,0,330,210],[0,g,0,470,210],[0,0,b,400,330]].forEach(([R,G,B,x,y])=>{c.fillStyle=`rgb(${R},${G},${B})`;c.beginPath();c.arc(x,y,150,0,7);c.fill();});
+  c.globalCompositeOperation='source-over';txt(c,'混合後：'+nameRGB(r,g,b),400,505,'#fff',26,'center',true);
+  $('crO').textContent=r;$('cgO').textContent=g;$('cbO').textContent=b;}
+['cr','cg','cb'].forEach(id=>$(id).addEventListener('input',drawRGB));
+
+const LIGHTS={白光:[1,1,1],紅光:[1,0,0],綠光:[0,1,0],藍光:[0,0,1]};
+const FILTERS={無:[1,1,1],紅色:[1,0,0],綠色:[0,1,0],藍色:[0,0,1]};
+const OBJS={紅蘋果:[1,0,0],綠葉:[0,1,0],白紙:[1,1,1],藍色紙:[0,0,1],'香蕉（黃）':[1,1,0],黑紙:[0,0,0]};
+let L='白光',Fi='無',O='紅蘋果';
+function mk(box,obj,cur,set){const el=$(box);Object.keys(obj).forEach(k=>{const b=document.createElement('button');b.className='btn';b.textContent=k;b.setAttribute('aria-pressed',k===cur);
+  b.onclick=()=>{[...el.children].forEach(x=>x.setAttribute('aria-pressed',x===b));set(k);drawObj();};el.appendChild(b);});}
+mk('selLight',LIGHTS,L,v=>L=v);mk('selFilter',FILTERS,Fi,v=>Fi=v);mk('selObj',OBJS,O,v=>O=v);
+const toCss=v=>`rgb(${v.map(x=>Math.round(x*255)).join(',')})`;
+const NAMEC=v=>{const k=v.map(x=>x>0.5?1:0).join('');return{'000':'黑色','100':'紅色','010':'綠色','001':'藍色','110':'黃色','111':'白色','101':'洋紅色','011':'青色'}[k];};
+function drawObj(){const c=$('cObj').getContext('2d');c.fillStyle=BG;c.fillRect(0,0,1600,420);
+  const l=LIGHTS[L],f=FILTERS[Fi],after=l.map((x,i)=>x*f[i]),seen=after.map((x,i)=>x*OBJS[O][i]);
+  // lamp
+  c.fillStyle=toCss(l.map(x=>x*.9+.1));c.beginPath();c.arc(110,200,40,0,7);c.fill();txt(c,'光源：'+L,110,280,'#e7e8f2',20,'center');
+  c.fillStyle=`rgba(${after.map(x=>Math.round(x*255)).join(',')},.25)`;c.beginPath();c.moveTo(150,200);c.lineTo(700,90);c.lineTo(700,330);c.fill();
+  if(Fi!=='無'){c.fillStyle=`rgba(${f.map(x=>Math.round(x*255)).join(',')},.55)`;c.fillRect(380,120,18,180);txt(c,Fi+'玻璃紙',389,110,'#e7e8f2',20,'center');}
+  // object
+  const ox=820,oy=210,col=toCss(seen);c.fillStyle=col;c.strokeStyle='#555';c.lineWidth=2;
+  if(O==='紅蘋果'){c.beginPath();c.arc(ox,oy,80,0,7);c.fill();c.stroke();c.fillStyle='#5a3';c.fillRect(ox-4,oy-110,8,34);}
+  else if(O==='綠葉'){c.beginPath();c.ellipse(ox,oy,120,60,-0.4,0,7);c.fill();c.stroke();}
+  else if(O==='香蕉（黃）'){c.lineWidth=40;c.strokeStyle=col;c.beginPath();c.arc(ox,oy-80,130,0.6,2.5);c.stroke();c.lineWidth=2;}
+  else{c.fillRect(ox-90,oy-110,180,220);c.strokeRect(ox-90,oy-110,180,220);}
+  txt(c,O,ox,oy+150,'#e7e8f2',20,'center');
+  // reflected to eye
+  if(seen.some(x=>x>0))ray(c,ox+110,oy,1330,200,toCss(seen),5);else line(c,ox+110,oy,1330,200,'rgba(255,255,255,.15)',2,[6,8]);
+  c.fillStyle='#fff';c.beginPath();c.ellipse(1400,200,40,22,0,0,7);c.fill();c.fillStyle='#222';c.beginPath();c.arc(1390,200,12,0,7);c.fill();txt(c,'眼睛',1400,260,'#e7e8f2',20,'center');
+  const ref=NAMEC(OBJS[O]),reach=NAMEC(after);
+  $('objV').innerHTML=`照到物體的是 <b>${reach}光</b>${Fi!=='無'?`（${Fi}玻璃紙只讓${NAMEC(f)}光穿透）`:''}，${O}${O==='白紙'?'會反射所有色光':O==='黑紙'?'會吸收所有色光':`只反射${ref}光`}，所以看起來是 <span class="swatch" style="background:${col}"></span><b>${NAMEC(seen)}</b>。`;}
+
+/* ================= 測驗 ================= */
+const Q=[
+ {q:'下列何者的光速最快？',o:['水','玻璃','真空'],a:2,w:'光速：真空＞空氣＞水＞玻璃。'},
+ {q:'針孔成像所形成的像是？',o:['正立虛像','上下顛倒、左右相反的實像','正立實像'],a:1,w:'光沿直線穿過針孔交錯，形成倒立實像，驗證光的直進性。'},
+ {q:'入射角 30° 的光射向平面鏡，反射角是？',o:['30°','60°','90°'],a:0,w:'反射定律：入射角＝反射角。'},
+ {q:'人站在平面鏡前 2 公尺，像與人相距多遠？',o:['2 公尺','4 公尺','1 公尺'],a:1,w:'像距＝物距＝2 公尺，像與人相距 2＋2＝4 公尺。'},
+ {q:'汽車後照鏡、道路轉角反射鏡用哪一種鏡子？',o:['凹面鏡','平面鏡','凸面鏡'],a:2,w:'凸面鏡使光發散，能看到較大範圍。'},
+ {q:'光由空氣斜射入水中，下列何者正確？',o:['偏離法線，入射角＜折射角','偏向法線，入射角＞折射角','方向不變'],a:1,w:'光由快到慢偏向法線。'},
+ {q:'用凸透鏡當放大鏡看字時，字應放在哪裡？',o:['焦點與透鏡之間','2 倍焦距外','1～2 倍焦距間'],a:0,w:'物在焦點內形成正立放大虛像。'},
+ {q:'照相機底片上的像是？',o:['正立放大虛像','倒立縮小實像','倒立放大實像'],a:1,w:'物在 2 倍焦距外，成倒立縮小實像。'},
+ {q:'矯正近視眼要用哪種透鏡？',o:['凸透鏡','凹透鏡','平面鏡'],a:1,w:'凹透鏡使光發散，矯正近視。'},
+ {q:'色光三原色是？',o:['紅、黃、藍','紅、綠、藍','紅、橙、黃'],a:1,w:'色光三原色：紅、綠、藍。'},
+ {q:'在只有紅光照射的暗房中，綠色的葉子看起來是？',o:['綠色','紅色','黑色'],a:2,w:'綠葉只反射綠光，紅光被吸收，沒有光反射進眼睛。'},
+ {q:'白光經過三稜鏡後分成各種色光，這種現象稱為？',o:['反射','色散','全反射'],a:1,w:'不同色光的偏折程度不同，形成色散。'},
+];
+let score=0;const qz=$('quiz');
+Q.forEach((it,i)=>{const d=document.createElement('div');d.className='q';d.innerHTML=`<p>${i+1}. ${it.q}</p><div class="opts"></div><div class="fb" aria-live="polite"></div>`;
+  const ops=d.querySelector('.opts'),fb=d.querySelector('.fb');let done=false;
+  it.o.forEach((t,j)=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.onclick=()=>{
+    if(j===it.a){b.className='ok';fb.textContent='正確！'+it.w;fb.style.color='var(--good)';if(!done){score++;$('qs').textContent=score;}done=true;}
+    else{b.className='no';fb.textContent='再想想看，可以回到前面的實驗試試。';fb.style.color='var(--bad)';done=true;}};ops.appendChild(b);});
+  qz.appendChild(d);});
+
+/* ---------- 初始與動畫 ---------- */
+function drawAll(){drawRace(null);drawShadow();drawMir();drawRef();drawCup();drawLens();drawPrism(null);drawRGB();drawObj();}
+let t0=performance.now();(function loop(n){if(active==='p5')drawPrism((n-t0)/1000);requestAnimationFrame(loop);})(t0);
+drawAll();if(document.fonts&&document.fonts.ready)document.fonts.ready.then(drawAll);
+})();
+</script>
+</body>
+</html>

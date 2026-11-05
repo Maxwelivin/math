@@ -124,6 +124,13 @@ tr.on td{background:var(--accent-soft);font-weight:700}
     </div>
     <div class="row" id="lawCtl">
       <div class="slider"><label for="inc">入射角 <output id="incOut"></output></label><input type="range" id="inc" min="0" max="80" step="1" value="35"></div>
+      <button class="big" id="shoot">🎯 發射小球</button>
+      <button class="btn" id="newTarget">換目標</button>
+      <span class="chip note" id="hitCount"></span>
+    </div>
+    <div class="row" id="cvCtl" hidden>
+      <button class="btn" data-cvd="in" aria-pressed="true">平行光射入 → 反射後會聚於焦點</button>
+      <button class="btn" data-cvd="out" aria-pressed="false">光源放在焦點 → 反射成平行光</button>
     </div>
     <div class="scene"><canvas id="cMir" width="1600" height="600"></canvas></div>
     <div class="verdict" id="mirV"></div>
@@ -294,48 +301,75 @@ cSh.addEventListener('pointerup',()=>dragSh=false);
 
 /* ================= 4-2 反射 ================= */
 const cM=$('cMir'),xM=cM.getContext('2d');let mir='law',inc=35,pObj={x:450,y:330},pEye={x:300,y:150},dragM=null;
-const LEADS={law:'光照射到物體表面後返回原介質，稱為反射。反射定律：入射角＝反射角；入射線、反射線在法線兩側，且三者在同一平面上。拖動滑桿改變入射角。',
+const LEADS={law:'光照射到物體表面後返回原介質，稱為反射。反射定律：入射角＝反射角；入射線、反射線在法線兩側，且三者在同一平面上。小球撞到鏡面反彈也遵守相同的規律：調整入射角，讓小球反彈後打中目標。',
   plane:'平面鏡的像與物大小相等、左右相反（對稱），物距＝像距。像無法呈現在紙屏上，是虛像。拖動物體或眼睛，觀察光線怎麼從物體反射進入眼睛，以及眼睛「以為」光從哪裡來。',
-  concave:'凹面鏡的鏡面向內凹，平行光照射後會反射會聚於一點（焦點）。應用：化妝鏡、手電筒、探照燈。',
+  concave:'凹面鏡的鏡面向內凹。平行光照射後，反射光會聚於一點（焦點）；反過來，把光源放在焦點，反射光就成為平行光。應用：化妝鏡、手電筒。',
   convex:'凸面鏡的鏡面向外凸，平行光照射後反射發散，反向延長線交於鏡後一點。可以看到更大的範圍。應用：汽車後照鏡、道路轉角反射鏡。'};
-function drawMir(){const c=xM;c.fillStyle=BG;c.fillRect(0,0,1600,600);$('mirLead').textContent=LEADS[mir];$('lawCtl').hidden=mir!=='law';
-  if(mir==='law'){const hx=800,hy=470,L=420;
+/* 反射定律：小球 */
+const HX=800,HY=470,LS=420;let target=null,ball=null,hits=0,shots=0;
+function newTarget(){const ang=12+Math.round(Math.random()*60),d=260+Math.random()*170;target={ang,d,x:HX+d*Math.sin(ang*DEG),y:HY-d*Math.cos(ang*DEG),hit:false};ball=null;}
+newTarget();
+function ballPos(s){const sx=HX-LS*Math.sin(inc*DEG),sy=HY-LS*Math.cos(inc*DEG);if(s<LS)return[sx+(HX-sx)*s/LS,sy+(HY-sy)*s/LS];const k=s-LS;return[HX+k*Math.sin(inc*DEG),HY-k*Math.cos(inc*DEG)];}
+/* 凹凸面鏡：流動的光 */
+let cvd='in';
+function flow(c,pts,col,t,w){c.strokeStyle=col.replace('1)','.25)');c.lineWidth=w||3;c.setLineDash([]);c.beginPath();pts.forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y));c.stroke();
+  c.strokeStyle=col;c.lineWidth=(w||3)+2;c.setLineDash([26,46]);c.lineDashOffset=-t*260;c.beginPath();pts.forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y));c.stroke();c.setLineDash([]);c.lineDashOffset=0;}
+function glow(c,x,y,r,col){const g=c.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,col);g.addColorStop(1,'rgba(0,0,0,0)');c.fillStyle=g;c.beginPath();c.arc(x,y,r,0,7);c.fill();}
+function drawMir(){const c=xM,t=performance.now()/1000;c.fillStyle=BG;c.fillRect(0,0,1600,600);$('mirLead').textContent=LEADS[mir];$('lawCtl').hidden=mir!=='law';$('cvCtl').hidden=mir!=='concave';
+  if(mir==='law'){const hx=HX,hy=HY,L=LS;
     c.fillStyle='#9fb3c8';c.fillRect(300,hy,1000,14);for(let x=300;x<1300;x+=24)line(c,x,hy+14,x-14,hy+34,'#56677a',2);
     line(c,hx,hy,hx,60,'#cfd3ff',2,[10,8]);txt(c,'法線',hx+10,80,'#cfd3ff',22);
     const sx=hx-L*Math.sin(inc*DEG),sy=hy-L*Math.cos(inc*DEG),rx=hx+L*Math.sin(inc*DEG),ry=sy;
-    ray(c,sx,sy,hx,hy,'#ff5a5a',5);ray(c,hx,hy,rx,ry,'#ff5a5a',5);
-    c.fillStyle='#ff5a5a';c.fillRect(sx-30,sy-14,40,28);
+    line(c,sx,sy,hx,hy,'rgba(255,90,90,.55)',4);arrowHead(c,sx,sy,hx,hy,'#ff5a5a');line(c,hx,hy,hx+900*Math.sin(inc*DEG),hy-900*Math.cos(inc*DEG),'rgba(255,90,90,.35)',3,[12,10]);
+    // launcher
+    c.save();c.translate(sx,sy);c.rotate(Math.atan2(hy-sy,hx-sx));c.fillStyle='#7d8bd6';c.fillRect(-46,-16,56,32);c.restore();
     c.strokeStyle='#ffd166';c.lineWidth=3;c.beginPath();c.arc(hx,hy,90,-Math.PI/2-inc*DEG,-Math.PI/2);c.stroke();c.strokeStyle='#4cc3d2';c.beginPath();c.arc(hx,hy,110,-Math.PI/2,-Math.PI/2+inc*DEG);c.stroke();
     txt(c,'入射角 '+inc+'°',hx-30,hy-130,'#ffd166',24,'right',true);txt(c,'反射角 '+inc+'°',hx+30,hy-130,'#4cc3d2',24,'left',true);
-    txt(c,'入射線',sx+20,sy+40,'#ffb0b0',20);txt(c,'反射線',rx-90,ry+40,'#ffb0b0',20);
-    $('incOut').textContent=inc+'°';$('mirV').textContent=`入射角 ${inc}° ＝ 反射角 ${inc}°`+(inc===0?'：光垂直射向鏡面，會沿原路反射回去。':'');return;}
+    // target
+    if(target){const T=target;c.fillStyle=T.hit?'#4ade80':'#ff8a4c';c.beginPath();c.arc(T.x,T.y,30,0,7);c.fill();c.fillStyle='#fff';c.beginPath();c.arc(T.x,T.y,18,0,7);c.fill();c.fillStyle=T.hit?'#4ade80':'#ff8a4c';c.beginPath();c.arc(T.x,T.y,8,0,7);c.fill();
+      txt(c,T.hit?'命中！':'目標',T.x,T.y-42,T.hit?'#4ade80':'#ffd0b0',22,'center',true);}
+    // ball
+    if(ball){const [bx,by]=ballPos(ball.s);c.fillStyle='#ffe066';c.beginPath();c.arc(bx,by,14,0,7);c.fill();
+      for(let k=1;k<6;k++){const [tx,ty]=ballPos(Math.max(0,ball.s-k*22));c.fillStyle=`rgba(255,224,102,${0.35-k*0.06})`;c.beginPath();c.arc(tx,ty,12-k,0,7);c.fill();}}
+    $('incOut').textContent=inc+'°';$('hitCount').textContent=`命中 ${hits} / ${shots} 次`;
+    if(!ball||ball.done)$('mirV').textContent=ball&&ball.done?(target.hit?`命中！入射角 ${inc}° ＝ 反射角 ${inc}°，小球沿反射線打中目標。`:`沒打中。小球反彈的角度＝入射角 ${inc}°，目標在反射角約 ${target.ang}° 的方向，再調整看看。`):`入射角 ${inc}° ＝ 反射角 ${inc}°`+(inc===0?'：垂直射向鏡面，會沿原路反彈回去。':'。按「發射小球」試試看。');
+    return;}
   if(mir==='plane'){const MX=800;c.fillStyle='#9fb3c8';c.fillRect(MX-6,60,12,480);for(let y=60;y<540;y+=24)line(c,MX+6,y,MX+26,y-14,'#56677a',2);
     const img={x:2*MX-pObj.x,y:pObj.y};
-    // object (candle) & image
     const drawCandle=(x,y,al,lab)=>{c.globalAlpha=al;c.fillStyle='#f1e3c6';c.fillRect(x-12,y,24,90);c.fillStyle='#ffb347';c.beginPath();c.ellipse(x,y-18,10,20,0,0,7);c.fill();c.globalAlpha=1;txt(c,lab,x,y+120,'#e7e8f2',20,'center');};
     drawCandle(pObj.x,pObj.y,1,'物體（拖動）');drawCandle(img.x,img.y,0.45,'像（虛像）');
-    // ray: object flame -> mirror -> eye
-    const fy=pObj.y-18,iy=img.y-18;const t=(MX-img.x)/(pEye.x-img.x);const my=iy+(pEye.y-iy)*t;
+    const fy=pObj.y-18,iy=img.y-18;const tt=(MX-img.x)/(pEye.x-img.x);const my=iy+(pEye.y-iy)*tt;
     if(my>60&&my<540&&pEye.x<MX){ray(c,pObj.x,fy,MX,my,'#ffd166',4);ray(c,MX,my,pEye.x,pEye.y,'#ffd166',4);line(c,MX,my,img.x,iy,'rgba(255,209,102,.6)',3,[10,8]);}
-    // eye
     c.fillStyle='#fff';c.beginPath();c.ellipse(pEye.x,pEye.y,28,16,0,0,7);c.fill();c.fillStyle='#222';c.beginPath();c.arc(pEye.x+8,pEye.y,8,0,7);c.fill();txt(c,'眼睛（拖動）',pEye.x,pEye.y-28,'#e7e8f2',20,'center');
     line(c,pObj.x,pObj.y+100,MX,pObj.y+100,'#4cc3d2',2);line(c,MX,img.y+100,img.x,img.y+100,'#a99cf5',2);
     txt(c,'物距 '+Math.round(MX-pObj.x),(pObj.x+MX)/2,pObj.y+96,'#4cc3d2',20,'center');txt(c,'像距 '+Math.round(img.x-MX),(img.x+MX)/2,img.y+96,'#a99cf5',20,'center');
     $('mirV').textContent=`物距 ${Math.round(MX-pObj.x)} ＝ 像距 ${Math.round(img.x-MX)}。虛線是反射光的反向延長線，大腦以為光是從鏡子後方的像發出的。`;return;}
-  // curved mirrors
-  const R=700,cy=300,hs=[-200,-150,-100,-50,0,50,100,150,200];
-  if(mir==='concave'){const cx=500;c.strokeStyle='#9fb3c8';c.lineWidth=12;c.beginPath();c.arc(cx,cy,R,-0.33,0.33);c.stroke();
-    hs.forEach(h=>{const px=cx+Math.sqrt(R*R-h*h),py=cy+h;const nx=(px-cx)/R,ny=(py-cy)/R;const d=nx;const rx=1-2*d*nx,ry=-2*d*ny;
-      ray(c,60,py,px,py,'#ffd166',3);line(c,px,py,px+rx*900,py+ry*900,'#ffd166',3);});
-    const F=cx+R/2;c.fillStyle='#ff6b6b';c.beginPath();c.arc(F,cy,9,0,7);c.fill();txt(c,'焦點',F,cy+40,'#ff6b6b',22,'center',true);
-    line(c,40,cy,1580,cy,'rgba(255,255,255,.25)',1,[6,6]);
-    $('mirV').textContent='平行光射向凹面鏡，反射後會聚於焦點；反過來把燈泡放在焦點，反射光就成為平行光（手電筒）。';}
-  else{const cx=1500;c.strokeStyle='#9fb3c8';c.lineWidth=12;c.beginPath();c.arc(cx,cy,R,Math.PI-0.33,Math.PI+0.33);c.stroke();
-    hs.forEach(h=>{const px=cx-Math.sqrt(R*R-h*h),py=cy+h;const nx=(px-cx)/R,ny=(py-cy)/R;const d=nx;const rx=1-2*d*nx,ry=-2*d*ny;
-      ray(c,60,py,px,py,'#ffd166',3);line(c,px,py,px+rx*800,py+ry*800,'#ffd166',3);line(c,px,py,px-rx*360,py-ry*360,'rgba(255,209,102,.45)',2,[8,8]);});
-    const F=cx-R/2;c.fillStyle='#ff6b6b';c.beginPath();c.arc(F,cy,9,0,7);c.fill();txt(c,'虛焦點（鏡後）',F,cy+40,'#ff6b6b',22,'center',true);
-    line(c,40,cy,1580,cy,'rgba(255,255,255,.25)',1,[6,6]);
-    $('mirV').textContent='平行光射向凸面鏡，反射後向外發散，看起來像從鏡後的一點發出。凸面鏡的像是正立縮小的虛像，能看到較大的範圍。';}}
+  const R=700,cy=300,hs=[-200,-150,-100,-50,0,50,100,150,200],Y='rgba(255,209,102,1)';
+  line(c,40,cy,1580,cy,'rgba(255,255,255,.25)',1,[6,6]);
+  if(mir==='concave'){const cx=500,F=cx+R/2;c.strokeStyle='#9fb3c8';c.lineWidth=12;c.beginPath();c.arc(cx,cy,R,-0.33,0.33);c.stroke();
+    if(cvd==='in'){// 平行光 → 會聚
+      for(let k=0;k<5;k++){c.fillStyle='rgba(255,224,102,.9)';}glow(c,40,cy,90,'rgba(255,224,102,.55)');txt(c,'遠方光源（平行光）',40,cy-110,'#ffe066',20,'left',true);
+      // 依課本的理想情形：反射光都通過焦點
+      hs.forEach(h=>{const px=cx+Math.sqrt(R*R-h*h),py=cy+h;let rx=F-px,ry=cy-py;const m=Math.hypot(rx,ry);rx/=m;ry/=m;const k=(F-px)/rx*1.6;flow(c,[[60,py],[px,py],[px+rx*k,py+ry*k]],Y,t);});
+      glow(c,F,cy,40+8*Math.sin(t*5),'rgba(255,255,255,.8)');
+      $('mirV').textContent='平行光射向凹面鏡，反射後會聚於焦點，焦點會變得很亮、很熱（可以用來聚光）。';}
+    else{// 焦點光源 → 平行光
+      glow(c,F,cy,60,'rgba(255,224,102,.9)');c.fillStyle='#fff6c8';c.beginPath();c.arc(F,cy,14,0,7);c.fill();txt(c,'燈泡（在焦點）',F,cy-70,'#ffe066',20,'center',true);
+      // 依課本的理想情形：反射光都成為平行光
+      hs.forEach(h=>{const px=cx+Math.sqrt(R*R-h*h),py=cy+h;flow(c,[[F,cy],[px,py],[50,py]],Y,t);});
+      $('mirV').textContent='把光源放在凹面鏡的焦點上，反射光會變成平行光射出，光不容易散開，可以照得很遠（手電筒的原理）。';}
+    c.fillStyle='#ff6b6b';c.beginPath();c.arc(F,cy,8,0,7);c.fill();txt(c,'焦點',F,cy+40,'#ff6b6b',22,'center',true);}
+  else{const cx=1500,F=cx-R/2;c.strokeStyle='#9fb3c8';c.lineWidth=12;c.beginPath();c.arc(cx,cy,R,Math.PI-0.33,Math.PI+0.33);c.stroke();
+    glow(c,40,cy,90,'rgba(255,224,102,.55)');txt(c,'遠方光源（平行光）',40,cy-110,'#ffe066',20,'left',true);
+    hs.forEach(h=>{const px=cx-Math.sqrt(R*R-h*h),py=cy+h;let rx=px-F,ry=py-cy;const m=Math.hypot(rx,ry);rx/=m;ry/=m; // 反射光好像從虛焦點發出
+      flow(c,[[60,py],[px,py],[px+rx*760,py+ry*760]],Y,t);line(c,px,py,px-rx*360,py-ry*360,'rgba(255,209,102,.45)',2,[8,8]);});
+    c.fillStyle='#ff6b6b';c.beginPath();c.arc(F,cy,8,0,7);c.fill();txt(c,'虛焦點（鏡後）',F,cy+40,'#ff6b6b',22,'center',true);
+    $('mirV').textContent='平行光射向凸面鏡，反射後向外發散，反向延長線（虛線）交於鏡後的一點。凸面鏡的像是正立縮小的虛像，能看到較大的範圍。';}}
+$('shoot').addEventListener('click',()=>{if(ball&&!ball.done)return;target.hit=false;shots++;ball={s:0,done:false,last:performance.now()};});
+$('newTarget').addEventListener('click',()=>{newTarget();drawMir();});
+function stepBall(n){if(!ball||ball.done)return;const dt=Math.min(0.05,Math.max(0,(n-ball.last)/1000));ball.last=n;ball.s+=700*dt;const [bx,by]=ballPos(ball.s);
+  if(Math.hypot(bx-target.x,by-target.y)<34){target.hit=true;hits++;ball.done=true;}else if(bx>1600||by<0||ball.s>LS+1000)ball.done=true;}
+seg('[data-cvd]',b=>{cvd=b.dataset.cvd;drawMir();});
 seg('[data-mir]',b=>{mir=b.dataset.mir;drawMir();});
 $('inc').addEventListener('input',e=>{inc=+e.target.value;drawMir();});
 cM.addEventListener('pointerdown',e=>{if(mir!=='plane')return;const p=pt(cM,e);
@@ -500,7 +534,7 @@ Q.forEach((it,i)=>{const d=document.createElement('div');d.className='q';d.inner
 
 /* ---------- 初始與動畫 ---------- */
 function drawAll(){drawRace(null);drawShadow();drawMir();drawRef();drawCup();drawLens();drawPrism(null);drawRGB();drawObj();}
-let t0=performance.now();(function loop(n){if(active==='p5')drawPrism((n-t0)/1000);requestAnimationFrame(loop);})(t0);
+let t0=performance.now();(function loop(n){if(active==='p5')drawPrism((n-t0)/1000);if(active==='p2'&&(mir==='concave'||mir==='convex'||(mir==='law'&&ball&&!ball.done))){stepBall(n);drawMir();}requestAnimationFrame(loop);})(t0);
 drawAll();if(document.fonts&&document.fonts.ready)document.fonts.ready.then(drawAll);
 })();
 </script>

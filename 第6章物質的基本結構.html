@@ -219,7 +219,7 @@ td,th{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left}
   <section class="page" id="p4" hidden>
     <div class="card">
       <h2>週期表</h2>
-      <p class="lead">週期表依原子序由小到大排列。橫列稱為<b>週期</b>（共 7 週期），直行稱為<b>族</b>（共 18 族）；<b>同族元素的化學性質相似</b>。下表列出前 4 週期，點元素看詳細資料。</p>
+      <p class="lead">週期表依原子序由小到大排列。橫列稱為<b>週期</b>（共 7 週期），直行稱為<b>族</b>（共 18 族）；<b>同族元素的化學性質相似</b>。下表列出原子序 1～20 的元素，點元素看詳細資料。</p>
     </div>
     <div class="row">
       <button class="btn" data-hl="all" aria-pressed="true">全部</button>
@@ -230,7 +230,7 @@ td,th{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left}
       <button class="btn" data-hl="metal">金屬</button>
       <button class="btn" data-hl="nonmetal">非金屬</button>
     </div>
-    <div class="legend"><span><i style="background:var(--metal)"></i>金屬</span><span><i style="background:var(--nonmetal)"></i>非金屬</span><span><i style="background:var(--metalloid)"></i>類金屬</span><span><i style="background:var(--noble)"></i>鈍氣</span></div>
+    <div class="legend"><span><i style="background:var(--metal)"></i>金屬</span><span><i style="background:var(--nonmetal)"></i>非金屬</span><span><i style="background:var(--noble)"></i>鈍氣</span></div>
     <div class="card ptbox"><div class="pt" id="pt"></div></div>
     <div class="verdict" id="ptV">點一個元素。</div>
   </section>
@@ -377,8 +377,8 @@ ECARDS.forEach(([s,n,p,u])=>{const b=document.createElement('button');b.classNam
   b.onclick=()=>{open=!open;b.querySelector('.more').innerHTML=open?`${p}<br>用途：${u}`:'點我看看';};$('ecards').appendChild(b);});
 
 /* ================= 6-3 原子 ================= */
-const EL=[null,['H','氫',1,1,'nonmetal'],['He','氦',4,18,'noble'],['Li','鋰',7,1,'metal'],['Be','鈹',9,2,'metal'],['B','硼',11,13,'metalloid'],['C','碳',12,14,'nonmetal'],['N','氮',14,15,'nonmetal'],['O','氧',16,16,'nonmetal'],['F','氟',19,17,'nonmetal'],['Ne','氖',20,18,'noble'],
-  ['Na','鈉',23,1,'metal'],['Mg','鎂',24,2,'metal'],['Al','鋁',27,13,'metal'],['Si','矽',28,14,'metalloid'],['P','磷',31,15,'nonmetal'],['S','硫',32,16,'nonmetal'],['Cl','氯',35,17,'nonmetal'],['Ar','氬',40,18,'noble'],['K','鉀',39,1,'metal'],['Ca','鈣',40,2,'metal'],
+const EL=[null,['H','氫',1,1,'nonmetal'],['He','氦',4,18,'noble'],['Li','鋰',7,1,'metal'],['Be','鈹',9,2,'metal'],['B','硼',11,13,'nonmetal'],['C','碳',12,14,'nonmetal'],['N','氮',14,15,'nonmetal'],['O','氧',16,16,'nonmetal'],['F','氟',19,17,'nonmetal'],['Ne','氖',20,18,'noble'],
+  ['Na','鈉',23,1,'metal'],['Mg','鎂',24,2,'metal'],['Al','鋁',27,13,'metal'],['Si','矽',28,14,'nonmetal'],['P','磷',31,15,'nonmetal'],['S','硫',32,16,'nonmetal'],['Cl','氯',35,17,'nonmetal'],['Ar','氬',40,18,'noble'],['K','鉀',39,1,'metal'],['Ca','鈣',40,2,'metal'],
   ['Sc','鈧',45,3,'metal'],['Ti','鈦',48,4,'metal'],['V','釩',51,5,'metal'],['Cr','鉻',52,6,'metal'],['Mn','錳',55,7,'metal'],['Fe','鐵',56,8,'metal'],['Co','鈷',59,9,'metal'],['Ni','鎳',59,10,'metal'],['Cu','銅',64,11,'metal'],['Zn','鋅',65,12,'metal'],
   ['Ga','鎵',70,13,'metal'],['Ge','鍺',73,14,'metalloid'],['As','砷',75,15,'metalloid'],['Se','硒',79,16,'nonmetal'],['Br','溴',80,17,'nonmetal'],['Kr','氪',84,18,'noble']];
 let P=6,N=6,E=6;
@@ -388,17 +388,18 @@ $('quickEl').addEventListener('change',e=>{const z=+e.target.value;P=z;E=z;N=EL[
 document.querySelectorAll('[data-c]').forEach(b=>b.addEventListener('click',()=>{const d=+b.dataset.d,k=b.dataset.c;
   if(k==='p')P=Math.max(1,Math.min(20,P+d));if(k==='n')N=Math.max(0,Math.min(24,N+d));if(k==='e')E=Math.max(0,Math.min(22,E+d));renderAtom();}));
 function renderAtom(){const c=$('cAtom').getContext('2d');c.fillStyle=BG;c.fillRect(0,0,800,600);const cx=400,cy=300;
-  const shells=[2,8,8,4];let left=E;const radii=[95,160,225,285];
-  radii.forEach((r,i)=>{c.strokeStyle='rgba(255,255,255,.15)';c.lineWidth=2;c.beginPath();c.arc(cx,cy,r,0,7);c.stroke();});
+  // 電子在原子核外運動（示意圖）
   const t=performance.now()/1000;
-  shells.forEach((cap,i)=>{const n=Math.min(cap,left);left-=n;for(let k=0;k<n;k++){const a=k/n*Math.PI*2+t*(0.6-i*0.12);c.fillStyle='#5aa9ff';c.beginPath();c.arc(cx+radii[i]*Math.cos(a),cy+radii[i]*Math.sin(a),11,0,7);c.fill();txt(c,'−',cx+radii[i]*Math.cos(a),cy+radii[i]*Math.sin(a)+7,'#fff',20,'center',true);}});
-  // nucleus
+  for(let k=0;k<E;k++){const tilt=k*Math.PI/Math.max(1,E),rx=120+(k%3)*55,ry=60+(k%3)*30,a=t*(0.9-(k%3)*0.2)+k*2.1;
+    c.save();c.translate(cx,cy);c.rotate(tilt);c.strokeStyle='rgba(255,255,255,.10)';c.lineWidth=2;c.beginPath();c.ellipse(0,0,rx,ry,0,0,7);c.stroke();
+    const x=rx*Math.cos(a),y=ry*Math.sin(a);c.fillStyle='#5aa9ff';c.beginPath();c.arc(x,y,11,0,7);c.fill();c.restore();
+    const gx=cx+x*Math.cos(tilt)-y*Math.sin(tilt),gy=cy+x*Math.sin(tilt)+y*Math.cos(tilt);txt(c,'−',gx,gy+7,'#fff',20,'center',true);}
   // 原子核：質子與中子交錯排列（數量依目前設定）
   const kinds=[];let pp=P,nn=N;while(pp||nn){if(pp){kinds.push('p');pp--;}if(nn){kinds.push('n');nn--;}}
   kinds.forEach((kind,i)=>{const r=9*Math.sqrt(i),a=i*2.399963,x=cx+r*Math.cos(a),y=cy+r*Math.sin(a);c.fillStyle=kind==='p'?'#ff6b6b':'#a8b3b8';c.strokeStyle='#111';c.lineWidth=1;c.beginPath();c.arc(x,y,10,0,7);c.fill();c.stroke();if(kind==='p')txt(c,'+',x,y+7,'#fff',18,'center',true);});
   const el=EL[P];$('np').textContent=P;$('nn').textContent=N;$('ne').textContent=E;
   $('nA').textContent=P+N;$('nZ').textContent=P;$('nX').textContent=el[0];$('elName').textContent=`${el[1]}（${el[0]}）`;
-  $('elInfo').textContent=`第 ${el[3]} 族・${{metal:'金屬',nonmetal:'非金屬',metalloid:'類金屬',noble:'鈍氣'}[el[4]]}・常見質量數 ${el[2]}`;
+  $('elInfo').textContent=`第 ${el[3]} 族・${{metal:'金屬',nonmetal:'非金屬',noble:'非金屬（鈍氣）'}[el[4]]}・常見質量數 ${el[2]}`;
   $('sZ').textContent=P;$('sA').textContent=P+N;const q=P-E;$('sQ').textContent=q===0?'不帶電':(q>0?`帶 ${q} 個正電`:`帶 ${-q} 個負電`);
   const v=$('atomV');
   if(q!==0){v.className='verdict no';v.textContent=`質子數（${P}）≠ 電子數（${E}），這不是中性原子，而是帶電的粒子（離子）。原子中質子數一定等於電子數。`;}
@@ -433,15 +434,15 @@ showHist();
 /* ================= 6-4 週期表 ================= */
 const pt=$('pt');let hl='all',selZ=null;
 const pos=z=>{if(z===1)return[1,1];if(z===2)return[1,18];if(z<=10)return[2,z<=4?z-2:z+8];if(z<=18)return[3,z<=12?z-10:z];return[4,z-18];};
-for(let z=1;z<=36;z++){const [r,c]=pos(z),e=EL[z];const b=document.createElement('button');b.className='el '+e[4];b.style.gridRow=r;b.style.gridColumn=c;b.dataset.z=z;
+for(let z=1;z<=20;z++){const [r,c]=pos(z),e=EL[z];const b=document.createElement('button');b.className='el '+e[4];b.style.gridRow=r;b.style.gridColumn=c;b.dataset.z=z;
   b.innerHTML=`<span class="z">${z}</span><span class="s">${e[0]}</span><span class="n">${e[1]}</span>`;b.setAttribute('aria-pressed','false');
   b.onclick=()=>{selZ=z;[...pt.children].forEach(x=>x.setAttribute('aria-pressed',x===b));
     const fam={1:z===1?'第 1 族（但氫不是鹼金屬）':'第 1 族　鹼金屬：活性大，遇水劇烈反應',2:'第 2 族　鹼土金屬',17:'第 17 族　鹵素：活性大的非金屬',18:'第 18 族　鈍氣：活性極小，不易和其他物質反應'}[e[3]]||`第 ${e[3]} 族`;
-    $('ptV').innerHTML=`<span class="mono">${z}</span>　<b>${e[1]}（${e[0]}）</b>　第 ${r} 週期・${fam}・${{metal:'金屬',nonmetal:'非金屬',metalloid:'類金屬',noble:'非金屬（鈍氣）'}[e[4]]}・常見質量數 ${e[2]}`;};pt.appendChild(b);}
+    $('ptV').innerHTML=`<span class="mono">${z}</span>　<b>${e[1]}（${e[0]}）</b>　第 ${r} 週期・${fam}・${{metal:'金屬',nonmetal:'非金屬',noble:'非金屬（鈍氣）'}[e[4]]}・常見質量數 ${e[2]}`;};pt.appendChild(b);}
 for(let r=1;r<=4;r++){/* period labels via title */}
 function applyHL(){[...pt.children].forEach(b=>{const z=+b.dataset.z,e=EL[z];let on=true;
   if(hl==='metal')on=e[4]==='metal';else if(hl==='nonmetal')on=e[4]==='nonmetal'||e[4]==='noble';else if(hl!=='all')on=e[3]===+hl&&!(hl==='1'&&z===1);b.classList.toggle('dim',!on);});
-  const msg={1:'鹼金屬（鋰、鈉、鉀）：同族，化學性質相似，都很活潑，會和水劇烈反應。',2:'鹼土金屬（鈹、鎂、鈣）：同族，化學性質相似。',17:'鹵素（氟、氯、溴）：同族，都是活性大的非金屬。',18:'鈍氣（氦、氖、氬、氪）：同族，活性極小，常用於霓虹燈、填充氣球。',metal:'金屬元素占週期表的大部分，集中在左邊和中間。',nonmetal:'非金屬元素集中在週期表的右上方（氫在左上角）。'}[hl];
+  const msg={1:'鹼金屬（鋰、鈉、鉀）：同族，化學性質相似，都很活潑，會和水劇烈反應。',2:'鹼土金屬（鈹、鎂、鈣）：同族，化學性質相似。',17:'鹵素（氟、氯、溴）：同族，都是活性大的非金屬。',18:'鈍氣（氦、氖、氬）：同族，活性極小，常用於霓虹燈、填充氣球。',metal:'金屬元素占週期表的大部分，集中在左邊和中間。',nonmetal:'非金屬元素集中在週期表的右上方（氫在左上角）。'}[hl];
   if(msg)$('ptV').textContent=msg;}
 seg('[data-hl]',b=>{hl=b.dataset.hl;applyHL();});
 

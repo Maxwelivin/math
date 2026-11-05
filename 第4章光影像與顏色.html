@@ -104,7 +104,6 @@ tr.on td{background:var(--accent-soft);font-weight:700}
     </div>
     <div class="row">
       <div class="slider"><label for="objX">物體與光源的距離 <output id="objXOut"></output></label><input type="range" id="objX" min="180" max="1300" step="5" value="500"></div>
-      <button class="btn" id="bigLight" aria-pressed="false">改用大光源（燈泡）</button>
     </div>
     <div class="scene"><canvas id="cShadow" width="1600" height="440"></canvas></div>
     <div class="verdict" id="shadowV"></div>
@@ -181,7 +180,7 @@ tr.on td{background:var(--accent-soft);font-weight:700}
         <tr data-k="out2f"><td>2 倍焦距外</td><td>倒立</td><td>縮小</td><td>實像</td><td>照相機、眼睛</td></tr>
         <tr data-k="at2f"><td>2 倍焦距上</td><td>倒立</td><td>相等</td><td>實像</td><td>—</td></tr>
         <tr data-k="f2f"><td>1～2 倍焦距間</td><td>倒立</td><td>放大</td><td>實像</td><td>投影機</td></tr>
-        <tr data-k="atf"><td>焦點上</td><td colspan="3">不成像（光線平行射出）</td><td>探照燈</td></tr>
+        <tr data-k="atf"><td>焦點上</td><td colspan="3">不成像（光線平行射出）</td><td>—</td></tr>
         <tr data-k="inf"><td>焦點至透鏡間</td><td>正立</td><td>放大</td><td>虛像</td><td>放大鏡、矯正遠視</td></tr>
         <tr data-k="concave"><td>凹透鏡（任何位置）</td><td>正立</td><td>縮小</td><td>虛像</td><td>矯正近視</td></tr>
       </tbody></table>
@@ -286,9 +285,9 @@ function drawShadow(){const c=xS;c.fillStyle=BG;c.fillRect(0,0,1600,440);
   c.fillStyle='#7d8bd6';c.fillRect(objX-10,Ot,20,OH*2);txt(c,'拖動物體',objX,Ot-14,'#cfd3ff',20,'center');
   txt(c,'光源',LX,CY+80,'#e7e8f2',22,'center');txt(c,'牆',SX+20,438,'#e7e8f2',20,'center');
   const H=(pBot-pTop)/(OH*2);$('objXOut').textContent=Math.round(objX-LX)+' 單位';
-  $('shadowV').textContent=`影子高度約為物體的 ${H.toFixed(1)} 倍。物體離光源越近，影子越大；離光源越遠（越靠近牆），影子越小。`+(bigL?' 大光源會形成全黑的本影和較淡的半影。':'');}
+  $('shadowV').textContent=`影子高度約為物體的 ${H.toFixed(1)} 倍。物體離光源越近，影子越大；離光源越遠（越靠近牆），影子越小。`;}
 $('objX').addEventListener('input',e=>{objX=+e.target.value;drawShadow();});
-$('bigLight').addEventListener('click',e=>{bigL=!bigL;e.currentTarget.setAttribute('aria-pressed',bigL);drawShadow();});
+
 cSh.addEventListener('pointerdown',e=>{const p=pt(cSh,e);if(Math.abs(p.x-objX)<60){dragSh=true;cSh.setPointerCapture(e.pointerId);}});
 cSh.addEventListener('pointermove',e=>{if(!dragSh)return;objX=Math.max(180,Math.min(1300,pt(cSh,e).x));$('objX').value=objX;drawShadow();});
 cSh.addEventListener('pointerup',()=>dragSh=false);
@@ -366,7 +365,7 @@ function drawRef(){const c=xF,[a,n1,b,n2]=MED[mi],hx=800,hy=280,L=330;c.fillStyl
     $('rR').textContent=(r/DEG).toFixed(0)+'°';
     const tow=n2>n1;$('refV').textContent=ri===0?'光垂直射入時，方向不改變（但速率仍會改變）。':tow?`光由快到慢（${a}→${b}），偏向法線：入射角 ${ri}° ＞ 折射角 ${(r/DEG).toFixed(0)}°。`:`光由慢到快（${a}→${b}），偏離法線：入射角 ${ri}° ＜ 折射角 ${(r/DEG).toFixed(0)}°。`;}
   $('rincOut').textContent=ri+'°';$('rI').textContent=ri+'°';$('rS').textContent=n2>n1?'變慢':'變快';}
-seg('[data-ref]',b=>{mi=+b.dataset.ref;drawRef();});$('rinc').addEventListener('input',e=>{ri=+e.target.value;drawRef();});
+seg('[data-ref]',b=>{mi=+b.dataset.ref;const mx=MED[mi][1]>MED[mi][3]?Math.floor(Math.asin(MED[mi][3]/MED[mi][1])/DEG)-3:80;$('rinc').max=mx;if(ri>mx){ri=mx;$('rinc').value=mx;}drawRef();});$('rinc').addEventListener('input',e=>{ri=+e.target.value;drawRef();});
 
 /* 杯底變淺 */
 const cC=$('cCup'),xC=cC.getContext('2d');let watered=false,waterLevel=0,waterAnim=null;

@@ -38,7 +38,7 @@ const D4 = [[0,1],[1,0],[0,-1],[-1,0]];
 }));
 
 // 踩地雷
-[['mines1','初級',9,9,10],['mines2','中級',12,12,25],['mines3','高級',16,16,45]].forEach(([id,lv,R0,C0,N]) => P(id, `踩地雷（${lv}）`, '💣', `找出 ${N} 顆地雷。右鍵或「插旗模式」標記地雷`, g => {
+[['mines1','初級',9,9,10],['mines2','中級',12,12,25],['mines3','高級',16,16,45],['mines4','專家',20,20,75]].forEach(([id,lv,R0,C0,N]) => P(id, `踩地雷（${lv}）`, '💣', `找出 ${N} 顆地雷。右鍵或「插旗模式」標記地雷`, g => {
   let mine = null, open = Array(R0*C0).fill(false), flag = Array(R0*C0).fill(false), flagMode = false, done = false, t0 = 0;
   const nb = i => { const r=Math.floor(i/C0), c=i%C0, o=[]; for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++){ const rr=r+dr, cc=c+dc; if((dr||dc)&&rr>=0&&cc>=0&&rr<R0&&cc<C0) o.push(rr*C0+cc);} return o; };
   const cnt = i => nb(i).filter(j=>mine[j]).length;
@@ -299,24 +299,25 @@ P('queens','八皇后','👑','在棋盤上放 8 個皇后，彼此不能在同�
 }));
 
 // 水管接接樂
-P('pipes','水管接接樂','🚰','點擊旋轉水管，讓所有水管連通（中心水源開始點亮）', g => {
-  const N=7; const m = Array(N*N).fill(0); // 位元：1上 2右 4下 8左
-  const seen=new Set([24]), st=[24];
+const pipesGame = N => g => {
+  const C0=(N*N-1)/2; const m = Array(N*N).fill(0); // 位元：1上 2右 4下 8左
+  const seen=new Set([C0]), st=[C0];
   while(st.length){ const i=st.at(-1), r=Math.floor(i/N), c=i%N; const nb=[[-1,0,1,4],[0,1,2,8],[1,0,4,1],[0,-1,8,2]].filter(([dr,dc])=>{const rr=r+dr,cc=c+dc;return rr>=0&&cc>=0&&rr<N&&cc<N&&!seen.has(rr*N+cc);});
     if(!nb.length){ st.pop(); continue; } const [dr,dc,a,bb]=pick(nb), j=(r+dr)*N+c+dc; m[i]|=a; m[j]|=bb; seen.add(j); st.push(j); }
   const rot = v => ((v<<1)|(v>>3))&15; const cur = m.map(v=>{ let x=v; for(let k=R(4);k>0;k--) x=rot(x); return x; }); let moves=0;
-  const x = g.canvas(N*56, N*56); const s=56;
-  const lit = () => { const L=new Set([24]), q=[24]; while(q.length){ const i=q.pop(), r=Math.floor(i/N), c=i%N;
+  const s=N>7?40:56; const x = g.canvas(N*s, N*s);
+  const lit = () => { const L=new Set([C0]), q=[C0]; while(q.length){ const i=q.pop(), r=Math.floor(i/N), c=i%N;
       [[-1,0,1,4],[0,1,2,8],[1,0,4,1],[0,-1,8,2]].forEach(([dr,dc,a,bb])=>{ const rr=r+dr,cc=c+dc,j=rr*N+cc; if(rr>=0&&cc>=0&&rr<N&&cc<N&&(cur[i]&a)&&(cur[j]&bb)&&!L.has(j)){L.add(j);q.push(j);} }); } return L; };
   const draw = () => { const L = lit(); x.fillStyle='#0b1020'; x.fillRect(0,0,N*s,N*s);
     for(let i=0;i<N*N;i++){ const cx=(i%N)*s+s/2, cy=Math.floor(i/N)*s+s/2; x.strokeStyle='#1e293b'; x.strokeRect(cx-s/2,cy-s/2,s,s);
       x.strokeStyle = L.has(i)?'#38bdf8':'#64748b'; x.lineWidth=10; x.lineCap='round';
       [[1,0,-1],[2,1,0],[4,0,1],[8,-1,0]].forEach(([b,dx,dy])=>{ if(cur[i]&b){ x.beginPath(); x.moveTo(cx,cy); x.lineTo(cx+dx*s/2,cy+dy*s/2); x.stroke(); } });
-      if(i===24){ x.fillStyle='#38bdf8'; x.beginPath(); x.arc(cx,cy,12,0,7); x.fill(); } else if([1,2,4,8].includes(cur[i])){ x.fillStyle=L.has(i)?'#38bdf8':'#64748b'; x.beginPath(); x.arc(cx,cy,9,0,7); x.fill(); } }
+      if(i===C0){ x.fillStyle='#38bdf8'; x.beginPath(); x.arc(cx,cy,12,0,7); x.fill(); } else if([1,2,4,8].includes(cur[i])){ x.fillStyle=L.has(i)?'#38bdf8':'#64748b'; x.beginPath(); x.arc(cx,cy,9,0,7); x.fill(); } }
     g.info('旋轉 '+moves+' 次'); if(L.size===N*N) g.over('全部連通！💧', `旋轉 ${moves} 次`); };
   g.on(x.canvas,'pointerdown',e=>{ if(g.ended) return; const p=g.pos(x.canvas,e), i=Math.floor(p.y/s)*N+Math.floor(p.x/s); cur[i]=rot(cur[i]); moves++; draw(); });
   draw();
-});
+};
+[[5,'pipes5','（小）'],[7,'pipes',''],[9,'pipes9','（大）']].forEach(([n,id,t])=>P(id,'水管接接樂'+t,'🚰',`${n}×${n}：點擊旋轉水管，讓所有水管連通（中心水源開始點亮）`,pipesGame(n)));
 
 // 華容道
 P('klotski','華容道','🐉','移動木塊，讓曹操（大紅塊）從下方中間出口逃出', g => {

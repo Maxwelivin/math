@@ -398,4 +398,5 @@ B('ttt3move','三子移動棋（雙人）','♻️','每人只有 3 顆棋子，
     msg.textContent = `輪到 ${turn==='X'?'✕':'◯'}` + (b.filter(v=>v===turn).length>=3?'：選一顆自己的棋子再點空格移動':'：放置棋子'); };
   draw();
 });
+Object.assign(window,{connectGame:connect, cardHTML, deck, RANKS, SUITS, t3win});
 })();

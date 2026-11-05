@@ -1,0 +1,1506 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>國中理化聲波探秘：峽谷雙壁回聲互動實驗室 (第16題深度解析)</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', 'Noto Sans TC', sans-serif;
+      background-color: #0f172a;
+      color: #f8fafc;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #1e293b;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #475569;
+      border-radius: 3px;
+    }
+    .pulse-glow {
+      box-shadow: 0 0 25px rgba(56, 189, 248, 0.45);
+    }
+    .echo-marker-glow {
+      box-shadow: 0 0 15px rgba(251, 191, 36, 0.7);
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-slate-950 text-slate-100 flex flex-col antialiased selection:bg-sky-500 selection:text-white">
+
+  <!-- Header -->
+  <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-40 px-4 lg:px-8 py-3 transition-colors">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-sky-500/20">
+          🔊
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <h1 class="text-lg lg:text-xl font-bold text-white tracking-wide">國二理化：回聲傳播互動實驗室</h1>
+            <span class="bg-sky-950 text-sky-400 border border-sky-800/80 text-xs px-2 py-0.5 rounded-full font-semibold">第 16 題精熟探索</span>
+          </div>
+          <p class="text-xs text-slate-400 hidden sm:block">雙山壁多次回聲幾何路徑動態模擬與第一性原理拆解</p>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-2 sm:space-x-3 text-sm">
+        <button id="soundToggleBtn" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-300 transition" title="開關聲音">
+          <span id="soundIcon">🔊</span>
+          <span id="soundLabel" class="text-xs font-medium">音效開啟</span>
+        </button>
+        <button id="presetOriginalBtn" class="px-3 py-1.5 rounded-lg border border-sky-700/60 bg-sky-950/60 hover:bg-sky-900/80 text-sky-300 text-xs font-medium transition shadow-sm">
+          重設原題數據
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 lg:px-8 py-5 space-y-6">
+
+    <!-- Question Context Banner -->
+    <section class="bg-gradient-to-r from-slate-900 via-slate-900/90 to-slate-800 border border-slate-800 rounded-2xl p-4 lg:p-5 shadow-xl relative overflow-hidden">
+      <div class="absolute -right-12 -top-12 w-48 h-48 bg-sky-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
+        <div class="space-y-2 max-w-3xl">
+          <div class="flex items-center space-x-2">
+            <span class="bg-amber-500/20 text-amber-300 border border-amber-500/40 text-xs font-bold px-2.5 py-0.5 rounded-md">原題重現</span>
+            <span class="text-xs text-slate-400">八年級上學期 · 波動與聲音 · 聲波的反射與回聲</span>
+          </div>
+          <p class="text-slate-200 text-sm lg:text-base leading-relaxed font-medium">
+            一艘船駛入一狹長水道如右圖，左右兩側各有垂直山壁，當船在靜止狀態時鳴笛，此時聲速為 <span class="text-amber-400 font-bold underline decoration-amber-400/50 underline-offset-4">346 m/s</span>，則在船上聽到<span class="text-sky-400 font-bold underline decoration-sky-400/50 underline-offset-4">第三次的回聲</span>是鳴笛後幾秒？
+          </p>
+          <div class="flex flex-wrap items-center gap-4 text-xs text-slate-300 pt-1">
+            <span class="bg-slate-800/80 px-2.5 py-1 rounded border border-slate-700/60">左壁距離：<strong class="text-sky-400 font-semibold">924 m</strong></span>
+            <span class="bg-slate-800/80 px-2.5 py-1 rounded border border-slate-700/60">右壁距離：<strong class="text-sky-400 font-semibold">460 m</strong></span>
+            <span class="bg-slate-800/80 px-2.5 py-1 rounded border border-slate-700/60">總峽寬：<strong class="text-indigo-400 font-semibold">1384 m</strong></span>
+            <span class="bg-slate-800/80 px-2.5 py-1 rounded border border-slate-700/60">選項：(A) 2 秒 (B) 4 秒 (C) 6 秒 <strong class="text-emerald-400 font-bold">(D) 8 秒</strong></span>
+          </div>
+        </div>
+
+        <div class="flex flex-col items-start md:items-end justify-center gap-2 border-t md:border-t-0 md:border-l border-slate-800 pt-3 md:pt-0 md:pl-5">
+          <div class="text-xs text-slate-400">核心謎題解密</div>
+          <div class="text-sm font-semibold text-emerald-400 flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+            答案是 (D) 8 秒！
+          </div>
+          <div class="text-xs text-slate-400 max-w-xs text-left md:text-right leading-tight">
+            單邊不是整數秒，為什麼第三次剛好是整數 8 秒？拉動下方時間軸親眼見證波前相遇！
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Simulation Canvas Card -->
+    <section class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl flex flex-col">
+      <!-- Canvas Header / Status Bar -->
+      <div class="bg-slate-850 px-4 py-3 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs sm:text-sm">
+        <div class="flex items-center space-x-3">
+          <span class="flex items-center gap-1.5 font-medium text-slate-300">
+            <span class="inline-block w-2.5 h-2.5 rounded-full bg-sky-500"></span>
+            物理傳播動態畫布
+          </span>
+          <span class="text-slate-500">|</span>
+          <div class="flex items-center space-x-1.5 text-xs text-slate-400">
+            <span>當前時間：</span>
+            <span id="digitalClock" class="font-mono text-base font-bold text-amber-400 bg-slate-950 px-2 py-0.5 rounded border border-slate-800">0.00 s</span>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-3 text-xs">
+          <div class="flex items-center space-x-1">
+            <span class="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block"></span>
+            <span class="text-slate-400">向右波前</span>
+          </div>
+          <div class="flex items-center space-x-1">
+            <span class="w-2.5 h-2.5 rounded-full bg-sky-400 inline-block"></span>
+            <span class="text-slate-400">向左波前</span>
+          </div>
+          <div class="flex items-center space-x-1">
+            <span class="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block"></span>
+            <span class="text-slate-400">船隻回聲接收點</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Canvas Viewport -->
+      <div class="relative w-full bg-slate-950 aspect-[16/8] sm:aspect-[16/7] md:aspect-[16/6] max-h-[460px] select-none">
+        <canvas id="simCanvas" class="w-full h-full block cursor-crosshair"></canvas>
+
+        <!-- Echo Toast Alert on Canvas -->
+        <div id="echoToast" class="absolute top-4 left-1/2 -translate-x-1/2 bg-slate-900/90 border border-amber-400/60 text-amber-300 px-4 py-1.5 rounded-full text-xs font-bold shadow-xl shadow-amber-500/10 opacity-0 pointer-events-none transition-all duration-300 flex items-center space-x-2">
+          <span class="text-base">🔔</span>
+          <span id="echoToastText">收到第 1 次回聲！</span>
+        </div>
+
+        <!-- Canvas Drag Instructions Overlay (only initial) -->
+        <div id="dragHint" class="absolute bottom-3 left-4 bg-slate-900/80 border border-slate-700/60 text-slate-300 text-xs px-3 py-1.5 rounded-lg pointer-events-none backdrop-blur flex items-center space-x-1.5">
+          <span>💡 提示：可以在水面上<strong>拖曳船隻</strong>改變位置</span>
+        </div>
+      </div>
+
+      <!-- Synchronized Acoustic Time Ribbon -->
+      <div class="bg-slate-900 border-t border-slate-800 p-4 space-y-3">
+        <div class="flex items-center justify-between text-xs text-slate-400">
+          <span class="font-medium flex items-center gap-1.5">
+            <span>⏱️</span> 聲音事件時間軸 (0.00s ~ 10.00s) — 點擊標記跳至回聲瞬間
+          </span>
+          <span id="activeEchoStatus" class="font-semibold text-slate-300">鳴笛準備就緒</span>
+        </div>
+
+        <!-- Custom Scrubber Timeline -->
+        <div class="relative pt-6 pb-2">
+          <!-- Timeline Track Background -->
+          <div class="h-2 w-full bg-slate-800 rounded-full relative">
+            <!-- Progress Fill -->
+            <div id="timelineProgress" class="h-full bg-gradient-to-r from-sky-500 to-amber-500 rounded-full w-0 transition-all duration-75"></div>
+
+            <!-- Time markers -->
+            <div id="timelineMarkersContainer" class="absolute inset-0 pointer-events-none">
+              <!-- Dynamically populated or static echo flags -->
+            </div>
+          </div>
+
+          <!-- Scrubbing Range Input -->
+          <input id="timeScrubber" type="range" min="0" max="10" step="0.01" value="0" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20">
+        </div>
+
+        <!-- Echo Badges Buttons Row -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-xs">
+          <button id="btnJumpWhistle" class="p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 border border-slate-700 flex flex-col items-start transition">
+            <span class="text-slate-400 font-medium">起點 (t = 0.00s)</span>
+            <span class="text-sky-400 font-bold">📢 船隻鳴笛發射</span>
+          </button>
+          <button id="btnJumpEcho1" class="p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 border border-slate-700 flex flex-col items-start transition">
+            <div class="flex items-center justify-between w-full">
+              <span class="text-slate-400 font-medium">第 1 次回聲</span>
+              <span class="font-mono text-amber-400 font-bold" id="labelEcho1Time">2.66s</span>
+            </div>
+            <span class="text-emerald-400 font-semibold truncate">右壁單趟反彈</span>
+          </button>
+          <button id="btnJumpEcho2" class="p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 border border-slate-700 flex flex-col items-start transition">
+            <div class="flex items-center justify-between w-full">
+              <span class="text-slate-400 font-medium">第 2 次回聲</span>
+              <span class="font-mono text-amber-400 font-bold" id="labelEcho2Time">5.34s</span>
+            </div>
+            <span class="text-cyan-400 font-semibold truncate">左壁單趟反彈</span>
+          </button>
+          <button id="btnJumpEcho3" class="p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 border border-amber-500/40 flex flex-col items-start transition bg-amber-950/20">
+            <div class="flex items-center justify-between w-full">
+              <span class="text-amber-300 font-bold">第 3 次回聲 ★</span>
+              <span class="font-mono text-amber-300 font-extrabold" id="labelEcho3Time">8.00s</span>
+            </div>
+            <span class="text-amber-400 font-semibold truncate">雙壁折返同至！</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Controls Dashboard -->
+      <div class="bg-slate-850 p-4 border-t border-slate-800 flex flex-wrap items-center justify-between gap-4">
+        <!-- Playback Controls -->
+        <div class="flex items-center space-x-2">
+          <button id="whistleBtn" class="px-4 py-2 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white font-bold text-sm rounded-xl shadow-lg shadow-sky-500/25 flex items-center space-x-1.5 transition active:scale-95">
+            <span>📢</span>
+            <span>鳴笛發射</span>
+          </button>
+
+          <button id="playPauseBtn" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-medium text-sm rounded-xl transition flex items-center space-x-1">
+            <span id="playPauseIcon">▶</span>
+            <span id="playPauseText">播放</span>
+          </button>
+
+          <button id="stepBackBtn" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl transition" title="後退 0.1 秒">
+            ⏮
+          </button>
+          <button id="stepFwdBtn" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl transition" title="快進 0.1 秒">
+            ⏭
+          </button>
+          <button id="resetSimBtn" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl transition" title="重設時間到 0">
+            🔄
+          </button>
+        </div>
+
+        <!-- Speed & Mode Controls -->
+        <div class="flex items-center space-x-3 text-xs">
+          <div class="flex items-center space-x-1 bg-slate-800 p-1 rounded-lg border border-slate-700">
+            <span class="text-slate-400 px-1 font-medium">速度:</span>
+            <button class="speed-btn px-2 py-0.5 rounded text-slate-300 hover:bg-slate-700 font-medium transition" data-speed="0.25">0.25x</button>
+            <button class="speed-btn px-2 py-0.5 rounded bg-sky-600 text-white font-bold transition" data-speed="0.5">0.5x</button>
+            <button class="speed-btn px-2 py-0.5 rounded text-slate-300 hover:bg-slate-700 font-medium transition" data-speed="1.0">1.0x</button>
+            <button class="speed-btn px-2 py-0.5 rounded text-slate-300 hover:bg-slate-700 font-medium transition" data-speed="2.0">2.0x</button>
+          </div>
+
+          <div class="flex items-center space-x-2">
+            <label class="flex items-center space-x-1.5 cursor-pointer text-slate-300 select-none">
+              <input id="showRaysCheckbox" type="checkbox" checked class="rounded bg-slate-800 border-slate-700 text-sky-500 focus:ring-0">
+              <span>顯示光線幾何路徑</span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Interactive Parameter Adjustment Accordion / Drawer -->
+    <section class="bg-slate-900 border border-slate-800 rounded-2xl p-4 lg:p-5 shadow-lg space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
+        <div class="flex items-center space-x-2">
+          <span class="text-base font-bold text-slate-200">🎛️ 物理參數實驗室</span>
+          <span class="text-xs text-slate-400">自由變更距離與聲速，驗證規律</span>
+        </div>
+        <div class="flex items-center space-x-2 text-xs">
+          <button id="presetCenterBtn" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded border border-slate-700 transition">置中對稱 (692m, 692m)</button>
+          <button id="presetSimpleRatioBtn" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded border border-slate-700 transition">倍數簡化 (346m, 692m)</button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-5 text-sm">
+        <!-- Left Distance Slider -->
+        <div class="space-y-1.5 bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
+          <div class="flex justify-between items-center text-xs">
+            <span class="text-slate-400 font-medium">左山壁距離 ($d_{左}$)</span>
+            <span class="font-mono text-sky-400 font-bold text-sm"><span id="valDistLeft">924</span> m</span>
+          </div>
+          <input id="sliderDistLeft" type="range" min="200" max="1500" step="10" value="924" class="w-full accent-sky-500 cursor-pointer">
+          <div class="flex justify-between text-[10px] text-slate-500">
+            <span>200m</span>
+            <span>1500m</span>
+          </div>
+        </div>
+
+        <!-- Right Distance Slider -->
+        <div class="space-y-1.5 bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
+          <div class="flex justify-between items-center text-xs">
+            <span class="text-slate-400 font-medium">右山壁距離 ($d_{右}$)</span>
+            <span class="font-mono text-sky-400 font-bold text-sm"><span id="valDistRight">460</span> m</span>
+          </div>
+          <input id="sliderDistRight" type="range" min="200" max="1500" step="10" value="460" class="w-full accent-sky-500 cursor-pointer">
+          <div class="flex justify-between text-[10px] text-slate-500">
+            <span>200m</span>
+            <span>1500m</span>
+          </div>
+        </div>
+
+        <!-- Speed of Sound Slider -->
+        <div class="space-y-1.5 bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
+          <div class="flex justify-between items-center text-xs">
+            <span class="text-slate-400 font-medium">空氣聲速 ($v$)</span>
+            <span class="font-mono text-amber-400 font-bold text-sm"><span id="valSoundSpeed">346</span> m/s</span>
+          </div>
+          <input id="sliderSoundSpeed" type="range" min="300" max="360" step="1" value="346" class="w-full accent-amber-500 cursor-pointer">
+          <div class="flex justify-between text-[10px] text-slate-500">
+            <span>300 m/s (低溫)</span>
+            <span>346 m/s (25°C)</span>
+            <span>360 m/s</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- First-Principles Teaching & Cognitive Scaffolding Tabs -->
+    <section class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+      <!-- Tabs Nav -->
+      <div class="flex border-b border-slate-800 bg-slate-850 overflow-x-auto text-sm font-medium">
+        <button class="tab-btn px-4 py-3 text-sky-400 border-b-2 border-sky-400 flex items-center space-x-1.5 whitespace-nowrap" data-tab="tab-principles">
+          <span>🧠</span>
+          <span>第一性原理路徑拆解</span>
+        </button>
+        <button class="tab-btn px-4 py-3 text-slate-400 hover:text-slate-200 border-b-2 border-transparent flex items-center space-x-1.5 whitespace-nowrap" data-tab="tab-derivation">
+          <span>📐</span>
+          <span>公式直觀證明與秒殺盲點</span>
+        </button>
+        <button class="tab-btn px-4 py-3 text-slate-400 hover:text-slate-200 border-b-2 border-transparent flex items-center space-x-1.5 whitespace-nowrap" data-tab="tab-quiz">
+          <span>🎯</span>
+          <span>隨堂挑戰與概念驗證 (F.I.R.E.)</span>
+        </button>
+      </div>
+
+      <!-- Tab Content Area -->
+      <div class="p-5 lg:p-6 text-slate-300">
+
+        <!-- Tab 1: First Principles Scaffolding -->
+        <div id="tab-principles" class="tab-content space-y-6">
+          <div class="border-l-4 border-sky-500 pl-4 py-1">
+            <h3 class="text-base lg:text-lg font-bold text-white">回歸物理底層事實：聲音是怎樣在狹谷中反彈的？</h3>
+            <p class="text-xs text-slate-400 mt-1">
+              剝除公式死記！聲音是介質傳遞的波，以等速前進。只要波前「觸碰」到垂直山壁就會反向彈回；只有當波前「掠過船隻所在坐標」時，船上的人耳才會聽見回聲。
+            </p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- Echo 1 Card -->
+            <div class="bg-slate-950/80 rounded-xl p-4 border border-slate-800 hover:border-emerald-500/40 transition flex flex-col justify-between space-y-3">
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <span class="text-xs font-bold text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/60">第 1 次回聲</span>
+                  <span class="font-mono text-xs text-slate-400">t ≈ 2.66 秒</span>
+                </div>
+                <h4 class="font-bold text-white text-sm">右側峭壁單趟往返</h4>
+                <div class="my-2 p-2 bg-slate-900 rounded border border-slate-800 text-xs font-mono text-slate-300">
+                  路徑：船 ➔ 右壁 ➔ 船<br>
+                  距離：460 + 460 = 920 m<br>
+                  時間：920 ÷ 346 ≈ 2.66 s
+                </div>
+                <p class="text-xs text-slate-400 leading-relaxed">
+                  因為右壁較近 (460m < 924m)，往右出發的聲波最先撞壁並彈回船隻，成為人耳聽見的第一道回聲。
+                </p>
+              </div>
+              <button class="w-full py-1.5 bg-emerald-950/40 hover:bg-emerald-900/60 border border-emerald-800/60 text-emerald-300 text-xs font-semibold rounded-lg transition" onclick="jumpToTime(2.659)">
+                回放到此瞬間 🔍
+              </button>
+            </div>
+
+            <!-- Echo 2 Card -->
+            <div class="bg-slate-950/80 rounded-xl p-4 border border-slate-800 hover:border-cyan-500/40 transition flex flex-col justify-between space-y-3">
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <span class="text-xs font-bold text-cyan-400 bg-cyan-950/60 px-2 py-0.5 rounded border border-cyan-800/60">第 2 次回聲</span>
+                  <span class="font-mono text-xs text-slate-400">t ≈ 5.34 秒</span>
+                </div>
+                <h4 class="font-bold text-white text-sm">左側峭壁單趟往返</h4>
+                <div class="my-2 p-2 bg-slate-900 rounded border border-slate-800 text-xs font-mono text-slate-300">
+                  路徑：船 ➔ 左壁 ➔ 船<br>
+                  距離：924 + 924 = 1848 m<br>
+                  時間：1848 ÷ 346 ≈ 5.34 s
+                </div>
+                <p class="text-xs text-slate-400 leading-relaxed">
+                  往左出發的聲波撞上較遠的左山壁後折返，傳回船隻時經過了約 5.34 秒，成為第二道回聲。
+                </p>
+              </div>
+              <button class="w-full py-1.5 bg-cyan-950/40 hover:bg-cyan-900/60 border border-cyan-800/60 text-cyan-300 text-xs font-semibold rounded-lg transition" onclick="jumpToTime(5.341)">
+                回放到此瞬間 🔍
+              </button>
+            </div>
+
+            <!-- Echo 3 Card -->
+            <div class="bg-slate-950/80 rounded-xl p-4 border border-amber-500/40 hover:border-amber-400 transition flex flex-col justify-between space-y-3 bg-amber-950/10">
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <span class="text-xs font-bold text-amber-300 bg-amber-950/80 px-2 py-0.5 rounded border border-amber-700/60">第 3 次回聲 ★</span>
+                  <span class="font-mono text-xs text-amber-300 font-bold">t = 8.00 秒 整</span>
+                </div>
+                <h4 class="font-bold text-white text-sm">雙壁來回折返 (兩波同至)</h4>
+                <div class="my-2 p-2 bg-slate-900 rounded border border-slate-800 text-xs font-mono text-amber-300">
+                  路徑 A：船 ➔ 右 ➔ 左 ➔ 船 (2768m)<br>
+                  路徑 B：船 ➔ 左 ➔ 右 ➔ 船 (2768m)<br>
+                  時間：2768 ÷ 346 = 8.00 s！
+                </div>
+                <p class="text-xs text-slate-400 leading-relaxed">
+                  向右彈回的波穿過船隻繼續撞擊左壁，向左彈回的波穿過船隻撞擊右壁。兩道波在 <strong class="text-amber-400">8.00 秒時恰好同時抵達船隻</strong>，合併成為極為響亮的第三次回聲！
+                </p>
+              </div>
+              <button class="w-full py-1.5 bg-amber-900/50 hover:bg-amber-800/60 border border-amber-600/60 text-amber-200 text-xs font-semibold rounded-lg transition" onclick="jumpToTime(8.000)">
+                回放到此瞬間 🔍
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 2: Mathematical Derivation & Traps -->
+        <div id="tab-derivation" class="tab-content hidden space-y-5">
+          <div class="border-l-4 border-indigo-500 pl-4 py-1">
+            <h3 class="text-base lg:text-lg font-bold text-white">為什麼第三次回聲的時間恰好等於「第一次 + 第二次」？</h3>
+            <p class="text-xs text-slate-400 mt-1">代數化簡的數學之美與會考常見出題陷阱剖析</p>
+          </div>
+
+          <div class="bg-slate-950/90 rounded-xl p-5 border border-slate-800 space-y-4">
+            <h4 class="text-sm font-bold text-sky-400">1. 代數嚴格推導 (Algebraic Proof)</h4>
+            <div class="text-xs lg:text-sm font-mono space-y-2 bg-slate-900 p-4 rounded-lg border border-slate-800 text-slate-200 leading-relaxed">
+              設船離右壁距離為 d₁ = 460 m，離左壁距離為 d₂ = 924 m，聲速為 v = 346 m/s。<br><br>
+              • 第一次回聲時間：t₁ = 2·d₁ / v<br>
+              • 第二次回聲時間：t₂ = 2·d₂ / v<br><br>
+              現在觀察第三次回聲的路徑（聲波撞擊一側壁面後，跨越整個峽谷撞擊另一側，再折返回船）：<br>
+              總路徑長 S₃ = d₁ + (d₁ + d₂) + d₂ = 2·(d₁ + d₂)<br><br>
+              因此第三次回聲時間：<br>
+              t₃ = S₃ / v = 2·(d₁ + d₂) / v = (2·d₁ / v) + (2·d₂ / v) = <span class="text-amber-400 font-bold">t₁ + t₂</span> ！
+            </div>
+            <p class="text-xs text-slate-400">
+              代入本題數值：<br>
+              t₃ = 2 × (460 + 924) ÷ 346 = 2 × 1384 ÷ 346 = 2 × 4 = <strong class="text-emerald-400 font-bold">8 秒</strong>。<br>
+              即使單邊算出來是無盡小數（2.6589... 與 5.3410...），兩者相加必定是精確的整數 <strong>8 秒</strong>！
+            </p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+            <div class="bg-rose-950/20 border border-rose-900/50 p-3.5 rounded-xl space-y-1">
+              <span class="text-rose-400 font-bold">❌ 誘答陷阱 (A) 2 秒</span>
+              <p class="text-slate-400">誤將總距離 1384 除以兩倍聲速 (1384 ÷ 692 = 2)，混淆了來回傳播與單程的物理意義。</p>
+            </div>
+            <div class="bg-rose-950/20 border border-rose-900/50 p-3.5 rounded-xl space-y-1">
+              <span class="text-rose-400 font-bold">❌ 誘答陷阱 (B) 4 秒</span>
+              <p class="text-slate-400">直接用峽寬除以聲速 1384 ÷ 346 = 4 秒。這只是聲音「從左壁直接飛到右壁單趟」的時間，並非回聲！</p>
+            </div>
+            <div class="bg-rose-950/20 border border-rose-900/50 p-3.5 rounded-xl space-y-1">
+              <span class="text-rose-400 font-bold">❌ 誘答陷阱 (C) 6 秒</span>
+              <p class="text-slate-400">誤以為 346m/s 對應 1 秒，亂猜 2+4=6 或誤用 17°C 題型模板。</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 3: Interactive Quiz -->
+        <div id="tab-quiz" class="tab-content hidden space-y-5">
+          <div class="border-l-4 border-amber-500 pl-4 py-1">
+            <h3 class="text-base lg:text-lg font-bold text-white">即時概念挑戰測驗 (八角框架：成就感激勵)</h3>
+            <p class="text-xs text-slate-400 mt-1">檢驗自己是否真正用第一性原理掌握了雙壁回聲規律</p>
+          </div>
+
+          <div class="space-y-4">
+            <!-- Quiz Item 1 -->
+            <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3">
+              <div class="text-sm font-semibold text-slate-200">
+                Q1. 承原題條件，如果把船開到水道正中間（左右各距山壁 692 m），船上鳴笛後，會聽到幾次回聲？第三次回聲何時到達？
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                <button class="quiz-btn p-2.5 rounded-lg border border-slate-800 bg-slate-900 hover:bg-slate-800 text-left transition" data-correct="false">
+                  (A) 第一次在 2 秒，第三次在 6 秒
+                </button>
+                <button class="quiz-btn p-2.5 rounded-lg border border-slate-800 bg-slate-900 hover:bg-slate-800 text-left transition" data-correct="true">
+                  (B) 兩側回聲同時在 4 秒到達（合併為第1次），下一波回聲在 8 秒到達
+                </button>
+                <button class="quiz-btn p-2.5 rounded-lg border border-slate-800 bg-slate-900 hover:bg-slate-800 text-left transition" data-correct="false">
+                  (C) 永遠聽不到回聲
+                </button>
+                <button class="quiz-btn p-2.5 rounded-lg border border-slate-800 bg-slate-900 hover:bg-slate-800 text-left transition" data-correct="false">
+                  (D) 第三次回聲會在 12 秒到達
+                </button>
+              </div>
+              <div class="quiz-feedback hidden p-3 rounded-lg text-xs font-medium"></div>
+            </div>
+
+            <!-- Quiz Item 2 -->
+            <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3">
+              <div class="text-sm font-semibold text-slate-200">
+                Q2. 如果已知某人在兩峭壁間大喊，1 秒後聽到第一次回聲，再隔 2 秒聽到第二次回聲（即鳴叫後 3 秒），則第三次回聲會在鳴叫後幾秒聽到？
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                <button class="quiz-btn p-2.5 rounded-lg border border-slate-800 bg-slate-900 hover:bg-slate-800 text-left transition" data-correct="false">
+                  (A) 3 秒
+                </button>
+                <button class="quiz-btn p-2.5 rounded-lg border border-slate-800 bg-slate-900 hover:bg-slate-800 text-left transition" data-correct="true">
+                  (B) 4 秒 (t₁ + t₂ = 1 + 3 = 4 秒)
+                </button>
+                <button class="quiz-btn p-2.5 rounded-lg border border-slate-800 bg-slate-900 hover:bg-slate-800 text-left transition" data-correct="false">
+                  (C) 5 秒
+                </button>
+                <button class="quiz-btn p-2.5 rounded-lg border border-slate-800 bg-slate-900 hover:bg-slate-800 text-left transition" data-correct="false">
+                  (D) 6 秒
+                </button>
+              </div>
+              <div class="quiz-feedback hidden p-3 rounded-lg text-xs font-medium"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-800/80 bg-slate-950 px-4 py-4 text-center text-xs text-slate-500">
+    國中自然理化教學互動教材 · 基於聲波反射定律與波動力學設計 · 聲速公式 $v = 331 + 0.6T$
+  </footer>
+
+  <!-- Script Logic -->
+  <script>
+    // --- State and Simulation Variables ---
+    const state = {
+      distLeft: 924,   // meters
+      distRight: 460,  // meters
+      speed: 346,      // m/s
+      currentTime: 0.0,// seconds (0 to 10)
+      isPlaying: false,
+      playbackRate: 0.5,
+      soundEnabled: true,
+      showRays: true,
+      isDraggingBoat: false,
+      lastFrameTime: null,
+      maxSimTime: 10.0,
+      notifiedEchoes: new Set()
+    };
+
+    // DOM Elements
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+    const timeScrubber = document.getElementById('timeScrubber');
+    const timelineProgress = document.getElementById('timelineProgress');
+    const digitalClock = document.getElementById('digitalClock');
+    const playPauseBtn = document.getElementById('playPauseBtn');
+    const playPauseIcon = document.getElementById('playPauseIcon');
+    const playPauseText = document.getElementById('playPauseText');
+    const whistleBtn = document.getElementById('whistleBtn');
+    const stepBackBtn = document.getElementById('stepBackBtn');
+    const stepFwdBtn = document.getElementById('stepFwdBtn');
+    const resetSimBtn = document.getElementById('resetSimBtn');
+    const soundToggleBtn = document.getElementById('soundToggleBtn');
+    const soundIcon = document.getElementById('soundIcon');
+    const soundLabel = document.getElementById('soundLabel');
+    const echoToast = document.getElementById('echoToast');
+    const echoToastText = document.getElementById('echoToastText');
+    const activeEchoStatus = document.getElementById('activeEchoStatus');
+    const showRaysCheckbox = document.getElementById('showRaysCheckbox');
+
+    // Sliders
+    const sliderDistLeft = document.getElementById('sliderDistLeft');
+    const sliderDistRight = document.getElementById('sliderDistRight');
+    const sliderSoundSpeed = document.getElementById('sliderSoundSpeed');
+    const valDistLeft = document.getElementById('valDistLeft');
+    const valDistRight = document.getElementById('valDistRight');
+    const valSoundSpeed = document.getElementById('valSoundSpeed');
+
+    // Labels for jump buttons
+    const labelEcho1Time = document.getElementById('labelEcho1Time');
+    const labelEcho2Time = document.getElementById('labelEcho2Time');
+    const labelEcho3Time = document.getElementById('labelEcho3Time');
+
+    // Web Audio Synthesizer
+    let audioCtx = null;
+    function getAudioContext() {
+      if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContext();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    // Play synthesized Ship Whistle / Foghorn
+    function playHornSound() {
+      if (!state.soundEnabled) return;
+      try {
+        const actx = getAudioContext();
+        const now = actx.currentTime;
+        const osc1 = actx.createOscillator();
+        const osc2 = actx.createOscillator();
+        const gainNode = actx.createGain();
+        const filter = actx.createBiquadFilter();
+
+        osc1.type = 'sawtooth';
+        osc1.frequency.setValueAtTime(140, now);
+        osc1.frequency.exponentialRampToValueAtTime(130, now + 0.6);
+
+        osc2.type = 'triangle';
+        osc2.frequency.setValueAtTime(175, now);
+        osc2.frequency.exponentialRampToValueAtTime(165, now + 0.6);
+
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(600, now);
+
+        gainNode.gain.setValueAtTime(0.01, now);
+        gainNode.gain.linearRampToValueAtTime(0.4, now + 0.08);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.7);
+
+        osc1.connect(filter);
+        osc2.connect(filter);
+        filter.connect(gainNode);
+        gainNode.connect(actx.destination);
+
+        osc1.start(now);
+        osc2.start(now);
+        osc1.stop(now + 0.75);
+        osc2.stop(now + 0.75);
+      } catch (e) {
+        console.warn('Audio not available', e);
+      }
+    }
+
+    // Play Echo Ping / Bell
+    function playEchoPing(pitch = 587.33, volume = 0.35) {
+      if (!state.soundEnabled) return;
+      try {
+        const actx = getAudioContext();
+        const now = actx.currentTime;
+        const osc = actx.createOscillator();
+        const gain = actx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(pitch, now);
+
+        gain.gain.setValueAtTime(0.01, now);
+        gain.gain.linearRampToValueAtTime(volume, now + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+
+        osc.connect(gain);
+        gain.connect(actx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.65);
+      } catch (e) {
+        console.warn('Audio error', e);
+      }
+    }
+
+    // --- Physics Echo Calculation Helpers ---
+    function computeEchoTimes() {
+      const d1 = Math.min(state.distLeft, state.distRight);
+      const d2 = Math.max(state.distLeft, state.distRight);
+      const v = state.speed;
+
+      const t1 = (2 * d1) / v;
+      const t2 = (2 * d2) / v;
+      const t3 = (2 * (d1 + d2)) / v; // t1 + t2
+      const t4 = Math.min((4 * d1) / v, (2 * d1 + 2 * (d1 + d2)) / v);
+
+      return {
+        t1: parseFloat(t1.toFixed(3)),
+        t2: parseFloat(t2.toFixed(3)),
+        t3: parseFloat(t3.toFixed(3)),
+        t4: parseFloat(t4.toFixed(3)),
+        isSymmetric: Math.abs(state.distLeft - state.distRight) < 1
+      };
+    }
+
+    function updateEchoLabels() {
+      const { t1, t2, t3, isSymmetric } = computeEchoTimes();
+      valDistLeft.textContent = Math.round(state.distLeft);
+      valDistRight.textContent = Math.round(state.distRight);
+      valSoundSpeed.textContent = Math.round(state.speed);
+
+      if (isSymmetric) {
+        labelEcho1Time.textContent = t1.toFixed(2) + 's (同至)';
+        labelEcho2Time.textContent = t1.toFixed(2) + 's (同至)';
+        labelEcho3Time.textContent = t3.toFixed(2) + 's';
+      } else {
+        labelEcho1Time.textContent = t1.toFixed(2) + 's';
+        labelEcho2Time.textContent = t2.toFixed(2) + 's';
+        labelEcho3Time.textContent = t3.toFixed(2) + 's';
+      }
+    }
+
+    // Show Toast Notification
+    let toastTimeout = null;
+    function triggerToast(text) {
+      echoToastText.textContent = text;
+      echoToast.classList.remove('opacity-0', 'scale-95');
+      echoToast.classList.add('opacity-100', 'scale-100');
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        echoToast.classList.remove('opacity-100', 'scale-100');
+        echoToast.classList.add('opacity-0', 'scale-95');
+      }, 1600);
+    }
+
+    // --- High DPI Canvas Sizing ---
+    function resizeCanvas() {
+      const rect = canvas.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.resetTransform();
+      ctx.scale(dpr, dpr);
+    }
+    window.addEventListener('resize', () => {
+      resizeCanvas();
+      draw();
+    });
+
+    // --- Wave Front Physics Engine ---
+    // At time t, calculate wavefront position and ray trajectory
+    // The boat is at coordinate x = 0 (origin).
+    // Left Cliff is at -distLeft, Right Cliff is at +distRight.
+    function getWavePositions(t) {
+      const distTraveled = state.speed * t;
+      const dL = state.distLeft;
+      const dR = state.distRight;
+      const canyonWidth = dL + dR;
+
+      // 1. Rightward wave: starts at x=0 heading right (+1)
+      // When it reaches +dR, it reflects to the left, heading towards -dL (distance dR + canyonWidth)
+      let posRightWave = 0;
+      let dirRightWave = 1;
+      let rightWaveBounces = 0;
+
+      // Distance modulo double canyon width
+      let remR = distTraveled;
+      if (remR <= dR) {
+        posRightWave = remR;
+        dirRightWave = 1;
+        rightWaveBounces = 0;
+      } else {
+        remR -= dR;
+        rightWaveBounces = 1;
+        // bouncing between right cliff (+dR) and left cliff (-dL)
+        const trip = canyonWidth;
+        const numCross = Math.floor(remR / trip);
+        const subRem = remR % trip;
+        if (numCross % 2 === 0) {
+          // moving left from right cliff towards left cliff
+          posRightWave = dR - subRem;
+          dirRightWave = -1;
+        } else {
+          // moving right from left cliff towards right cliff
+          posRightWave = -dL + subRem;
+          dirRightWave = 1;
+        }
+        rightWaveBounces += numCross;
+      }
+
+      // 2. Leftward wave: starts at x=0 heading left (-1)
+      let posLeftWave = 0;
+      let dirLeftWave = -1;
+      let leftWaveBounces = 0;
+
+      let remL = distTraveled;
+      if (remL <= dL) {
+        posLeftWave = -remL;
+        dirLeftWave = -1;
+        leftWaveBounces = 0;
+      } else {
+        remL -= dL;
+        leftWaveBounces = 1;
+        const trip = canyonWidth;
+        const numCross = Math.floor(remL / trip);
+        const subRem = remL % trip;
+        if (numCross % 2 === 0) {
+          // moving right from left cliff towards right cliff
+          posLeftWave = -dL + subRem;
+          dirLeftWave = 1;
+        } else {
+          // moving left from right cliff towards left cliff
+          posLeftWave = dR - subRem;
+          dirLeftWave = -1;
+        }
+        leftWaveBounces += numCross;
+      }
+
+      return {
+        posRightWave,
+        dirRightWave,
+        rightWaveBounces,
+        posLeftWave,
+        dirLeftWave,
+        leftWaveBounces,
+        distTraveled
+      };
+    }
+
+    // Check if an echo should trigger sound/visual
+    function checkEchoTriggers(prevT, currT) {
+      const { t1, t2, t3, isSymmetric } = computeEchoTimes();
+
+      // Check for Echo 1
+      if (prevT < t1 && currT >= t1 && !state.notifiedEchoes.has('e1')) {
+        state.notifiedEchoes.add('e1');
+        playEchoPing(587.33, 0.4); // D5
+        triggerToast(isSymmetric ? '🔔 兩側回聲同時抵達 (4.00s)！' : `🔔 收到第 1 次回聲 (${t1.toFixed(2)}s)！來自右壁`);
+        activeEchoStatus.textContent = isSymmetric ? '第 1 次回聲：左右壁同時到達' : `第 1 次回聲：右壁往返 (${t1.toFixed(2)}s)`;
+      }
+
+      // Check for Echo 2
+      if (!isSymmetric && prevT < t2 && currT >= t2 && !state.notifiedEchoes.has('e2')) {
+        state.notifiedEchoes.add('e2');
+        playEchoPing(659.25, 0.4); // E5
+        triggerToast(`🔔 收到第 2 次回聲 (${t2.toFixed(2)}s)！來自左壁`);
+        activeEchoStatus.textContent = `第 2 次回聲：左壁往返 (${t2.toFixed(2)}s)`;
+      }
+
+      // Check for Echo 3
+      if (prevT < t3 && currT >= t3 && !state.notifiedEchoes.has('e3')) {
+        state.notifiedEchoes.add('e3');
+        playEchoPing(880.00, 0.55); // A5 double chime
+        setTimeout(() => playEchoPing(1174.66, 0.4), 120);
+        triggerToast(`🌟 收到第 3 次回聲 (${t3.toFixed(2)}s)！雙壁折返同至！`);
+        activeEchoStatus.textContent = `第 3 次回聲：雙壁折返同至 (${t3.toFixed(2)}s)`;
+      }
+    }
+
+    // --- Render Loop ---
+    function draw() {
+      const rect = canvas.getBoundingClientRect();
+      const w = rect.width;
+      const h = rect.height;
+
+      ctx.clearRect(0, 0, w, h);
+
+      // Coordinate mapping:
+      // Total canyon width = distLeft + distRight
+      // Allow padding on sides for cliff drawing
+      const cliffPad = 48; // px
+      const waterW = w - cliffPad * 2;
+      const totalDist = state.distLeft + state.distRight;
+
+      // Scale: pixels per meter
+      const pxPerMeter = waterW / totalDist;
+      const leftCliffX = cliffPad;
+      const rightCliffX = w - cliffPad;
+      const boatX = leftCliffX + state.distLeft * pxPerMeter;
+      const waterY = h * 0.68;
+
+      // 1. Sky & Background Atmosphere
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, waterY);
+      skyGrad.addColorStop(0, '#020617');
+      skyGrad.addColorStop(1, '#0f172a');
+      ctx.fillStyle = skyGrad;
+      ctx.fillRect(0, 0, w, waterY);
+
+      // Distant mountains silhouette
+      ctx.fillStyle = '#1e293b';
+      ctx.beginPath();
+      ctx.moveTo(leftCliffX, waterY);
+      ctx.lineTo(leftCliffX + 80, waterY - 60);
+      ctx.lineTo(leftCliffX + 160, waterY - 30);
+      ctx.lineTo(leftCliffX + 240, waterY - 80);
+      ctx.lineTo(rightCliffX - 100, waterY - 40);
+      ctx.lineTo(rightCliffX, waterY);
+      ctx.closePath();
+      ctx.fill();
+
+      // 2. Water Channel
+      const waterGrad = ctx.createLinearGradient(0, waterY, 0, h);
+      waterGrad.addColorStop(0, '#0369a1');
+      waterGrad.addColorStop(0.3, '#0c4a6e');
+      waterGrad.addColorStop(1, '#082f49');
+      ctx.fillStyle = waterGrad;
+      ctx.fillRect(leftCliffX, waterY, waterW, h - waterY);
+
+      // Water gentle waves lines
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.2)';
+      ctx.lineWidth = 1.5;
+      for (let y = waterY + 12; y < h; y += 14) {
+        ctx.beginPath();
+        for (let x = leftCliffX; x <= rightCliffX; x += 30) {
+          const waveOffset = Math.sin(x * 0.04 + state.currentTime * 3) * 2;
+          if (x === leftCliffX) ctx.moveTo(x, y + waveOffset);
+          else ctx.lineTo(x, y + waveOffset);
+        }
+        ctx.stroke();
+      }
+
+      // 3. Vertical Canyon Walls (Cliffs)
+      // Left Cliff
+      const leftCliffGrad = ctx.createLinearGradient(0, 0, leftCliffX, 0);
+      leftCliffGrad.addColorStop(0, '#334155');
+      leftCliffGrad.addColorStop(1, '#1e293b');
+      ctx.fillStyle = leftCliffGrad;
+      ctx.fillRect(0, 20, leftCliffX, h - 20);
+
+      // Left Cliff vertical highlight edge
+      ctx.strokeStyle = '#64748b';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(leftCliffX, 20);
+      ctx.lineTo(leftCliffX, h);
+      ctx.stroke();
+
+      // Right Cliff
+      const rightCliffGrad = ctx.createLinearGradient(rightCliffX, 0, w, 0);
+      rightCliffGrad.addColorStop(0, '#1e293b');
+      rightCliffGrad.addColorStop(1, '#334155');
+      ctx.fillStyle = rightCliffGrad;
+      ctx.fillRect(rightCliffX, 20, cliffPad, h - 20);
+
+      ctx.strokeStyle = '#64748b';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(rightCliffX, 20);
+      ctx.lineTo(rightCliffX, h);
+      ctx.stroke();
+
+      // Cliff Text Badges
+      ctx.font = 'bold 11px sans-serif';
+      ctx.textAlign = 'center';
+
+      // Left Cliff Label
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillText('左垂直山壁', leftCliffX / 2, 45);
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillText(`${Math.round(state.distLeft)} m`, leftCliffX / 2, 65);
+
+      // Right Cliff Label
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillText('右垂直山壁', rightCliffX + cliffPad / 2, 45);
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillText(`${Math.round(state.distRight)} m`, rightCliffX + cliffPad / 2, 65);
+
+      // 4. Dimension Arrows & Labels
+      ctx.strokeStyle = '#0284c7';
+      ctx.lineWidth = 1.5;
+      const arrowY = waterY - 50;
+
+      // Left distance arrow
+      drawArrow(ctx, boatX - 10, arrowY, leftCliffX + 4, arrowY);
+      // Right distance arrow
+      drawArrow(ctx, boatX + 10, arrowY, rightCliffX - 4, arrowY);
+
+      // Dimension Text Labels
+      ctx.font = 'bold 12px monospace';
+      ctx.fillStyle = '#7dd3fc';
+      ctx.textAlign = 'center';
+      ctx.fillText(`${Math.round(state.distLeft)} m`, (leftCliffX + boatX) / 2, arrowY - 8);
+      ctx.fillText(`${Math.round(state.distRight)} m`, (rightCliffX + boatX) / 2, arrowY - 8);
+
+      // 5. Sound Wavefronts and Geometry Rays
+      const waves = getWavePositions(state.currentTime);
+
+      if (state.currentTime > 0) {
+        // Map wave coordinate in meters to canvas X
+        // Wave coordinate is relative to boat (0): actual X = boatX + pos * pxPerMeter
+        const rWaveX = boatX + waves.posRightWave * pxPerMeter;
+        const lWaveX = boatX + waves.posLeftWave * pxPerMeter;
+
+        // Draw Expanding Arcs / Wavefronts
+        const arcCenterY = waterY - 14;
+
+        // A. Right Wavefront (Rose / Orange glow)
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(rWaveX, arcCenterY, 32, 0, Math.PI * 2);
+        ctx.strokeStyle = waves.dirRightWave > 0 ? '#f43f5e' : '#fb923c';
+        ctx.lineWidth = 3;
+        ctx.setLineDash([4, 2]);
+        ctx.stroke();
+        ctx.restore();
+
+        // Right wave vertical wavefront line
+        ctx.strokeStyle = waves.dirRightWave > 0 ? 'rgba(244, 63, 94, 0.85)' : 'rgba(251, 146, 60, 0.85)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(rWaveX, waterY - 90);
+        ctx.lineTo(rWaveX, waterY + 40);
+        ctx.stroke();
+
+        // Right wave indicator tag
+        ctx.fillStyle = waves.dirRightWave > 0 ? '#f43f5e' : '#fb923c';
+        ctx.font = 'bold 10px sans-serif';
+        ctx.fillText(waves.dirRightWave > 0 ? '波前R ➔' : '波前R ⬅', rWaveX, waterY - 95);
+
+        // B. Left Wavefront (Sky / Violet glow)
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(lWaveX, arcCenterY, 32, 0, Math.PI * 2);
+        ctx.strokeStyle = waves.dirLeftWave < 0 ? '#38bdf8' : '#a855f7';
+        ctx.lineWidth = 3;
+        ctx.setLineDash([4, 2]);
+        ctx.stroke();
+        ctx.restore();
+
+        // Left wave vertical wavefront line
+        ctx.strokeStyle = waves.dirLeftWave < 0 ? 'rgba(56, 189, 248, 0.85)' : 'rgba(168, 85, 247, 0.85)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(lWaveX, waterY - 90);
+        ctx.lineTo(lWaveX, waterY + 40);
+        ctx.stroke();
+
+        ctx.fillStyle = waves.dirLeftWave < 0 ? '#38bdf8' : '#a855f7';
+        ctx.font = 'bold 10px sans-serif';
+        ctx.fillText(waves.dirLeftWave < 0 ? '⬅ 波前L' : '➔ 波前L', lWaveX, waterY - 95);
+
+        // Optional: Ray Path visualization tracks
+        if (state.showRays) {
+          drawRayPaths(ctx, boatX, leftCliffX, rightCliffX, waterY);
+        }
+      }
+
+      // 6. Draw The Boat
+      drawBoat(ctx, boatX, waterY, state.currentTime);
+
+      // 7. Time & Status Floating Tag at Boat
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)';
+      ctx.lineWidth = 1;
+      const tagW = 100;
+      const tagH = 22;
+      ctx.beginPath();
+      ctx.roundRect(boatX - tagW / 2, waterY + 28, tagW, tagH, 6);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#e2e8f0';
+      ctx.font = '10px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(`船隻位置 (靜止)`, boatX, waterY + 42);
+    }
+
+    // Helper: Draw Vector Arrow
+    function drawArrow(ctx, fromX, fromY, toX, toY) {
+      const headlen = 8;
+      const angle = Math.atan2(toY - fromY, toX - fromX);
+      ctx.beginPath();
+      ctx.moveTo(fromX, fromY);
+      ctx.lineTo(toX, toY);
+      ctx.lineTo(toX - headlen * Math.cos(angle - Math.PI / 6), toY - headlen * Math.sin(angle - Math.PI / 6));
+      ctx.moveTo(toX, toY);
+      ctx.lineTo(toX - headlen * Math.cos(angle + Math.PI / 6), toY - headlen * Math.sin(angle + Math.PI / 6));
+      ctx.stroke();
+    }
+
+    // Helper: Draw Ray Paths
+    function drawRayPaths(ctx, boatX, leftX, rightX, waterY) {
+      ctx.save();
+      const { t1, t2, t3 } = computeEchoTimes();
+      const curr = state.currentTime;
+
+      // Echo 1 Path (Boat -> Right -> Boat)
+      if (curr >= t1 * 0.95 && curr <= t1 * 1.05) {
+        ctx.strokeStyle = '#34d399';
+        ctx.lineWidth = 2.5;
+        ctx.setLineDash([5, 3]);
+        ctx.beginPath();
+        ctx.moveTo(boatX, waterY - 20);
+        ctx.lineTo(rightX, waterY - 20);
+        ctx.lineTo(boatX, waterY - 20);
+        ctx.stroke();
+      }
+
+      // Echo 2 Path (Boat -> Left -> Boat)
+      if (curr >= t2 * 0.95 && curr <= t2 * 1.05) {
+        ctx.strokeStyle = '#22d3ee';
+        ctx.lineWidth = 2.5;
+        ctx.setLineDash([5, 3]);
+        ctx.beginPath();
+        ctx.moveTo(boatX, waterY - 25);
+        ctx.lineTo(leftX, waterY - 25);
+        ctx.lineTo(boatX, waterY - 25);
+        ctx.stroke();
+      }
+
+      // Echo 3 Path (Double Bounce)
+      if (curr >= t3 * 0.95 && curr <= t3 * 1.05) {
+        ctx.strokeStyle = '#fbbf24';
+        ctx.lineWidth = 3.5;
+        ctx.setLineDash([]);
+        ctx.beginPath();
+        // Path A: Boat -> Right -> Left -> Boat
+        ctx.moveTo(boatX, waterY - 30);
+        ctx.lineTo(rightX, waterY - 30);
+        ctx.lineTo(leftX, waterY - 30);
+        ctx.lineTo(boatX, waterY - 30);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    // Helper: Draw Detailed Boat
+    function drawBoat(ctx, x, y, t) {
+      ctx.save();
+      const bobbing = Math.sin(t * 4) * 2;
+      const boatY = y + bobbing;
+
+      // Whistle smoke puff if recent whistle
+      if (t > 0 && t < 0.8) {
+        const smokeSize = 6 + t * 24;
+        const alpha = Math.max(0, 1 - t * 1.25);
+        ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+        ctx.beginPath();
+        ctx.arc(x, boatY - 36 - t * 25, smokeSize, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(x - 5, boatY - 45 - t * 35, smokeSize * 0.8, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Hull
+      ctx.fillStyle = '#e2e8f0';
+      ctx.beginPath();
+      ctx.moveTo(x - 22, boatY - 4);
+      ctx.lineTo(x + 22, boatY - 4);
+      ctx.lineTo(x + 16, boatY + 8);
+      ctx.lineTo(x - 16, boatY + 8);
+      ctx.closePath();
+      ctx.fill();
+
+      // Red hull stripe
+      ctx.fillStyle = '#dc2626';
+      ctx.beginPath();
+      ctx.moveTo(x - 20, boatY - 4);
+      ctx.lineTo(x + 20, boatY - 4);
+      ctx.lineTo(x + 18, boatY);
+      ctx.lineTo(x - 18, boatY);
+      ctx.closePath();
+      ctx.fill();
+
+      // Cabin
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(x - 12, boatY - 18, 24, 14);
+
+      // Cabin roof (crimson)
+      ctx.fillStyle = '#991b1b';
+      ctx.fillRect(x - 14, boatY - 21, 28, 4);
+
+      // Windows
+      ctx.fillStyle = '#0284c7';
+      ctx.fillRect(x - 8, boatY - 14, 5, 6);
+      ctx.fillRect(x - 1, boatY - 14, 5, 6);
+      ctx.fillRect(x + 6, boatY - 14, 5, 6);
+
+      // Smokestack
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(x - 3, boatY - 29, 6, 9);
+      ctx.fillStyle = '#ef4444';
+      ctx.fillRect(x - 3, boatY - 25, 6, 3);
+
+      // Drag handle pulse ring
+      if (state.isDraggingBoat) {
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(x, boatY - 10, 36, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      ctx.restore();
+    }
+
+    // --- Animation Loop ---
+    function tick(timestamp) {
+      if (!state.lastFrameTime) state.lastFrameTime = timestamp;
+      const deltaSec = (timestamp - state.lastFrameTime) / 1000;
+      state.lastFrameTime = timestamp;
+
+      if (state.isPlaying) {
+        const prevT = state.currentTime;
+        state.currentTime += deltaSec * state.playbackRate;
+
+        if (state.currentTime >= state.maxSimTime) {
+          state.currentTime = state.maxSimTime;
+          state.isPlaying = false;
+          updatePlayPauseButton();
+        }
+
+        checkEchoTriggers(prevT, state.currentTime);
+        syncUIWithTime();
+      }
+
+      draw();
+      requestAnimationFrame(tick);
+    }
+
+    // Synchronize UI elements with current time
+    function syncUIWithTime() {
+      digitalClock.textContent = state.currentTime.toFixed(2) + ' s';
+      timeScrubber.value = state.currentTime.toFixed(2);
+      const progressPercent = (state.currentTime / state.maxSimTime) * 100;
+      timelineProgress.style.width = progressPercent + '%';
+    }
+
+    function setTime(newTime, resetTriggers = false) {
+      const prevT = state.currentTime;
+      state.currentTime = Math.max(0, Math.min(state.maxSimTime, newTime));
+      if (resetTriggers) {
+        state.notifiedEchoes.clear();
+      }
+      syncUIWithTime();
+      draw();
+    }
+
+    function jumpToTime(targetT) {
+      state.isPlaying = false;
+      updatePlayPauseButton();
+      // Clear echoes that occur after targetT
+      state.notifiedEchoes.clear();
+      const { t1, t2, t3 } = computeEchoTimes();
+      if (targetT >= t1) state.notifiedEchoes.add('e1');
+      if (targetT >= t2) state.notifiedEchoes.add('e2');
+      if (targetT >= t3) state.notifiedEchoes.add('e3');
+      setTime(targetT);
+    }
+
+    function updatePlayPauseButton() {
+      if (state.isPlaying) {
+        playPauseIcon.textContent = '⏸';
+        playPauseText.textContent = '暫停';
+      } else {
+        playPauseIcon.textContent = '▶';
+        playPauseText.textContent = '播放';
+      }
+    }
+
+    // --- Timeline Markers Builder ---
+    function renderTimelineMarkers() {
+      const container = document.getElementById('timelineMarkersContainer');
+      container.innerHTML = '';
+      const { t1, t2, t3, isSymmetric } = computeEchoTimes();
+
+      const markers = [
+        { t: 0, label: '鳴笛', color: 'bg-sky-400', textColor: 'text-sky-400' }
+      ];
+
+      if (isSymmetric) {
+        markers.push({ t: t1, label: '回聲1+2 (同至)', color: 'bg-emerald-400', textColor: 'text-emerald-400' });
+      } else {
+        markers.push({ t: t1, label: '回聲1', color: 'bg-emerald-400', textColor: 'text-emerald-400' });
+        markers.push({ t: t2, label: '回聲2', color: 'bg-cyan-400', textColor: 'text-cyan-400' });
+      }
+
+      markers.push({ t: t3, label: '★ 回聲3', color: 'bg-amber-400 echo-marker-glow', textColor: 'text-amber-400' });
+
+      markers.forEach(m => {
+        if (m.t <= state.maxSimTime) {
+          const pct = (m.t / state.maxSimTime) * 100;
+          const markerEl = document.createElement('div');
+          markerEl.className = 'absolute top-1/2 -translate-y-1/2 -translate-x-1/2 flex flex-col items-center pointer-events-auto cursor-pointer';
+          markerEl.style.left = pct + '%';
+          markerEl.title = `點擊跳至 ${m.label} (${m.t.toFixed(2)}s)`;
+          markerEl.onclick = () => jumpToTime(m.t);
+
+          markerEl.innerHTML = `
+            <div class="w-3.5 h-3.5 rounded-full ${m.color} border-2 border-slate-900 transition-transform hover:scale-125"></div>
+            <span class="text-[10px] font-bold ${m.textColor} mt-1 whitespace-nowrap bg-slate-950/80 px-1 rounded shadow">${m.label}</span>
+          `;
+          container.appendChild(markerEl);
+        }
+      });
+    }
+
+    // --- Event Listeners Wiring ---
+
+    // Whistle Blast Action
+    whistleBtn.addEventListener('click', () => {
+      setTime(0, true);
+      playHornSound();
+      state.isPlaying = true;
+      updatePlayPauseButton();
+      triggerToast('📢 船隻鳴笛！聲波向左右以 346 m/s 擴散');
+      activeEchoStatus.textContent = '聲波前進中...';
+    });
+
+    playPauseBtn.addEventListener('click', () => {
+      state.isPlaying = !state.isPlaying;
+      updatePlayPauseButton();
+    });
+
+    stepBackBtn.addEventListener('click', () => {
+      state.isPlaying = false;
+      updatePlayPauseButton();
+      setTime(state.currentTime - 0.1);
+    });
+
+    stepFwdBtn.addEventListener('click', () => {
+      state.isPlaying = false;
+      updatePlayPauseButton();
+      setTime(state.currentTime + 0.1);
+    });
+
+    resetSimBtn.addEventListener('click', () => {
+      state.isPlaying = false;
+      updatePlayPauseButton();
+      setTime(0, true);
+      activeEchoStatus.textContent = '準備就緒';
+    });
+
+    timeScrubber.addEventListener('input', (e) => {
+      state.isPlaying = false;
+      updatePlayPauseButton();
+      setTime(parseFloat(e.target.value));
+    });
+
+    // Sound toggle
+    soundToggleBtn.addEventListener('click', () => {
+      state.soundEnabled = !state.soundEnabled;
+      if (state.soundEnabled) {
+        soundIcon.textContent = '🔊';
+        soundLabel.textContent = '音效開啟';
+        getAudioContext();
+      } else {
+        soundIcon.textContent = '🔇';
+        soundLabel.textContent = '音效靜音';
+      }
+    });
+
+    showRaysCheckbox.addEventListener('change', (e) => {
+      state.showRays = e.target.checked;
+      draw();
+    });
+
+    // Jump Buttons
+    document.getElementById('btnJumpWhistle').addEventListener('click', () => jumpToTime(0));
+    document.getElementById('btnJumpEcho1').addEventListener('click', () => {
+      const { t1 } = computeEchoTimes();
+      jumpToTime(t1);
+    });
+    document.getElementById('btnJumpEcho2').addEventListener('click', () => {
+      const { t2 } = computeEchoTimes();
+      jumpToTime(t2);
+    });
+    document.getElementById('btnJumpEcho3').addEventListener('click', () => {
+      const { t3 } = computeEchoTimes();
+      jumpToTime(t3);
+    });
+
+    // Speed Buttons
+    document.querySelectorAll('.speed-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.speed-btn').forEach(b => {
+          b.classList.remove('bg-sky-600', 'text-white', 'font-bold');
+          b.classList.add('text-slate-300');
+        });
+        btn.classList.add('bg-sky-600', 'text-white', 'font-bold');
+        btn.classList.remove('text-slate-300');
+        state.playbackRate = parseFloat(btn.dataset.speed);
+      });
+    });
+
+    // Presets
+    document.getElementById('presetOriginalBtn').addEventListener('click', () => {
+      state.distLeft = 924;
+      state.distRight = 460;
+      state.speed = 346;
+      sliderDistLeft.value = 924;
+      sliderDistRight.value = 460;
+      sliderSoundSpeed.value = 346;
+      updateEchoLabels();
+      renderTimelineMarkers();
+      setTime(0, true);
+    });
+
+    document.getElementById('presetCenterBtn').addEventListener('click', () => {
+      state.distLeft = 692;
+      state.distRight = 692;
+      state.speed = 346;
+      sliderDistLeft.value = 692;
+      sliderDistRight.value = 692;
+      sliderSoundSpeed.value = 346;
+      updateEchoLabels();
+      renderTimelineMarkers();
+      setTime(0, true);
+    });
+
+    document.getElementById('presetSimpleRatioBtn').addEventListener('click', () => {
+      state.distLeft = 692;
+      state.distRight = 346;
+      state.speed = 346;
+      sliderDistLeft.value = 692;
+      sliderDistRight.value = 346;
+      sliderSoundSpeed.value = 346;
+      updateEchoLabels();
+      renderTimelineMarkers();
+      setTime(0, true);
+    });
+
+    // Parameter Sliders Input
+    sliderDistLeft.addEventListener('input', (e) => {
+      state.distLeft = parseFloat(e.target.value);
+      updateEchoLabels();
+      renderTimelineMarkers();
+      draw();
+    });
+
+    sliderDistRight.addEventListener('input', (e) => {
+      state.distRight = parseFloat(e.target.value);
+      updateEchoLabels();
+      renderTimelineMarkers();
+      draw();
+    });
+
+    sliderSoundSpeed.addEventListener('input', (e) => {
+      state.speed = parseFloat(e.target.value);
+      updateEchoLabels();
+      renderTimelineMarkers();
+      draw();
+    });
+
+    // Interactive Boat Dragging on Canvas
+    function getCanvasBoatX() {
+      const rect = canvas.getBoundingClientRect();
+      const cliffPad = 48;
+      const waterW = rect.width - cliffPad * 2;
+      const totalDist = state.distLeft + state.distRight;
+      const pxPerMeter = waterW / totalDist;
+      return cliffPad + state.distLeft * pxPerMeter;
+    }
+
+    canvas.addEventListener('mousedown', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+      const boatX = getCanvasBoatX();
+      const boatY = rect.height * 0.68;
+
+      if (Math.hypot(mouseX - boatX, mouseY - boatY) < 45) {
+        state.isDraggingBoat = true;
+        document.getElementById('dragHint').style.display = 'none';
+      }
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!state.isDraggingBoat) return;
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = Math.max(60, Math.min(rect.width - 60, e.clientX - rect.left));
+      const cliffPad = 48;
+      const waterW = rect.width - cliffPad * 2;
+      const totalDist = state.distLeft + state.distRight;
+
+      // Fraction from left
+      const frac = (mouseX - cliffPad) / waterW;
+      const clampedFrac = Math.max(0.1, Math.min(0.9, frac));
+
+      state.distLeft = Math.round(totalDist * clampedFrac);
+      state.distRight = Math.round(totalDist * (1 - clampedFrac));
+
+      sliderDistLeft.value = state.distLeft;
+      sliderDistRight.value = state.distRight;
+
+      updateEchoLabels();
+      renderTimelineMarkers();
+      draw();
+    });
+
+    window.addEventListener('mouseup', () => {
+      if (state.isDraggingBoat) {
+        state.isDraggingBoat = false;
+        draw();
+      }
+    });
+
+    // --- Tab Switching Navigation ---
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => {
+          b.classList.remove('text-sky-400', 'border-sky-400');
+          b.classList.add('text-slate-400', 'border-transparent');
+        });
+        btn.classList.add('text-sky-400', 'border-sky-400');
+        btn.classList.remove('text-slate-400', 'border-transparent');
+
+        const targetId = btn.dataset.tab;
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+        document.getElementById(targetId).classList.remove('hidden');
+      });
+    });
+
+    // --- Quiz Validation ---
+    document.querySelectorAll('.quiz-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const parent = btn.closest('.space-y-3');
+        const feedback = parent.querySelector('.quiz-feedback');
+        const isCorrect = btn.dataset.correct === 'true';
+
+        // Reset siblings
+        parent.querySelectorAll('.quiz-btn').forEach(b => {
+          b.classList.remove('border-emerald-500', 'bg-emerald-950/40', 'border-rose-500', 'bg-rose-950/40');
+        });
+
+        feedback.classList.remove('hidden', 'bg-emerald-950/60', 'text-emerald-300', 'border-emerald-800', 'bg-rose-950/60', 'text-rose-300', 'border-rose-800');
+
+        if (isCorrect) {
+          btn.classList.add('border-emerald-500', 'bg-emerald-950/40');
+          feedback.classList.add('bg-emerald-950/60', 'text-emerald-300', 'border', 'border-emerald-800');
+          feedback.innerHTML = '🎉 <strong>完全正確！</strong> 對稱情況下，兩次回聲同時在 4 秒到達，因此聽到的第 1 次回聲就是 4 秒；下一波折返回聲在 8 秒到達！';
+          playEchoPing(880, 0.4);
+        } else {
+          btn.classList.add('border-rose-500', 'bg-rose-950/40');
+          feedback.classList.add('bg-rose-950/60', 'text-rose-300', 'border', 'border-rose-800');
+          feedback.innerHTML = '🤔 <strong>再想一下：</strong> 請注意聲速與距離，點擊上方「置中對稱 (692m, 692m)」預設按鈕，親自看動畫驗證！';
+        }
+      });
+    });
+
+    // --- Initialization on Load ---
+    window.onload = () => {
+      resizeCanvas();
+      updateEchoLabels();
+      renderTimelineMarkers();
+      draw();
+      requestAnimationFrame(tick);
+    };
+  </script>
+</body>
+</html>

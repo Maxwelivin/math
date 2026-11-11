@@ -167,6 +167,14 @@ details.ans summary{cursor:pointer;color:var(--accent)}
 #s2 .s2-steps{margin-bottom:8px}
 @media(max-width:820px){#s2 .s2-views{grid-template-columns:1fr}}
 
+#s2 .s2-eyewrap{position:relative}
+#s2 .s2-eyewrap svg{display:block}
+#s2 .s2-gbtn{position:absolute;left:calc(19% + 8px);top:6px;min-width:34px;height:32px;border:1px solid #adb5bd;background:rgba(255,255,255,.92);border-radius:8px;font-size:18px;line-height:1;padding:0 6px;cursor:pointer}
+#s2 .s2-gbtn.on{background:#ffe3e3;border-color:#c92a2a}
+#s2 #s2-lab.s2-game #s2-eye-svg{pointer-events:auto;touch-action:manipulation;cursor:none}
+#s2 #s2-lab.s2-game #s2-steps{opacity:.4;pointer-events:none}
+#s2 #s2-gstrip .btn.on{background:var(--accent);color:#fff}
+
 #s3 .s3-main{margin-top:0;padding:10px}
 #s3 .s3-main .ctrl{margin:4px 0}
 #s3 svg.stage{touch-action:pan-y;max-height:calc(100vh - 390px);min-height:300px}
@@ -299,10 +307,13 @@ details.ans summary{cursor:pointer;color:var(--accent)}
 <div class="card" id="s2-lab">
   <div class="s2-steps" id="s2-steps"></div>
   <div class="s2-views">
-    <svg id="s2-eye-svg" class="stage" viewBox="0 0 600 480" role="img" aria-label="眼睛視角：單眼貼近桌面看到的鏡子與電池"></svg>
+    <div class="s2-eyewrap">
+      <svg id="s2-eye-svg" class="stage" viewBox="0 0 600 480" role="img" aria-label="眼睛視角：單眼貼近桌面看到的鏡子與電池"></svg>
+      <button type="button" class="s2-gbtn" id="s2-g-toggle" title="眼睛視角小遊戲" aria-label="切換小遊戲">🎮</button>
+    </div>
     <svg id="s2-svg" class="stage" viewBox="0 0 600 480" role="img" aria-label="俯視圖：平面鏡、方格紙、電池 A、電池 B 與眼睛（可拖曳）"></svg>
   </div>
-  <div class="s2-strip">
+  <div class="s2-strip" id="s2-strip">
     <div class="s2-hintbox">
       <p class="s2-text" id="s2-text"></p>
       <div class="s2-msg" id="s2-msg" aria-live="polite"></div>
@@ -318,6 +329,19 @@ details.ans summary{cursor:pointer;color:var(--accent)}
         <button class="btn" id="s2-reset">重設</button>
         <button class="btn" id="s2-prev">← 上一步</button>
         <button class="btn" id="s2-nextstep">下一步 →</button>
+      </div>
+    </div>
+  </div>
+  <div class="s2-strip s2-gstrip" id="s2-gstrip" hidden>
+    <div class="s2-hintbox"><p class="s2-text" id="s2-g-text"></p></div>
+    <div class="s2-btns">
+      <div class="ctrl">
+        <button class="btn on" id="s2-g-mirror">鏡中瞄準</button>
+        <button class="btn" id="s2-g-direct">直射</button>
+        <label><input type="checkbox" id="s2-g-path"> 顯示反射路徑</label>
+        <button class="btn" id="s2-g-restart">重新開始</button>
+        <button class="btn" id="s2-g-mute" aria-label="音效開關">🔊</button>
+        <button class="btn" id="s2-g-exit">回實驗</button>
       </div>
     </div>
   </div>
@@ -1015,8 +1039,8 @@ const evClip=E_('clipPath',{id:'s2-ev-clip'},evDefs);
 const evClipPoly=E_('polygon',{points:'0,0 0,0 0,0'},evClip);
 const evG=E_('g',{},evs);
 let CAM=null;
-function makeCam(){
-  const c={x:Eye.x,y:-Eye.y,z:CAM_H};                       // 世界座標：x 向右、Y = -y 向前（進鏡子）、z 向上
+function makeCam(p){
+  p=p||Eye; const c={x:p.x,y:-p.y,z:CAM_H};                       // 世界座標：x 向右、Y = -y 向前（進鏡子）、z 向上
   let f={x:CX-c.x,y:-MY-c.y,z:TGT_Z-c.z}; const fl=Math.hypot(f.x,f.y,f.z); f={x:f.x/fl,y:f.y/fl,z:f.z/fl};
   let r={x:f.y,y:-f.x,z:0}; const rl=Math.hypot(r.x,r.y); r={x:r.x/rl,y:r.y/rl,z:0};
   const u={x:r.y*f.z-r.z*f.y,y:r.z*f.x-r.x*f.z,z:r.x*f.y-r.y*f.x};
@@ -1181,6 +1205,7 @@ function drawProtractor(P){
 
 /* ---- 主畫面重畫 ---- */
 function render(){
+  if(G.on){gRenderAll();return;}
   const g=geom();
   gdyn.replaceChildren();
   // 足跡（步驟1、2）
@@ -1299,7 +1324,7 @@ function updateUI(g){
 /* ---- 步驟切換 ---- */
 const stepsBox=$('s2-steps');
 STEPS.forEach((s,i)=>{const b=document.createElement('button'); b.type='button'; b.textContent=s.n; b.addEventListener('click',()=>goStep(i+1)); stepsBox.appendChild(b);});
-function goStep(n){step=clamp(n,1,5); trail=[]; if(step>=3&&B.x===RACK.x&&B.y===RACK.y){/* B 還在待命區 */} render();}
+function goStep(n){if(G.on) return; step=clamp(n,1,5); trail=[]; if(step>=3&&B.x===RACK.x&&B.y===RACK.y){/* B 還在待命區 */} render();}
 $('s2-prev').addEventListener('click',()=>goStep(step-1));
 $('s2-nextstep').addEventListener('click',()=>goStep(step+1));
 $('s2-path').addEventListener('change',render);
@@ -1313,7 +1338,7 @@ function addTrail(g){
   if(!l||Math.hypot(l.x-Eye.x,l.y-Eye.y)>9){trail.push({x:Eye.x,y:Eye.y}); if(trail.length>500) trail.shift();}
 }
 Opt.draggable(gA,svg,(x,y)=>{touched=true;A={x:clamp(x,24,W-24),y:clamp(y,MY+50,H-24)}; trail=[]; render();},()=>{snapB();render();});
-Opt.draggable(gE,svg,(x,y)=>{touched=true;Eye={x:clamp(x,30,W-30),y:clamp(y,MY+72,H-30)}; addTrail(geom()); render();},()=>{snapB();render();});
+Opt.draggable(gE,svg,(x,y)=>{if(G.on){G.eye=gClampEye(x,y);if(!G.raf)gRenderAll();return;} touched=true;Eye={x:clamp(x,30,W-30),y:clamp(y,MY+72,H-30)}; addTrail(geom()); render();},()=>{if(G.on) return; snapB();render();});
 Opt.draggable(gB,svg,(x,y)=>{touched=true;B={x:clamp(x,24,W-24),y:clamp(y,MY+26,H-24)}; snapB(); render();},()=>{snapB();render();});
 
 /* ---- 提示按鈕 ---- */
@@ -1470,6 +1495,356 @@ function frame(ts){
   }
   requestAnimationFrame(frame);
 }
+
+/* ============ 彩蛋：眼睛視角小遊戲（鏡中瞄準／直射；Web Audio 即時合成音效） ============ */
+const GZ={x0:400,x1:520,y0:220,y1:300};                                  // 鏡中瞄準：玩家活動區（確保反射線不被屏風擋住）
+const WALL_X=CX, WALL_Y0=MY+94, WALL_Y1=MY+210, WALL_H=200, WALL_T=4;    // 屏風：與鏡面垂直的短牆，立在摺線上
+const ER=14, EH=120, GCOL=['#e03131','#7048e8','#f08c00'];
+const G={on:false,type:'mirror',muted:false,eye:{x:460,y:260},enemies:[],score:0,shots:0,hits:0,wave:1,
+  lasers:[],fx:[],cross:{x:300,y:240,show:false},path:false,state:'play',stateT:0,raf:0,time:0,last:0};
+const gLab=$('s2-lab');
+
+/* ---- 音效（Web Audio，不用外部音檔；靜音時完全不建立 oscillator） ---- */
+const S2A={ctx:null,created:0,osc:0,noise:0,resumes:0,calls:{pew:0,hit:0,down:0,win:0,miss:0}};
+function s2Ctx(){
+  if(G.muted) return null;
+  if(!S2A.ctx){
+    const AC=window.AudioContext||window.webkitAudioContext; if(!AC) return null;
+    try{S2A.ctx=new AC(); S2A.created++;}catch(e){return null;}
+  }
+  if(S2A.ctx.state==='suspended'){S2A.resumes++; S2A.ctx.resume();}
+  return S2A.ctx;
+}
+function s2Tone(f0,f1,dur,type,vol,delay){
+  const c=s2Ctx(); if(!c) return;
+  const t=c.currentTime+(delay||0), o=c.createOscillator(), g=c.createGain();
+  o.type=type; o.frequency.setValueAtTime(f0,t); o.frequency.exponentialRampToValueAtTime(Math.max(f1,30),t+dur);
+  g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  o.connect(g); g.connect(c.destination); o.start(t); o.stop(t+dur+0.03); S2A.osc++;
+}
+function s2Noise(dur,vol){
+  const c=s2Ctx(); if(!c) return;
+  const n=Math.floor(c.sampleRate*dur), buf=c.createBuffer(1,n,c.sampleRate), d=buf.getChannelData(0);
+  for(let i=0;i<n;i++) d[i]=(Math.random()*2-1)*(1-i/n);
+  const s=c.createBufferSource(), g=c.createGain(); s.buffer=buf; g.gain.value=vol; s.connect(g); g.connect(c.destination); s.start(); S2A.noise++;
+}
+const sfx={
+  pew(){S2A.calls.pew++; s2Tone(1100,160,0.14,'sawtooth',0.035);},
+  hit(){S2A.calls.hit++; s2Tone(320,110,0.09,'square',0.045);},
+  down(){S2A.calls.down++; s2Tone(280,70,0.3,'triangle',0.07); s2Tone(190,55,0.28,'triangle',0.06,0.12);},
+  win(){S2A.calls.win++; [523,659,784,1047].forEach((f,i)=>s2Tone(f,f*1.01,0.14,'triangle',0.05,i*0.11));},
+  miss(){S2A.calls.miss++; s2Noise(0.06,0.02);}
+};
+
+/* ---- 敵人與雷射的幾何（3D 射線；鏡面在 y=MY，對鏡面反射 = y 方向反號） ---- */
+function gSpawn(){
+  const n=Math.min(3,1+G.wave), sp=1+0.25*(G.wave-1); G.enemies=[];
+  for(let i=0;i<n;i++){
+    const m=G.type==='mirror';
+    G.enemies.push({i,hp:3,max:3,dead:false,deadT:0,flash:-1e9,col:GCOL[i],
+      y:m?[230,260,290][i]:[170,192,214][i], bx:m?150:300+[-70,0,70][i]*0.6, amp:m?40:(90+i*8),
+      sp:(0.45+0.13*i)*sp, ph:i*2.1, x:m?150:300});
+  }
+  gUpdateEnemies();
+}
+function gUpdateEnemies(){G.enemies.forEach(e=>{e.x=e.bx+e.amp*Math.sin(G.time*e.sp+e.ph);});}
+function gOrigin(){return {x:G.eye.x,y:G.eye.y,z:CAM_H};}
+function gAimDir(px,py){                                    // 螢幕點 → 從眼睛穿過該點的射線方向（上視座標）
+  CAM=makeCam(G.eye);
+  const xc=(px-EV_CX)/FOCAL, yc=-(py-EV_CY)/FOCAL;
+  const w={x:CAM.r.x*xc+CAM.u.x*yc+CAM.f.x, y:CAM.r.y*xc+CAM.u.y*yc+CAM.f.y, z:CAM.r.z*xc+CAM.u.z*yc+CAM.f.z};
+  const l=Math.hypot(w.x,w.y,w.z); return {x:w.x/l,y:-w.y/l,z:w.z/l};
+}
+function gTrace(o,d){
+  const pts=[{x:o.x,y:o.y,z:o.z}]; let p={x:o.x,y:o.y,z:o.z}, v={x:d.x,y:d.y,z:d.z}, via=false, kind='far', hit=null;
+  for(let seg=0;seg<2;seg++){
+    let best=1500,bk='far',be=null;
+    if(v.z<-1e-9){const t=-p.z/v.z; if(t>1e-6&&t<best){best=t;bk='table';}}
+    if(!via&&v.y<-1e-9){const t=(MY-p.y)/v.y; if(t>1e-6&&t<best){const x=p.x+v.x*t,z=p.z+v.z*t; if(x>=MX0&&x<=MX1&&z>=0&&z<=MIR_H){best=t;bk='mirror';}}}
+    if(G.type==='mirror'&&Math.abs(v.x)>1e-9){const t=(WALL_X-p.x)/v.x; if(t>1e-6&&t<best){const y=p.y+v.y*t,z=p.z+v.z*t; if(y>=WALL_Y0&&y<=WALL_Y1&&z>=0&&z<=WALL_H){best=t;bk='wall';}}}
+    for(const e of G.enemies){
+      if(e.dead) continue;
+      const dx=p.x-e.x,dy=p.y-e.y,a=v.x*v.x+v.y*v.y; if(a<1e-9) continue;
+      const b=dx*v.x+dy*v.y,c=dx*dx+dy*dy-ER*ER,disc=b*b-a*c; if(disc<0) continue;
+      const t=(-b-Math.sqrt(disc))/a; if(t<1e-6) continue;
+      const z=p.z+v.z*t; if(z>=0&&z<=EH&&t<best){best=t;bk='enemy';be=e;}
+    }
+    const q={x:p.x+v.x*best,y:p.y+v.y*best,z:p.z+v.z*best}; pts.push(q);
+    if(bk==='mirror'){via=true; p=q; v={x:v.x,y:-v.y,z:v.z}; continue;}
+    kind=bk; hit=be; break;
+  }
+  return {pts,hit,kind,viaMirror:via};
+}
+function gMuzzle(){                                         // 槍口：眼睛右下方一點（第一人稱看得到雷射）
+  CAM=makeCam(G.eye);
+  const w={x:CAM.c.x+CAM.r.x*9-CAM.u.x*13+CAM.f.x*18, y:CAM.c.y+CAM.r.y*9-CAM.u.y*13+CAM.f.y*18, z:CAM.c.z+CAM.r.z*9-CAM.u.z*13+CAM.f.z*18};
+  return {x:w.x,y:-w.y,z:w.z};
+}
+function gClear(e){                                         // 從眼睛看過去，鏡中 e 的像沒被擋住（反射線打得到 e）
+  const o=gOrigin(), tx=e.x-o.x, ty=(2*MY-e.y)-o.y, tz=60-o.z, l=Math.hypot(tx,ty,tz);
+  const tr=gTrace(o,{x:tx/l,y:ty/l,z:tz/l}); return tr.hit===e&&tr.viaMirror;
+}
+function gShoot(px,py){
+  const now=performance.now(), o=gOrigin(), tr=gTrace(o,gAimDir(px,py));
+  G.shots++; sfx.pew();
+  G.lasers.push({pts:tr.pts,muz:gMuzzle(),t0:now});
+  const last=tr.pts[tr.pts.length-1];
+  if(tr.hit){
+    const e=tr.hit; e.hp--; e.flash=now; G.hits++; G.score+=10; G.fx.push({k:'dmg',e,t0:now}); sfx.hit();
+    if(e.hp<=0){e.dead=true;e.deadT=now;G.score+=50;sfx.down();}
+  }else{
+    sfx.miss(); if(tr.kind==='wall') G.fx.push({k:'spark',p:last,t0:now}); else if(tr.kind==='table') G.fx.push({k:'puff',p:last,t0:now});
+  }
+  if(G.lasers.length>6) G.lasers.shift();
+}
+function gAcc(){return G.shots?Math.round(100*G.hits/G.shots):0;}
+function gUpdate(dt){
+  G.time+=dt; gUpdateEnemies();
+  const now=performance.now();
+  G.lasers=G.lasers.filter(l=>now-l.t0<300); G.fx=G.fx.filter(f=>now-f.t0<700);
+  if(G.state==='play'&&G.enemies.length&&G.enemies.every(e=>e.dead&&now-e.deadT>450)){G.state='clear';G.stateT=now;sfx.win();}
+  else if(G.state==='clear'&&now-G.stateT>2600){G.wave++;gSpawn();G.state='play';}
+}
+
+/* ---- 眼睛視角（遊戲版）渲染 ---- */
+function gRenderEye(){
+  const now=performance.now();
+  CAM=makeCam(G.eye); evG.replaceChildren();
+  const poly=(pts3,attrs,par)=>{const q=projPoly(pts3); if(q.length>=3) E_('polygon',Object.assign({points:ptsStr(q)},attrs),par||evG); return q;};
+  const lineW=(a,b,st,sw,par)=>{const sg=projSeg(a,b); if(sg) E_('line',{x1:sg[0][0],y1:sg[0][1],x2:sg[1][0],y2:sg[1][1],stroke:st,'stroke-width':sw,'stroke-linecap':'round'},par||evG);};
+  const halo={'paint-order':'stroke',stroke:'#fff','stroke-width':3.5,'font-weight':700,'text-anchor':'middle'};
+  E_('rect',{x:0,y:0,width:EVW,height:EVH,fill:'#e3eaf3'},evG);
+  poly([[-900,-900,0],[1500,-900,0],[1500,1400,0],[-900,1400,0]],{fill:'#efe4c9'});
+  poly([[0,MY,0],[600,MY,0],[600,480,0],[0,480,0]],{fill:'#fff',stroke:'#adb5bd','stroke-width':1.5});
+  for(let x=0;x<=600;x+=24) lineW([x,MY,0],[x,480,0],x%120===0?'#8fbfe0':'#c6def0',x%120===0?1.6:1);
+  for(let y=MY;y<=480;y+=24) lineW([0,y,0],[600,y,0],(y-MY)%120===0?'#8fbfe0':'#c6def0',(y-MY)%120===0?1.6:1);
+  // 鏡子（整面反射）
+  const T=MIR_T;
+  poly([[MX0,MY-T,0],[MX1,MY-T,0],[MX1,MY-T,MIR_H],[MX0,MY-T,MIR_H]],{fill:'#74c0d0',stroke:'#0b7285','stroke-width':1});
+  poly([[MX0,MY,MIR_H],[MX1,MY,MIR_H],[MX1,MY-T,MIR_H],[MX0,MY-T,MIR_H]],{fill:'#a5d8e2',stroke:'#0b7285','stroke-width':1});
+  const quad=[[MX0,MY,0],[MX1,MY,0],[MX1,MY,MIR_H],[MX0,MY,MIR_H]];
+  const face=poly(quad,{fill:'#d3eff6'});
+  const ap=projPoly(quad);
+  evClipPoly.setAttribute('points',ap.length>=3?ptsStr(ap):'0,0 0,0 0,0');
+  if(ap.length>=3){
+    const gr=E_('g',{'clip-path':'url(#s2-ev-clip)'},evG), Y0=2*MY-480;
+    poly([[0,Y0,0],[600,Y0,0],[600,MY,0],[0,MY,0]],{fill:'#f1fafc'},gr);
+    for(let x=0;x<=600;x+=24) lineW([x,Y0,0],[x,MY,0],'#b6dbe6',1,gr);
+    for(let y=MY;y>=Y0;y-=24) lineW([0,y,0],[600,y,0],'#b6dbe6',1,gr);
+    // 鏡中的敵人像（淡色）：只有反射線沒被擋住才看得到
+    G.enemies.forEach(e=>{
+      if(e.dead||!gClear(e)) return;
+      const c=cylHull(e.x,2*MY-e.y); if(!c) return;
+      E_('polygon',{points:ptsStr(c.hull),fill:e.col,opacity:0.42,stroke:e.col,'stroke-width':1.5,'stroke-dasharray':'5 3'},gr);
+      E_('polygon',{points:ptsStr(c.top),fill:'#fff',opacity:0.35},gr);
+    });
+  }
+  if(face.length>=3) E_('polygon',{points:ptsStr(face),fill:'none',stroke:'#0b7285','stroke-width':2},evG);
+  // 真敵人（由遠到近）
+  const es=G.enemies.filter(e=>!(e.dead&&now-e.deadT>450)).sort((a,b)=>Math.hypot(b.x-G.eye.x,b.y-G.eye.y)-Math.hypot(a.x-G.eye.x,a.y-G.eye.y));
+  const proj=(x,y,z)=>{const c=toCam(x,y,z); return c.zc<NEAR?null:{p:pj(c),zc:c.zc};};
+  es.forEach(e=>{
+    const k=e.dead?Math.max(0,1-(now-e.deadT)/450):1, flash=(now-e.flash)<160;
+    const jx=flash?3*Math.sin(now*0.09):0;
+    const c=cylHull(e.x,e.y); if(!c) return;
+    const gE_=E_('g',{opacity:k,transform:`translate(${jx.toFixed(1)},0)`},evG);
+    E_('polygon',{points:ptsStr(c.hull),fill:flash?'#fff':e.col,stroke:'#212529','stroke-width':2},gE_);
+    E_('polygon',{points:ptsStr(c.top),fill:flash?'#fff':'#ffffff',opacity:flash?1:0.45,stroke:'#212529','stroke-width':1.2},gE_);
+    // 小眼睛（朝向眼睛）
+    let ux=G.eye.x-e.x,uy=G.eye.y-e.y; const ul=Math.hypot(ux,uy)||1; ux/=ul; uy/=ul;
+    [-1,1].forEach(sd=>{
+      const a=proj(e.x+ux*ER*0.95-uy*sd*ER*0.42, e.y+uy*ER*0.95+ux*sd*ER*0.42, 86);
+      if(!a) return; const r=Math.max(2.5,FOCAL*3.6/a.zc);
+      E_('circle',{cx:a.p[0],cy:a.p[1],r,fill:'#fff',stroke:'#212529','stroke-width':1.2},gE_);
+      E_('circle',{cx:a.p[0],cy:a.p[1]+r*0.1,r:r*0.45,fill:'#212529'},gE_);
+    });
+    // 血條
+    const hb=proj(e.x,e.y,EH+16);
+    if(hb&&!e.dead){
+      const w=clamp(FOCAL*40/hb.zc,22,90), h=Math.max(5,w*0.14), x0=hb.p[0]-w/2, y0=hb.p[1]-h-6, sw=w/e.max;
+      E_('rect',{x:x0-2,y:y0-2,width:w+4,height:h+4,rx:3,fill:'#212529',opacity:0.75},gE_);
+      for(let s=0;s<e.max;s++) E_('rect',{x:x0+s*sw+1,y:y0,width:sw-2,height:h,fill:s<e.hp?'#51cf66':'#495057'},gE_);
+    }
+  });
+  // 屏風
+  if(G.type==='mirror'){
+    const xr=WALL_X+WALL_T,xl=WALL_X-WALL_T;
+    poly([[xr,WALL_Y0,0],[xr,WALL_Y1,0],[xr,WALL_Y1,WALL_H],[xr,WALL_Y0,WALL_H]],{fill:'#c8a27c',stroke:'#7a5a3a','stroke-width':1.5});
+    for(let y=WALL_Y0+28;y<WALL_Y1;y+=28) lineW([xr,y,0],[xr,y,WALL_H],'#a98259',1.2);
+    poly([[xl,WALL_Y0,WALL_H],[xr,WALL_Y0,WALL_H],[xr,WALL_Y1,WALL_H],[xl,WALL_Y1,WALL_H]],{fill:'#e0c19b',stroke:'#7a5a3a','stroke-width':1.5});
+    poly([[xl,WALL_Y1,0],[xr,WALL_Y1,0],[xr,WALL_Y1,WALL_H],[xl,WALL_Y1,WALL_H]],{fill:'#b48c64',stroke:'#7a5a3a','stroke-width':1.5});
+    const lb=proj(WALL_X,(WALL_Y0+Math.min(WALL_Y1,G.eye.y-30))/2,WALL_H*0.5);
+    if(lb) E_('text',Object.assign({x:lb.p[0],y:lb.p[1],'font-size':20,fill:'#6b4a2b'},halo,{text:'屏風'}),evG);
+  }
+  // 雷射、火花、傷害數字
+  const drawLaser=(muz,pts,alpha,dash,col)=>{
+    const seq=[muz].concat(pts.slice(1));
+    for(let i=0;i<seq.length-1;i++){
+      const a=seq[i],b=seq[i+1];
+      if(dash){lineW([a.x,a.y,a.z],[b.x,b.y,b.z],col,3);const l=evG.lastChild; if(l){l.setAttribute('stroke-dasharray','7 6');l.setAttribute('opacity',0.9);}}
+      else{
+        lineW([a.x,a.y,a.z],[b.x,b.y,b.z],'#ff2d55',9); evG.lastChild&&evG.lastChild.setAttribute('opacity',alpha*0.3);
+        lineW([a.x,a.y,a.z],[b.x,b.y,b.z],'#ff6b6b',4.5); evG.lastChild&&evG.lastChild.setAttribute('opacity',alpha*0.9);
+        lineW([a.x,a.y,a.z],[b.x,b.y,b.z],'#fff',1.8); evG.lastChild&&evG.lastChild.setAttribute('opacity',alpha);
+      }
+    }
+  };
+  if(G.path&&G.cross.show){
+    const tr=gTrace(gOrigin(),gAimDir(G.cross.x,G.cross.y)); drawLaser(gMuzzle(),tr.pts,1,true,'#0c8599');
+  }
+  G.lasers.forEach(l=>drawLaser(l.muz,l.pts,Math.max(0,1-(now-l.t0)/300),false));
+  G.fx.forEach(f=>{
+    const age=(now-f.t0)/700;
+    if(f.k==='dmg'){const a=proj(f.e.x,f.e.y,EH+40); if(a) E_('text',Object.assign({x:a.p[0],y:a.p[1]-age*26,'font-size':22,fill:'#e03131',opacity:1-age},halo,{text:'-1'}),evG);}
+    else{const a=proj(f.p.x,f.p.y,f.p.z); if(a){const r=(f.k==='spark'?6:3)+age*14; E_('circle',{cx:a.p[0],cy:a.p[1],r,fill:'none',stroke:f.k==='spark'?'#ffa94d':'#adb5bd','stroke-width':2.5,opacity:Math.max(0,0.9-age*1.3)},evG);
+      if(f.k==='spark') for(let k=0;k<6;k++){const an=k*Math.PI/3+0.4; E_('line',{x1:a.p[0]+Math.cos(an)*r*0.5,y1:a.p[1]+Math.sin(an)*r*0.5,x2:a.p[0]+Math.cos(an)*r*1.3,y2:a.p[1]+Math.sin(an)*r*1.3,stroke:'#ffd43b','stroke-width':2.5,opacity:Math.max(0,1-age*1.4)},evG);}}}
+  });
+  // 準星
+  if(G.cross.show){
+    const {x,y}=G.cross;
+    E_('circle',{cx:x,cy:y,r:15,fill:'none',stroke:'#212529','stroke-width':4.5,opacity:0.55},evG);
+    E_('circle',{cx:x,cy:y,r:15,fill:'none',stroke:'#fff','stroke-width':2},evG);
+    [[-24,-8],[8,24]].forEach(([a,b])=>{
+      E_('line',{x1:x+a,y1:y,x2:x+b,y2:y,stroke:'#e03131','stroke-width':3},evG);
+      E_('line',{x1:x,y1:y+a,x2:x,y2:y+b,stroke:'#e03131','stroke-width':3},evG);
+    });
+  }
+  // HUD：分數、命中率（極少字）
+  E_('rect',{x:8,y:8,width:112,height:30,rx:8,fill:'#fff',opacity:0.85,stroke:'#adb5bd'},evG);
+  E_('ellipse',{cx:28,cy:23,rx:11,ry:7,fill:'#fff',stroke:'#495057','stroke-width':1.6},evG);
+  E_('circle',{cx:28,cy:23,r:3.6,fill:'#212529'},evG);
+  E_('text',{x:46,y:29,'font-size':16,'font-weight':700,fill:'#495057',text:'眼睛視角'},evG);
+  E_('rect',{x:430,y:8,width:162,height:50,rx:8,fill:'#fff',opacity:0.88,stroke:'#adb5bd'},evG);
+  E_('text',{x:442,y:30,'font-size':17,'font-weight':700,fill:'#212529',text:'分數 '+G.score},evG);
+  E_('text',{x:442,y:51,'font-size':17,'font-weight':700,fill:'#1971c2',text:'命中率 '+gAcc()+'%'},evG);
+  if(G.state==='clear'){
+    E_('rect',{x:110,y:200,width:380,height:64,rx:14,fill:'#fff',opacity:0.92,stroke:'#2b8a3e','stroke-width':3},evG);
+    E_('text',{x:300,y:242,'text-anchor':'middle','font-size':26,'font-weight':700,fill:'#2b8a3e',text:'過關！命中率 '+gAcc()+'%'},evG);
+  }
+}
+
+/* ---- 俯視圖（遊戲版）：眼睛 = 玩家，可拖曳 ---- */
+function gRenderTop(){
+  const now=performance.now();
+  gdyn.replaceChildren();
+  E_('rect',{x:MX0,y:MY-12,width:MX1-MX0,height:12,fill:'#9be3ee',stroke:'#0b7285','stroke-width':2},gdyn);
+  for(let x=MX0+6;x<MX1-6;x+=12) E_('line',{x1:x,y1:MY-12,x2:x+8,y2:MY-22,stroke:'#0b7285','stroke-width':1.5},gdyn);
+  E_('line',{x1:MX0,y1:MY,x2:MX1,y2:MY,stroke:'#0b7285','stroke-width':4},gdyn);
+  E_('text',{x:MX1+8,y:MY-3,'font-size':16,fill:'#0b7285','font-weight':700,text:'平面鏡'},gdyn);
+  if(G.type==='mirror'){
+    E_('rect',{x:GZ.x0-16,y:GZ.y0-16,width:GZ.x1-GZ.x0+32,height:GZ.y1-GZ.y0+32,rx:10,fill:'rgba(25,113,194,0.06)',stroke:'#74c0fc','stroke-width':1.5,'stroke-dasharray':'5 4'},gdyn);
+    E_('line',{x1:WALL_X,y1:WALL_Y0,x2:WALL_X,y2:WALL_Y1,stroke:'#a98259','stroke-width':WALL_T*2,'stroke-linecap':'butt'},gdyn);
+    E_('text',{x:WALL_X-8,y:(WALL_Y0+WALL_Y1)/2,'text-anchor':'end','font-size':15,fill:'#6b4a2b','font-weight':700,text:'屏風'},gdyn);
+  }
+  const ghalo={'paint-order':'stroke',stroke:'#fff','stroke-width':3};
+  G.enemies.forEach(e=>{
+    if(e.dead&&now-e.deadT>450) return;
+    const k=e.dead?Math.max(0,1-(now-e.deadT)/450):1;
+    E_('circle',{cx:e.x,cy:e.y,r:ER,fill:e.col,stroke:'#212529','stroke-width':2,opacity:k},gdyn);
+    for(let s=0;s<e.max;s++) E_('rect',{x:e.x-17+s*12,y:e.y-ER-11,width:10,height:5,fill:s<e.hp?'#51cf66':'#adb5bd',stroke:'#212529','stroke-width':0.8,opacity:k},gdyn);
+  });
+  const drawL=(pts,alpha,dash)=>{
+    for(let i=0;i<pts.length-1;i++){
+      const a=pts[i],b=pts[i+1];
+      E_('line',dash?{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:'#0c8599','stroke-width':2.5,'stroke-dasharray':'6 5'}
+                    :{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:'#ff2d55','stroke-width':3.5,opacity:alpha,'stroke-linecap':'round'},gdyn);
+    }
+  };
+  if(G.path&&G.cross.show){const tr=gTrace(gOrigin(),gAimDir(G.cross.x,G.cross.y)); drawL(tr.pts,1,true);}
+  G.lasers.forEach(l=>drawL(l.pts,Math.max(0,1-(now-l.t0)/300),false));
+  gE.setAttribute('transform',`translate(${G.eye.x},${G.eye.y})`);
+  const tx=CX-G.eye.x,ty=MY-G.eye.y,tl=Math.hypot(tx,ty)||1;
+  pupil.setAttribute('cx',tx/tl*7); pupil.setAttribute('cy',ty/tl*7);
+  gE.querySelector('.ring').setAttribute('opacity',0);
+}
+function gRenderAll(){ gRenderTop(); gRenderEye(); gUpdateUI(); }
+function gUpdateUI(){
+  $('s2-g-mirror').classList.toggle('on',G.type==='mirror'); $('s2-g-direct').classList.toggle('on',G.type==='direct');
+  $('s2-g-text').textContent=G.type==='mirror'?'屏風擋住了敵人：點鏡中的像射擊':'點敵人射擊';
+  $('s2-g-mute').textContent=G.muted?'🔇':'🔊';
+  $('s2-g-toggle').classList.toggle('on',G.on);
+}
+function gClampEye(x,y){
+  return G.type==='mirror'?{x:clamp(x,GZ.x0,GZ.x1),y:clamp(y,GZ.y0,GZ.y1)}:{x:clamp(x,40,W-40),y:clamp(y,MY+150,H-30)};
+}
+
+/* ---- 迴圈（只在遊戲模式且分頁②顯示時跑） ---- */
+function gStart(){ if(!G.raf){G.last=0; G.raf=requestAnimationFrame(gFrame);} }
+function gStop(){ if(G.raf){cancelAnimationFrame(G.raf);G.raf=0;} }
+function gFrame(ts){
+  G.raf=0;
+  if(!G.on||document.hidden||!sec.classList.contains('on')) return;
+  const dt=G.last?Math.min(0.05,(ts-G.last)/1000):0; G.last=ts;
+  gUpdate(dt); gRenderAll();
+  G.raf=requestAnimationFrame(gFrame);
+}
+window.addEventListener('tabshow',e=>{ if(e.detail==='s2'){ if(G.on) gStart(); } else { gStop(); if(S2A.ctx&&S2A.ctx.state==='running') S2A.ctx.suspend(); } });
+document.addEventListener('visibilitychange',()=>{ if(document.hidden) gStop(); else if(G.on&&sec.classList.contains('on')) gStart(); });
+
+function gReset(){G.score=0;G.shots=0;G.hits=0;G.wave=1;G.state='play';G.lasers=[];G.fx=[];G.time=0;G.eye=gClampEye(G.eye.x,G.eye.y);gSpawn();}
+function gSetType(t){
+  G.type=t; G.eye=t==='mirror'?{x:460,y:260}:{x:300,y:420}; gReset(); gRenderAll();
+}
+function gEnter(){
+  G.on=true; gLab.classList.add('s2-game');
+  $('s2-strip').hidden=true; $('s2-gstrip').hidden=false;
+  gA.style.display='none'; gB.style.display='none'; gBan.style.display='none';
+  G.cross.show=false; G.eye=gClampEye(G.eye.x,G.eye.y); gReset();
+  s2Ctx(); gStart(); gRenderAll();
+}
+function gExit(){
+  G.on=false; gStop(); gLab.classList.remove('s2-game');
+  $('s2-strip').hidden=false; $('s2-gstrip').hidden=true;
+  gA.style.display=''; gBan.style.display='';
+  if(S2A.ctx&&S2A.ctx.state==='running') S2A.ctx.suspend();
+  $('s2-g-toggle').classList.remove('on');
+  render();
+}
+$('s2-g-toggle').addEventListener('click',()=>{ if(G.on) gExit(); else gEnter(); });
+$('s2-g-exit').addEventListener('click',gExit);
+$('s2-g-mirror').addEventListener('click',()=>{ if(G.type!=='mirror') gSetType('mirror'); });
+$('s2-g-direct').addEventListener('click',()=>{ if(G.type!=='direct') gSetType('direct'); });
+$('s2-g-restart').addEventListener('click',()=>{ gReset(); gRenderAll(); });
+$('s2-g-path').addEventListener('change',e=>{G.path=e.target.checked; gRenderAll();});
+$('s2-g-mute').addEventListener('click',()=>{ G.muted=!G.muted; if(!G.muted) s2Ctx(); else if(S2A.ctx&&S2A.ctx.state==='running') S2A.ctx.suspend(); gUpdateUI(); });
+evs.addEventListener('pointermove',e=>{ if(!G.on) return; const p=Opt.svgPoint(evs,e); G.cross={x:clamp(p.x,0,EVW),y:clamp(p.y,0,EVH),show:true}; });
+evs.addEventListener('pointerdown',e=>{
+  if(!G.on) return; e.preventDefault();
+  const p=Opt.svgPoint(evs,e); G.cross={x:clamp(p.x,0,EVW),y:clamp(p.y,0,EVH),show:true};
+  if(G.state==='play') gShoot(G.cross.x,G.cross.y);
+  if(!G.raf) gRenderAll();
+});
+
+/* 驗證用：鏡中瞄準幾何（瞄準敵人像中心 → 反射後必打中真敵人）。solo=只放一隻敵人（排除敵人互相擋住） */
+function gGeomTest(n,zone){
+  const keep={type:G.type,en:G.enemies,eye:G.eye}; G.type='mirror';
+  const r={tot:0,hitSolo:0,blockedSolo:0,wallSolo:0,hitAll:0,occludedByOther:0,otherBlocked:0,missOther:0};
+  for(let k=0;k<n;k++){
+    G.eye={x:zone.x0+Math.random()*(zone.x1-zone.x0),y:zone.y0+Math.random()*(zone.y1-zone.y0)};
+    const all=[0,1,2].map(i=>({i,dead:false,x:110+Math.random()*80,y:[230,260,290][i]})), o=gOrigin();
+    all.forEach(e=>{
+      const t={x:e.x-o.x,y:2*MY-e.y-o.y,z:60-o.z}, l=Math.hypot(t.x,t.y,t.z), d={x:t.x/l,y:t.y/l,z:t.z/l};
+      r.tot++;
+      G.enemies=[e]; const a=gTrace(o,d);
+      if(a.hit===e&&a.viaMirror) r.hitSolo++; else {r.blockedSolo++; if(a.kind==='wall') r.wallSolo++;}
+      const t2={x:t.x+90,y:t.y,z:t.z}, l2=Math.hypot(t2.x,t2.y,t2.z); const a2=gTrace(o,{x:t2.x/l2,y:t2.y/l2,z:t2.z/l2});
+      if(a2.hit!==e) r.missOther++;
+      G.enemies=all; const b=gTrace(o,d);
+      if(b.hit===e&&b.viaMirror) r.hitAll++; else if(b.kind==='enemy') r.occludedByOther++; else r.otherBlocked++;
+    });
+  }
+  G.type=keep.type; G.enemies=keep.en; G.eye=keep.eye;
+  return r;
+}
+function gDirectTest(n){
+  const keep={type:G.type,en:G.enemies,eye:G.eye}; G.type='direct'; let tot=0,hitSolo=0;
+  for(let k=0;k<n;k++){
+    G.eye={x:40+Math.random()*520,y:270+Math.random()*180}; const all=[0,1,2].map(i=>({i,dead:false,x:170+Math.random()*260,y:[170,192,214][i]}));
+    const o=gOrigin(); all.forEach(e=>{G.enemies=[e];const t={x:e.x-o.x,y:e.y-o.y,z:60-o.z},l=Math.hypot(t.x,t.y,t.z); const tr=gTrace(o,{x:t.x/l,y:t.y/l,z:t.z/l}); tot++; if(tr.hit===e&&!tr.viaMirror) hitSolo++;});
+  }
+  G.type=keep.type; G.enemies=keep.en; G.eye=keep.eye; return {tot,hitSolo};
+}
+Object.assign(sec._s2,{projG:(x,y,z)=>{CAM=makeCam(G.eye);return pj(toCam(x,y,z));},G,S2A,gGeomTest,gDirectTest,gShoot,gTrace,gUpdate,gAimDir,gRenderAll,GZ,sfx});
 
 /* ---- 初始化 ---- */
 renderTable(); drawFold(); drawRev(); render();

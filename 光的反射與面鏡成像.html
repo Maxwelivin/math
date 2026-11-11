@@ -154,6 +154,19 @@ details.ans summary{cursor:pointer;color:var(--accent)}
 #s2 .s2-labgrid{grid-template-columns:minmax(0,1.7fr) minmax(0,1fr)}
 @media(max-width:900px){#s2 .s2-labgrid{grid-template-columns:1fr}}
 
+#s2 .s2-labgrid{display:block}
+#s2 .s2-views{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:start}
+#s2 #s2-eye-svg{pointer-events:none;touch-action:pan-y}
+#s2 .s2-strip{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;margin-top:8px}
+#s2 .s2-hintbox{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;flex:1 1 300px;min-width:0}
+#s2 .s2-hintbox .s2-text{margin:0}
+#s2 .s2-hintbox .s2-msg{margin:0;min-height:0;flex:1 1 200px}
+#s2 .s2-btns{flex:2 1 520px}
+#s2 .s2-btns .ctrl{margin:0}
+#s2 #s2-lab{padding:10px}
+#s2 .s2-steps{margin-bottom:8px}
+@media(max-width:820px){#s2 .s2-views{grid-template-columns:1fr}}
+
 #s3 .s3-main{margin-top:0;padding:10px}
 #s3 .s3-main .ctrl{margin:4px 0}
 #s3 svg.stage{touch-action:pan-y;max-height:calc(100vh - 390px);min-height:300px}
@@ -285,27 +298,27 @@ details.ans summary{cursor:pointer;color:var(--accent)}
 
 <div class="card" id="s2-lab">
   <div class="s2-steps" id="s2-steps"></div>
-  <div class="s2-labgrid">
-    <svg id="s2-svg" class="stage" viewBox="0 0 600 480" role="img" aria-label="實驗 4-1 俯視圖：平面鏡、方格紙、電池 A、電池 B 與眼睛"></svg>
-    <div class="s2-panel">
+  <div class="s2-views">
+    <svg id="s2-eye-svg" class="stage" viewBox="0 0 600 480" role="img" aria-label="眼睛視角：單眼貼近桌面看到的鏡子與電池"></svg>
+    <svg id="s2-svg" class="stage" viewBox="0 0 600 480" role="img" aria-label="俯視圖：平面鏡、方格紙、電池 A、電池 B 與眼睛（可拖曳）"></svg>
+  </div>
+  <div class="s2-strip">
+    <div class="s2-hintbox">
       <p class="s2-text" id="s2-text"></p>
       <div class="s2-msg" id="s2-msg" aria-live="polite"></div>
+    </div>
+    <div class="s2-btns">
       <div class="ctrl">
         <label data-steps="2,3"><input type="checkbox" id="s2-path"> 顯示光路</label>
         <label data-steps="4,5"><input type="checkbox" id="s2-prot" checked> 量角器</label>
-      </div>
-      <div class="ctrl">
         <button class="btn" id="s2-hint-eye" data-steps="2,3,4,5">提示：眼睛位置</button>
         <button class="btn" id="s2-hint-b" data-steps="3,4,5">提示：放 B</button>
         <button class="btn primary" id="s2-rec" data-steps="5">記錄這一組</button>
         <button class="btn" id="s2-another" data-steps="5">換位置</button>
         <button class="btn" id="s2-reset">重設</button>
-      </div>
-      <div class="ctrl s2-nav">
         <button class="btn" id="s2-prev">← 上一步</button>
         <button class="btn" id="s2-nextstep">下一步 →</button>
       </div>
-      <div class="s2-read" id="s2-read" hidden></div>
     </div>
   </div>
 </div>
@@ -950,7 +963,7 @@ let presetIdx=0;
 const RACK={x:548,y:438};
 let step=1;
 let A={x:O.x+PRESETS[0][0],y:O.y+PRESETS[0][1]};
-let Eye={x:470,y:360};
+let Eye={x:480,y:390};
 let B={x:RACK.x,y:RACK.y};
 let trail=[];
 let records=[];
@@ -959,19 +972,26 @@ let touched=false;
 
 function resetPos(){
   presetIdx=0;
-  A={x:O.x+PRESETS[0][0],y:O.y+PRESETS[0][1]}; Eye={x:470,y:360}; B={x:RACK.x,y:RACK.y}; trail=[];
+  A={x:O.x+PRESETS[0][0],y:O.y+PRESETS[0][1]}; Eye={x:480,y:390}; B={x:RACK.x,y:RACK.y}; trail=[];
 }
 
 /* ---- 幾何（鏡面在 y=MY；像用鏡射點算，不是寫死） ---- */
 function geom(){
   const Ap=Opt.reflectPoint(A,{x:0,y:MY},{x:1,y:MY});             // A 的像
   const t=(MY-Eye.y)/(Ap.y-Eye.y);
-  const P={x:Eye.x+t*(Ap.x-Eye.x),y:MY};                          // 眼睛—像 連線與鏡面交點 = 入射點
-  const inMirror=P.x>=MX0&&P.x<=MX1, inSlit=Math.abs(P.x-CX)<=SLIT;
-  const seen=(step===1)?inMirror:inSlit;
-  const Pm=seen?P:O;
+  const P={x:Eye.x+t*(Ap.x-Eye.x),y:MY};                          // 眼睛—像中心 連線與鏡面交點 = 入射點
+  // 電池有粗細：像的左右切線穿過鏡面的範圍 [xa,xb]，與開口（整面鏡／狹縫）有重疊 → 看得到（至少一部分）
+  const dxe=Ap.x-Eye.x, dye=Ap.y-Eye.y, dEA=Math.hypot(dxe,dye);
+  const al=Math.asin(Math.min(0.99,BAT_R/dEA)), a0=Math.atan2(dye,dxe);
+  const xs=[a0-al,a0+al].map(a=>Eye.x+(MY-Eye.y)/Math.sin(a)*Math.cos(a));
+  const xa=Math.min(xs[0],xs[1]), xb=Math.max(xs[0],xs[1]);
+  const lo=(step===1)?MX0:CX-SLIT, hi=(step===1)?MX1:CX+SLIT;
+  const seen=(xb>lo&&xa<hi);
+  const aligned=(step>=2)&&Math.abs(P.x-CX)<=SLIT;                // 像的中心正好在縫裡（量角度用）
+  const Pm=aligned?P:O;
+  const Pv={x:clamp(P.x,lo,hi),y:MY};
   let matched=false,s=0,dist=1e9;
-  if(step>=3&&seen){
+  if(step>=3&&aligned){
     const vx=P.x-Eye.x,vy=P.y-Eye.y,L2=vx*vx+vy*vy;
     s=((B.x-Eye.x)*vx+(B.y-Eye.y)*vy)/L2;
     dist=Math.abs((B.x-Eye.x)*vy-(B.y-Eye.y)*vx)/Math.sqrt(L2);
@@ -979,12 +999,157 @@ function geom(){
   }
   const ai=deg(Math.atan2(Math.abs(A.x-Pm.x),A.y-Pm.y));
   const br=deg(Math.atan2(Math.abs(B.x-Pm.x),B.y-Pm.y));
-  return {Ap,P,Pm,seen,matched,s,dist,ai,br};
+  return {Ap,P,Pm,Pv,seen,aligned,matched,s,dist,ai,br};
 }
 function snapB(g){
   g=g||geom();
   if(g.matched){const vx=g.P.x-Eye.x,vy=g.P.y-Eye.y; B={x:Eye.x+g.s*vx,y:Eye.y+g.s*vy};}
 }
+
+/* ============ 眼睛視角：單眼貼近桌面（自己算針孔透視，不用外部函式庫） ============ */
+const evs=$('s2-eye-svg');
+const EVW=600,EVH=480,EV_CX=300,EV_CY=240,FOCAL=(EVW/2)/Math.tan(rad(33)),NEAR=6;   // 水平視角約 66°
+const CAM_H=29,TGT_Z=60,MIR_H=168,BAT_R=14,BAT_H=120,MIR_T=6;                      // 1 cm = 24 px：鏡高 7 cm、電池半徑約 0.6 cm、高 5 cm
+const evDefs=E_('defs',{},evs);
+const evClip=E_('clipPath',{id:'s2-ev-clip'},evDefs);
+const evClipPoly=E_('polygon',{points:'0,0 0,0 0,0'},evClip);
+const evG=E_('g',{},evs);
+let CAM=null;
+function makeCam(){
+  const c={x:Eye.x,y:-Eye.y,z:CAM_H};                       // 世界座標：x 向右、Y = -y 向前（進鏡子）、z 向上
+  let f={x:CX-c.x,y:-MY-c.y,z:TGT_Z-c.z}; const fl=Math.hypot(f.x,f.y,f.z); f={x:f.x/fl,y:f.y/fl,z:f.z/fl};
+  let r={x:f.y,y:-f.x,z:0}; const rl=Math.hypot(r.x,r.y); r={x:r.x/rl,y:r.y/rl,z:0};
+  const u={x:r.y*f.z-r.z*f.y,y:r.z*f.x-r.x*f.z,z:r.x*f.y-r.y*f.x};
+  return {c,f,r,u};
+}
+function toCam(x,y,z){
+  const dx=x-CAM.c.x,dy=-y-CAM.c.y,dz=z-CAM.c.z;
+  return {xc:dx*CAM.r.x+dy*CAM.r.y+dz*CAM.r.z, yc:dx*CAM.u.x+dy*CAM.u.y+dz*CAM.u.z, zc:dx*CAM.f.x+dy*CAM.f.y+dz*CAM.f.z};
+}
+const pj=p=>[EV_CX+FOCAL*p.xc/p.zc, EV_CY-FOCAL*p.yc/p.zc];
+function projPoly(pts3){                                    // 多邊形（世界座標）→ 近平面裁切 → 螢幕座標
+  const cp=pts3.map(p=>toCam(p[0],p[1],p[2])), out=[];
+  for(let i=0;i<cp.length;i++){
+    const a=cp[i],b=cp[(i+1)%cp.length],ia=a.zc>=NEAR,ib=b.zc>=NEAR;
+    if(ia) out.push(a);
+    if(ia!==ib){const t=(NEAR-a.zc)/(b.zc-a.zc); out.push({xc:a.xc+t*(b.xc-a.xc),yc:a.yc+t*(b.yc-a.yc),zc:NEAR});}
+  }
+  return out.map(pj);
+}
+function projSeg(p,q){
+  let a=toCam(p[0],p[1],p[2]),b=toCam(q[0],q[1],q[2]);
+  if(a.zc<NEAR&&b.zc<NEAR) return null;
+  if(a.zc<NEAR){const t=(NEAR-a.zc)/(b.zc-a.zc); a={xc:a.xc+t*(b.xc-a.xc),yc:a.yc+t*(b.yc-a.yc),zc:NEAR};}
+  else if(b.zc<NEAR){const t=(NEAR-b.zc)/(a.zc-b.zc); b={xc:b.xc+t*(a.xc-b.xc),yc:b.yc+t*(a.yc-b.yc),zc:NEAR};}
+  return [pj(a),pj(b)];
+}
+const ptsStr=a=>a.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
+function hull2(pts){
+  const P=pts.slice().sort((a,b)=>a[0]-b[0]||a[1]-b[1]); if(P.length<3) return P;
+  const cr=(o,a,b)=>(a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0]);
+  const lo=[],up=[];
+  for(const p of P){while(lo.length>=2&&cr(lo[lo.length-2],lo[lo.length-1],p)<=0)lo.pop();lo.push(p);}
+  for(let i=P.length-1;i>=0;i--){const p=P[i];while(up.length>=2&&cr(up[up.length-2],up[up.length-1],p)<=0)up.pop();up.push(p);}
+  lo.pop();up.pop();return lo.concat(up);
+}
+function ring3(cx,cy,r,z){const o=[];for(let k=0;k<32;k++){const a=k/32*2*Math.PI;o.push([cx+r*Math.cos(a),cy+r*Math.sin(a),z]);}return o;}
+function cylHull(cx,cy){                                    // 立著的圓柱：上下圓周投影後取凸包
+  const top=ring3(cx,cy,BAT_R,BAT_H).map(p=>toCam(p[0],p[1],p[2])), bot=ring3(cx,cy,BAT_R,0).map(p=>toCam(p[0],p[1],p[2]));
+  if(top.concat(bot).some(p=>p.zc<NEAR)) return null;
+  const T=top.map(pj);
+  return {hull:hull2(T.concat(bot.map(pj))), top:T};
+}
+const polyArea=p=>{let a=0;for(let i=0;i<p.length;i++){const q=p[(i+1)%p.length];a+=p[i][0]*q[1]-q[0]*p[i][1];}return a/2;};
+function clipConvex(subj,clip){                              // Sutherland–Hodgman（兩者皆凸）
+  const sg=polyArea(clip)>=0?1:-1; let out=subj;
+  for(let i=0;i<clip.length&&out.length;i++){
+    const a=clip[i],b=clip[(i+1)%clip.length],inp=out; out=[];
+    const side=p=>sg*((b[0]-a[0])*(p[1]-a[1])-(b[1]-a[1])*(p[0]-a[0]));
+    for(let j=0;j<inp.length;j++){
+      const c=inp[j],pv=inp[(j+inp.length-1)%inp.length],sc=side(c),sp=side(pv);
+      if(sc>=0){ if(sp<0){const t=sp/(sp-sc);out.push([pv[0]+t*(c[0]-pv[0]),pv[1]+t*(c[1]-pv[1])]);} out.push(c); }
+      else if(sp>=0){const t=sp/(sp-sc);out.push([pv[0]+t*(c[0]-pv[0]),pv[1]+t*(c[1]-pv[1])]);}
+    }
+  }
+  return out;
+}
+function apertureQuad(){                                     // 鏡面可反射的開口（世界座標）：步驟1整面鏡，之後只有狹縫
+  const a=step===1?MX0:CX-SLIT, b=step===1?MX1:CX+SLIT;
+  return [[a,MY,0],[b,MY,0],[b,MY,MIR_H],[a,MY,MIR_H]];
+}
+function overlapArea(){                                      // 驗證用：A 的像的投影與開口的重疊面積
+  CAM=makeCam();
+  const ci=cylHull(A.x,2*MY-A.y), ap=projPoly(apertureQuad());
+  if(!ci||ap.length<3) return 0;
+  return Math.abs(polyArea(clipConvex(ci.hull,ap)));
+}
+function renderEye(g){
+  CAM=makeCam(); evG.replaceChildren();
+  const poly=(pts3,attrs,par)=>{const q=projPoly(pts3); if(q.length>=3) E_('polygon',Object.assign({points:ptsStr(q)},attrs),par||evG); return q;};
+  const lineW=(a,b,st,sw,par)=>{const sg=projSeg(a,b); if(sg) E_('line',{x1:sg[0][0],y1:sg[0][1],x2:sg[1][0],y2:sg[1][1],stroke:st,'stroke-width':sw},par||evG);};
+  E_('rect',{x:0,y:0,width:EVW,height:EVH,fill:'#e3eaf3'},evG);
+  poly([[-900,-900,0],[1500,-900,0],[1500,1400,0],[-900,1400,0]],{fill:'#efe4c9'});                       // 桌面
+  poly([[0,MY,0],[600,MY,0],[600,480,0],[0,480,0]],{fill:'#fff',stroke:'#adb5bd','stroke-width':1.5});      // A4 方格紙
+  for(let x=0;x<=600;x+=24) lineW([x,MY,0],[x,480,0],x%120===0?'#8fbfe0':'#c6def0',x%120===0?1.6:1);
+  for(let y=MY;y<=480;y+=24) lineW([0,y,0],[600,y,0],(y-MY)%120===0?'#8fbfe0':'#c6def0',(y-MY)%120===0?1.6:1);
+  {const sg=projSeg([CX,MY,0],[CX,480,0]); if(sg) E_('line',{x1:sg[0][0],y1:sg[0][1],x2:sg[1][0],y2:sg[1][1],class:'r-normal'},evG);}   // 摺線
+  // 鏡子（厚度 + 鏡面）
+  const T=MIR_T;
+  poly([[MX0,MY-T,0],[MX1,MY-T,0],[MX1,MY-T,MIR_H],[MX0,MY-T,MIR_H]],{fill:'#74c0d0',stroke:'#0b7285','stroke-width':1});
+  poly([[MX0,MY,MIR_H],[MX1,MY,MIR_H],[MX1,MY-T,MIR_H],[MX0,MY-T,MIR_H]],{fill:'#a5d8e2',stroke:'#0b7285','stroke-width':1});
+  poly([[MX0,MY,0],[MX0,MY-T,0],[MX0,MY-T,MIR_H],[MX0,MY,MIR_H]],{fill:'#8cc9d6',stroke:'#0b7285','stroke-width':1});
+  poly([[MX1,MY,0],[MX1,MY-T,0],[MX1,MY-T,MIR_H],[MX1,MY,MIR_H]],{fill:'#8cc9d6',stroke:'#0b7285','stroke-width':1});
+  const face=poly([[MX0,MY,0],[MX1,MY,0],[MX1,MY,MIR_H],[MX0,MY,MIR_H]],{fill:'#d3eff6'});
+  // 鏡中的像：A 對鏡面鏡射成虛擬的 3D 圓柱，只在「開口」裡看得到
+  const ap=projPoly(apertureQuad());
+  evClipPoly.setAttribute('points',ap.length>=3?ptsStr(ap):'0,0 0,0 0,0');
+  const ci=cylHull(A.x,2*MY-A.y);
+  if(ap.length>=3){                                          // 鏡中的桌面（方格紙的鏡像），讓像「站」在虛擬的桌面上
+    const gr=E_('g',{'clip-path':'url(#s2-ev-clip)'},evG), Y0=2*MY-480;
+    poly([[0,Y0,0],[600,Y0,0],[600,MY,0],[0,MY,0]],{fill:'#f1fafc'},gr);
+    for(let x=0;x<=600;x+=24) lineW([x,Y0,0],[x,MY,0],'#b6dbe6',1,gr);
+    for(let y=MY;y>=Y0;y-=24) lineW([0,y,0],[600,y,0],'#b6dbe6',1,gr);
+  }
+  if(ci&&ap.length>=3){
+    const gi=E_('g',{'clip-path':'url(#s2-ev-clip)'},evG);
+    E_('polygon',{points:ptsStr(ci.hull),fill:'#69db7c',opacity:0.72,stroke:'#2b8a3e','stroke-width':1.5,'stroke-dasharray':'5 3'},gi);
+    E_('polygon',{points:ptsStr(ci.top),fill:'#c0f0c8',opacity:0.85,stroke:'#2b8a3e','stroke-width':1},gi);
+  }
+  if(step>=2){                                               // 不透明紙
+    [[MX0,CX-SLIT],[CX+SLIT,MX1]].forEach(([a,b])=>poly([[a,MY+1,0],[b,MY+1,0],[b,MY+1,MIR_H],[a,MY+1,MIR_H]],{fill:'#e2cfa3',stroke:'#8d7648','stroke-width':1.5}));
+  }
+  if(face.length>=3) E_('polygon',{points:ptsStr(face),fill:'none',stroke:'#0b7285','stroke-width':2},evG);
+  const halo={'paint-order':'stroke',stroke:'#fff','stroke-width':3.5,'font-weight':700,'text-anchor':'middle'};
+  // 標籤：像、狹縫
+  const vis=(ci&&ap.length>=3)?Math.abs(polyArea(clipConvex(ci.hull,ap))):0;
+  if(g.seen&&vis>10){
+    const xs=ap.map(p=>p[0]), ys=ap.map(p=>p[1]), top=Math.min.apply(null,ys);
+    const hx=ci.hull.map(p=>p[0]), hy=ci.hull.map(p=>p[1]);
+    const lx=clamp((Math.min.apply(null,hx)+Math.max.apply(null,hx))/2,Math.min.apply(null,xs)+4,Math.max.apply(null,xs)-4);
+    E_('text',Object.assign({x:lx,y:Math.max(Math.min.apply(null,hy)-6,top+16),'font-size':17,fill:'#9c36b5'},halo,{text:'A的像'}),evG);
+  }
+  if(step>=2&&ap.length>=3){
+    const ys=ap.map(p=>p[1]),xs=ap.map(p=>p[0]);
+    E_('text',Object.assign({x:(Math.min.apply(null,xs)+Math.max.apply(null,xs))/2,y:Math.min.apply(null,ys)-6,'font-size':15,fill:'#6b5a2e'},halo,{text:'狹縫'}),evG);
+  }
+  // 鏡前真實物件：由遠到近
+  const objs=[{k:'A',p:A,fill:'#51cf66',top:'#b2f2bb',st:'#2b8a3e'}];
+  if(step>=3) objs.push({k:'B',p:B,fill:'#ff8787',top:'#ffc9c9',st:'#c92a2a'});
+  objs.sort((a,b)=>Math.hypot(b.p.x-Eye.x,b.p.y-Eye.y)-Math.hypot(a.p.x-Eye.x,a.p.y-Eye.y));
+  objs.forEach(o=>{
+    const c=cylHull(o.p.x,o.p.y); if(!c) return;
+    E_('polygon',{points:ptsStr(c.hull),fill:o.fill,stroke:o.st,'stroke-width':2},evG);
+    E_('polygon',{points:ptsStr(c.top),fill:o.top,stroke:o.st,'stroke-width':1.5},evG);
+    const hy=c.hull.map(p=>p[1]), hx=c.hull.map(p=>p[0]);
+    E_('text',Object.assign({x:(Math.min.apply(null,hx)+Math.max.apply(null,hx))/2,y:Math.min.apply(null,hy)-6,'font-size':22,fill:o.st},halo,{text:o.k}),evG);
+  });
+  // 角落：眼睛圖示 + 標題
+  E_('rect',{x:8,y:8,width:112,height:30,rx:8,fill:'#fff',opacity:0.85,stroke:'#adb5bd'},evG);
+  E_('ellipse',{cx:28,cy:23,rx:11,ry:7,fill:'#fff',stroke:'#495057','stroke-width':1.6},evG);
+  E_('circle',{cx:28,cy:23,r:3.6,fill:'#212529'},evG);
+  E_('text',{x:46,y:29,'font-size':16,'font-weight':700,fill:'#495057',text:'眼睛視角'},evG);
+}
+sec._s2={geom:()=>geom(), overlapArea, set:(a,e,st,b)=>{A=a;Eye=e;if(st)step=st;if(b)B=b;render();}};
 
 /* ---- 小工具：畫一條中間（或指定距離）有箭頭的線 ---- */
 function arrowLine(parent,p,q,cls,marker,at){
@@ -1046,7 +1211,7 @@ function render(){
     arrowLine(gdyn,A,Pm,'r-in',MK_IN,Math.min(110,Math.hypot(A.x-Pm.x,A.y-Pm.y)*0.55));
     if(showLines){
       arrowLine(gdyn,Pm,B,'r-out',MK_OUT,Math.min(110,Math.hypot(B.x-Pm.x,B.y-Pm.y)*0.55));
-      if(g.seen) E_('line',{x1:B.x,y1:B.y,x2:Eye.x,y2:Eye.y,class:'r-out',opacity:0.3,'stroke-dasharray':'4 5'},gdyn);
+      if(g.aligned) E_('line',{x1:B.x,y1:B.y,x2:Eye.x,y2:Eye.y,class:'r-out',opacity:0.3,'stroke-dasharray':'4 5'},gdyn);
     }else{
       const d=Opt.reflectDir({x:Pm.x-A.x,y:Pm.y-A.y},{x:0,y:1}), dl=Math.hypot(d.x,d.y);
       const q={x:Pm.x+d.x/dl*520,y:Pm.y+d.y/dl*520};
@@ -1066,8 +1231,8 @@ function render(){
   // 眼睛在鏡面上「看到像」的位置：A 的像亮在這裡；被 B 擋住就變灰
   if(g.seen){
     const hit=g.matched;
-    E_('ellipse',{cx:g.P.x,cy:MY-2,rx:step===1?13:10,ry:7,fill:hit?'#ced4da':'#69db7c',stroke:hit?'#868e96':'#2b8a3e','stroke-width':2},gdyn);
-    E_('text',{x:g.P.x,y:MY-28,'text-anchor':'middle','font-size':14,'font-weight':700,'paint-order':'stroke',stroke:'#fff','stroke-width':3,fill:hit?'#868e96':'#2b8a3e',text:hit?'像被B擋住':'A的像'},gdyn);
+    E_('ellipse',{cx:g.Pv.x,cy:MY-2,rx:step===1?13:10,ry:7,fill:hit?'#ced4da':'#69db7c',stroke:hit?'#868e96':'#2b8a3e','stroke-width':2},gdyn);
+    E_('text',{x:g.Pv.x,y:MY-28,'text-anchor':'middle','font-size':14,'font-weight':700,'paint-order':'stroke',stroke:'#fff','stroke-width':3,fill:hit?'#868e96':'#2b8a3e',text:hit?'像被B擋住':'A的像'},gdyn);
   }
   // 物件位置
   gA.setAttribute('transform',`translate(${A.x},${A.y})`);
@@ -1077,6 +1242,7 @@ function render(){
   const tx=g.Pm.x-Eye.x,ty=g.Pm.y-Eye.y,tl=Math.hypot(tx,ty)||1;
   pupil.setAttribute('cx',tx/tl*7); pupil.setAttribute('cy',ty/tl*7);
   gE.querySelector('.ring').setAttribute('opacity',g.seen?1:0);
+  gE.querySelector('.ring').setAttribute('stroke',(step===1||g.aligned)?'#2b8a3e':'#f08c00');
   gB.querySelector('.ring').setAttribute('opacity',g.matched?1:0);
   gB.querySelector('.ring').setAttribute('stroke','#2b8a3e');
 
@@ -1086,6 +1252,7 @@ function render(){
   if(step>=3&&g.matched) done[3]=true;
   if(step===4&&g.matched) done[4]=true;
   done[5]=records.length>=3;
+  renderEye(g);
   updateUI(g);
 }
 
@@ -1113,11 +1280,13 @@ function updateUI(g){
     if(g.seen){good();b1='✓ 看得到 A 的像';setMsg('good',trail.length>=18?'好多位置都看得到！':'✓ 看得到像');}
     else{bad();b1='✗ 看不到 A 的像';setMsg('bad','✗ 看不到');}
   }else if(step===2){
-    if(g.seen){good();b1='✓ 看得到 A 的像';setMsg('good','✓ 只有特定位置看得到');}
+    if(g.seen&&!g.aligned){b1='△ 只看到一部分';col='#f08c00';bc='#ffd8a8';setMsg('warn','再移一點，讓像在縫中央');}
+    else if(g.seen){good();b1='✓ 看得到 A 的像';setMsg('good','✓ 只有特定位置看得到');}
     else{bad();b1='✗ 看不到 A 的像';setMsg('bad','✗ 看不到，再找找');}
   }else if(step===3){
     if(g.matched){good();b1='✓ B 擋住了 A 的像';setMsg('good','✓ B 在反射光路上（光直進）');}
-    else if(g.seen){good();b1='✓ 看得到 A 的像';setMsg('','拖 B 擋住像');}
+    else if(g.seen&&!g.aligned){b1='△ 只看到一部分';col='#f08c00';bc='#ffd8a8';setMsg('warn','再移一點，讓像在縫中央');}
+    else if(g.aligned){good();b1='✓ 看得到 A 的像';setMsg('','拖 B 擋住像');}
     else{bad();b1='✗ 看不到 A 的像';setMsg('bad','先找到看得到像的位置');}
   }else{
     b1=`∠1 = ${Math.round(g.ai)}°　　∠2 = ${Math.round(g.br)}°`;
@@ -1144,19 +1313,19 @@ function addTrail(g){
   if(!l||Math.hypot(l.x-Eye.x,l.y-Eye.y)>9){trail.push({x:Eye.x,y:Eye.y}); if(trail.length>500) trail.shift();}
 }
 Opt.draggable(gA,svg,(x,y)=>{touched=true;A={x:clamp(x,24,W-24),y:clamp(y,MY+50,H-24)}; trail=[]; render();},()=>{snapB();render();});
-Opt.draggable(gE,svg,(x,y)=>{touched=true;Eye={x:clamp(x,30,W-30),y:clamp(y,MY+40,H-30)}; addTrail(geom()); render();},()=>{snapB();render();});
+Opt.draggable(gE,svg,(x,y)=>{touched=true;Eye={x:clamp(x,30,W-30),y:clamp(y,MY+72,H-30)}; addTrail(geom()); render();},()=>{snapB();render();});
 Opt.draggable(gB,svg,(x,y)=>{touched=true;B={x:clamp(x,24,W-24),y:clamp(y,MY+26,H-24)}; snapB(); render();},()=>{snapB();render();});
 
 /* ---- 提示按鈕 ---- */
 $('s2-hint-eye').addEventListener('click',()=>{
   // 眼睛放到「A 對摺線鏡射」的位置：從入射點 O 沿反射方向走
   const a={x:A.x-O.x,y:A.y-O.y}, xmax=a.x<0?(W-30-O.x)/-a.x:(O.x-24)/Math.max(a.x,1e-6), k=Math.min(1.5,(H-30-O.y)/a.y,Math.abs(a.x)<1?9:xmax);
-  Eye={x:clamp(O.x-a.x*k,20,W-20),y:O.y+a.y*k}; trail=[];
+  Eye={x:clamp(O.x-a.x*k,30,W-30),y:Math.max(O.y+a.y*k,MY+72)}; trail=[];
   touched=true;  render();
 });
 $('s2-hint-b').addEventListener('click',()=>{
   const g=geom();
-  if(!g.seen){setMsg('bad','先找眼睛位置'); return;}
+  if(!g.aligned){setMsg('bad','先找眼睛位置'); return;}
   const vx=g.P.x-Eye.x,vy=g.P.y-Eye.y; B={x:Eye.x+0.55*vx,y:Eye.y+0.55*vy}; render();
 });
 

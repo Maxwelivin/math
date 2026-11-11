@@ -1,0 +1,1801 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>理化 4-2 光的反射與面鏡成像</title>
+<style>
+:root{
+  --bg:#f6f8fb; --card:#fff; --ink:#1f2937; --muted:#6b7280; --line:#d8dee8;
+  --accent:#2563eb;
+  --ray-in:#e8590c;      /* 入射線 */
+  --ray-out:#1971c2;     /* 反射線 */
+  --ray-ext:#1971c2;     /* 反射線反向延長(虛線) */
+  --normal:#868e96;      /* 法線 */
+  --obj:#2f9e44;         /* 物體 */
+  --img:#9c36b5;         /* 像 */
+  --mirror:#0b7285;      /* 鏡面 */
+  --good:#2b8a3e; --bad:#c92a2a; --warn:#f08c00;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:"Microsoft JhengHei","PingFang TC","Noto Sans TC",system-ui,sans-serif;line-height:1.6;font-size:17px}
+.top{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20;padding:8px 14px 0}
+.top h1{margin:0 0 6px;font-size:20px}
+.tabs{display:flex;gap:4px;overflow-x:auto}
+.tabs button{border:1px solid var(--line);border-bottom:none;background:#eef2f7;padding:8px 14px;border-radius:10px 10px 0 0;
+  font:inherit;font-size:16px;cursor:pointer;white-space:nowrap;color:var(--muted)}
+.tabs button.on{background:var(--bg);color:var(--ink);font-weight:700;border-color:var(--accent);border-bottom:2px solid var(--bg);margin-bottom:-1px}
+main{max-width:1180px;margin:0 auto;padding:14px}
+.part{display:none}.part.on{display:block}
+.part h2{margin:4px 0 8px;font-size:22px}
+.lead{background:#eef4ff;border-left:4px solid var(--accent);padding:8px 12px;border-radius:6px;margin:8px 0 12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin:10px 0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:820px){.grid2{grid-template-columns:1fr}}
+svg.stage{width:100%;height:auto;display:block;background:#fff;border:1px solid var(--line);border-radius:10px;touch-action:none;user-select:none}
+.ctrl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}
+.ctrl label{display:inline-flex;align-items:center;gap:6px}
+button.btn{font:inherit;font-size:16px;border:1px solid var(--accent);background:#fff;color:var(--accent);border-radius:8px;padding:5px 12px;cursor:pointer}
+button.btn:hover{background:#eef4ff}
+button.btn.on,button.btn.primary{background:var(--accent);color:#fff}
+.tbl{border-collapse:collapse;width:100%;font-size:16px}
+.tbl th,.tbl td{border:1px solid var(--line);padding:6px 8px;text-align:center}
+.tbl th{background:#f1f5f9}
+.ok{color:var(--good);font-weight:700}.ng{color:var(--bad);font-weight:700}
+details.ans{margin:6px 0}
+details.ans summary{cursor:pointer;color:var(--accent)}
+.key{background:#fff8e1;border:2px solid var(--warn);border-radius:10px;padding:10px 14px;margin:12px 0;font-size:18px}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:14px;color:var(--muted)}
+.legend i{display:inline-block;width:26px;height:0;border-top:3px solid;vertical-align:middle;margin-right:4px}
+/* SVG 通用 */
+.r-in{stroke:var(--ray-in);stroke-width:2.5;fill:none}
+.r-out{stroke:var(--ray-out);stroke-width:2.5;fill:none}
+.r-ext{stroke:var(--ray-ext);stroke-width:2;stroke-dasharray:6 5;fill:none}
+.r-normal{stroke:var(--normal);stroke-width:1.5;stroke-dasharray:3 4;fill:none}
+.drag{cursor:grab}.drag:active{cursor:grabbing}
+
+#s1 .s1-steptext{background:#fff;border:2px solid var(--accent);border-radius:10px;padding:6px 14px;font-size:22px;font-weight:700;min-height:2.2em;display:flex;align-items:center;margin:6px 0}
+#s1 .s1-ctrl .btn,#s1 .s1-ctrl2 .btn,#s1 .s1-modes .btn{min-height:40px}
+#s1 .s1-modes .btn{font-size:18px;padding:6px 18px}
+#s1 .s1-stepno{font-weight:700;color:var(--muted);margin-left:6px}
+#s1 .s1-ctrl2 label{font-size:16px;cursor:pointer;padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:#fff}
+#s1 .s1-ctrl2 input{width:18px;height:18px}
+#s1 button:disabled{opacity:.4;cursor:default}
+#s1[data-mode="1"] .s1-only2{display:none}
+#s1 .s1-bg{fill:#fffdf5;transition:fill .4s}
+#s1 svg.dark .s1-bg{fill:#2b3445}
+#s1 .s1-lab{font-size:22px;font-weight:700;fill:#1f2937;paint-order:stroke;stroke:#fff;stroke-width:5px;stroke-linejoin:round;text-anchor:middle;pointer-events:none}
+#s1 svg.dark .s1-lab{fill:#f3f4f6;stroke:#2b3445}
+#s1 .s1-cap{font-size:20px;fill:#6b7280;pointer-events:none}
+#s1 .s1-dot{fill:#fff3bf;stroke:#f08c00;stroke-width:2.5;pointer-events:none}
+#s1[data-mode="2"] .s1-dotb{fill:#d0ebff;stroke:#1971c2}
+#s1 .s1-cross{font-size:34px;font-weight:900;fill:var(--bad);text-anchor:middle;paint-order:stroke;stroke:#fff;stroke-width:4px;pointer-events:none}
+#s1 .s1-handle{cursor:grab;fill:#2563eb;stroke:#fff;stroke-width:3}
+#s1 .s1-cone{fill:rgba(37,99,235,.10);stroke:#2563eb;stroke-width:1.5;stroke-dasharray:5 5;pointer-events:none}
+/* 右側 */
+#s1 .s1-brainout{fill:#9aa3af;transition:fill .5s}
+#s1 .s1-brainfill{fill:#e5e7eb;transition:fill .5s}
+#s1 .s1-brainwr{fill:none;stroke:#9aa3af;stroke-width:3;stroke-linecap:round;transition:stroke .5s}
+#s1 .s1-retina{fill:none;stroke:#f1a7a7;stroke-width:9;stroke-linecap:round;transition:stroke .4s}
+#s1 .s1-nerve{fill:none;stroke:#ced4da;stroke-width:8;stroke-linecap:round;transition:stroke .4s}
+#s1 svg.lit .s1-brainout{fill:#d6336c}
+#s1 svg.lit .s1-brainfill{fill:#ffc9de}
+#s1 svg.lit .s1-brainwr{stroke:#d6336c}
+#s1 svg.lit .s1-nerve{stroke:#f59f00}
+#s1 svg.lit .s1-retina{stroke:#e8590c}
+#s1 svg.entering .s1-retina{stroke:#fa5252}
+#s1 .s1-status{display:flex;align-items:center;gap:10px;font-size:20px;font-weight:700;padding:10px 12px;border-radius:10px;background:#eef0f3;color:#6b7280;border:2px solid transparent;margin-top:8px;min-height:3.2em}
+#s1 .s1-led{flex:none;width:22px;height:22px;border-radius:50%;background:#adb5bd;box-shadow:inset 0 0 0 3px #868e96}
+#s1 .s1-status.on{background:#fff3bf;color:#7a4b00;border-color:#f08c00}
+#s1 .s1-status.on .s1-led{background:#ffd43b;box-shadow:0 0 14px 4px #ffd43b,inset 0 0 0 3px #f08c00}
+#s1 .s1-status.mid{background:#fff8e1;color:#7a4b00}
+#s1 .s1-status.mid .s1-led{background:#ffe8a3;box-shadow:inset 0 0 0 3px #f0b400}
+#s1 .key ul{margin:6px 0 0;padding-left:1.3em}
+#s1 .s1-qa p{margin:8px 0 2px;font-weight:600}
+#s1 .s1-qa details.ans{margin:2px 0 6px 1em;font-size:17px}
+@media(max-width:820px){
+  #s1 .s1-steptext{font-size:19px;min-height:2.3em}
+  #s1 .s1-status{font-size:18px}
+}
+#s1 svg .r-in,#s1 svg .r-out,#s1 .s1-dot,#s1 .s1-cross{pointer-events:none}
+#s1 #s1-left g line.r-out{stroke-width:1.5}
+#s1 #s1-left g line.r-in{stroke-width:1.8}
+#s1 #s1-left>line.r-in,#s1 #s1-left>line.r-out{stroke-width:3.5}
+#s1 .s1-bar{gap:6px 14px;margin:0}
+#s1 .s1-bar>span{display:inline-flex;flex-wrap:wrap;gap:6px;align-items:center}
+#s1 .s1-modes .btn{font-size:17px;padding:5px 14px}
+#s1 .s1-grid{margin:6px 0;gap:10px}
+#s1 .s1-grid .card{margin:0;padding:8px}
+#s1 .s1-status{margin-top:6px;min-height:2.6em;padding:6px 12px}
+#s1 .key{margin:8px 0;font-size:17px;padding:8px 14px}
+#s1 .key .nw{white-space:nowrap}
+
+#s2 [hidden]{display:none!important}
+#s2 h3{margin:2px 0 8px;font-size:19px}
+#s2 h4{margin:4px 0 6px;font-size:17px;color:var(--accent)}
+#s2 .s2-small{font-size:15px;color:var(--muted)}
+#s2 svg.stage{touch-action:pan-y}
+#s2 .s2-steps{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+#s2 .s2-steps button{font:inherit;font-size:15px;border:1px solid var(--line);background:#eef2f7;color:var(--ink);
+  border-radius:20px;padding:6px 12px;cursor:pointer;min-height:38px}
+#s2 .s2-steps button.on{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:700}
+#s2 .s2-steps button.done::after{content:" ✓";color:var(--good);font-weight:700}
+#s2 .s2-steps button.on.done::after{color:#d3f9d8}
+#s2 .s2-labgrid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:14px;align-items:start}
+@media(max-width:900px){#s2 .s2-labgrid{grid-template-columns:1fr}}
+#s2 .s2-title{font-weight:700;font-size:19px;color:var(--accent);margin-bottom:4px}
+#s2 .s2-text{margin:4px 0 8px}
+#s2 .s2-msg{min-height:2.2em;padding:8px 10px;border-radius:8px;background:#f1f5f9;margin:6px 0;font-size:16px}
+#s2 .s2-msg.good{background:#ebfbee;color:var(--good);font-weight:700}
+#s2 .s2-msg.bad{background:#fff5f5;color:var(--bad)}
+#s2 .s2-msg.warn{background:#fff9db;color:#9c6a00}
+#s2 .s2-read{display:flex;gap:14px;flex-wrap:wrap;font-size:20px;font-weight:700;margin:6px 0}
+#s2 .s2-read .i{color:var(--ray-in)}
+#s2 .s2-read .r{color:var(--ray-out)}
+#s2 .ctrl button.btn{min-height:40px}
+#s2 .ctrl input[type=range]{width:150px}
+#s2 .s2-tblwrap{overflow-x:auto}
+#s2 .s2-empty{color:var(--muted)}
+#s2 .s2-summary{margin:8px 0;font-size:17px}
+#s2 .s2-concl{background:#fff8e1;border:2px solid var(--warn);border-radius:8px;padding:8px 12px;margin-top:6px;font-size:19px}
+#s2 .s2-ul,#s2 .s2-ol{margin:6px 0;padding-left:1.4em}
+#s2 .s2-q{margin:12px 0 2px;font-weight:600}
+#s2 details.ans{background:#f8fafc;border:1px dashed var(--line);border-radius:8px;padding:6px 10px}
+#s2 details.ans[open]{background:#eef4ff}
+#s2 .s2-tips{background:#f8fbff}
+#s2 .legend i{width:22px}
+
+#s2 .s2-text{font-size:19px;font-weight:700;color:var(--accent);margin:2px 0 6px}
+#s2 .s2-summary{margin-left:8px;font-size:16px}
+#s2 h2{margin:0 0 6px}
+#s2 .card{margin:8px 0}
+#s2 .s2-ol{margin:4px 0;font-size:18px}
+#s2 .s2-labgrid{grid-template-columns:minmax(0,1.7fr) minmax(0,1fr)}
+@media(max-width:900px){#s2 .s2-labgrid{grid-template-columns:1fr}}
+
+#s3 .s3-main{margin-top:0;padding:10px}
+#s3 .s3-main .ctrl{margin:4px 0}
+#s3 svg.stage{touch-action:pan-y;max-height:calc(100vh - 390px);min-height:300px}
+#s3 .s3-chips{display:inline-flex;gap:4px;flex-wrap:wrap}
+#s3 .s3-chips button{width:32px;height:32px;border-radius:50%;border:1px solid var(--accent);background:#fff;color:var(--accent);font:inherit;font-size:15px;cursor:pointer;padding:0}
+#s3 .s3-chips button.on{background:var(--accent);color:#fff}
+#s3 .s3-chips button.done{background:#dbe7ff}
+#s3 .s3-cap{font-size:20px;font-weight:700;color:var(--ink);margin-left:6px}
+#s3 .s3-opts{gap:12px}
+#s3 .s3-opts input[type=range]{width:130px}
+#s3 .s3-opts label{white-space:nowrap}
+#s3 .s3-tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+#s3 .s3-tag{padding:4px 12px;border-radius:999px;background:#ebfbee;border:1px solid #b2f2bb;color:#1f5f2b;font-weight:700;font-size:16px}
+#s3 .s3-tagv{background:#f6ecfa;border-color:#e0b8ec;color:var(--img)}
+#s3 .s3-tagno{background:#fff0f0;border-color:#ffc9c9;color:var(--bad)}
+#s3 .key{margin:8px 0 0;padding:8px 14px;font-size:17px}
+/* SVG */
+#s3 .s3-mir{stroke:var(--mirror);stroke-width:6;stroke-linecap:round;fill:none}
+#s3 .s3-obj{fill:var(--obj);fill-opacity:.9;stroke:#1b6b2e;stroke-width:1.5;stroke-linejoin:round}
+#s3 .s3-img{fill:var(--img);fill-opacity:.33;stroke:var(--img);stroke-width:2;stroke-dasharray:5 4;stroke-linejoin:round}
+#s3 .s3-real{fill:var(--obj);fill-opacity:.9;stroke:#1b6b2e;stroke-width:2.5;stroke-linejoin:round}
+#s3 .s3-ring{fill:rgba(255,255,255,.01);stroke:#adb5bd;stroke-width:1.5;stroke-dasharray:3 4}
+#s3 text.s3-t{font-size:20px;font-weight:700;paint-order:stroke;stroke:#fff;stroke-width:4px;stroke-linejoin:round;fill:#1f2937}
+#s3 text.s3-ti{fill:var(--img)}
+#s3 text.s3-to{fill:#1b6b2e}
+#s3 text.s3-tr{fill:var(--bad)}
+#s3 text.s3-tm{fill:var(--mirror)}
+#s3 text.s3-tx{fill:#495057;font-weight:400;font-size:18px}
+#s3 .s3-grid{stroke:#eef1f5;stroke-width:1}
+#s3 .s3-plane{stroke:#c3cad6;stroke-width:1.5;stroke-dasharray:2 6}
+#s3 .s3-dim{stroke:#495057;stroke-width:1.6;stroke-dasharray:5 4}
+#s3 .s3-link{stroke:#adb5bd;stroke-width:1.3;stroke-dasharray:2 4}
+#s3 .s3-paper{fill:#fffdf3;stroke:#b9a46b;stroke-width:2}
+#s3 .s3-pulse{fill:none;stroke:var(--img);stroke-width:2.5;animation:s3-pulse 1.4s ease-out infinite}
+@keyframes s3-pulse{from{r:8;opacity:1}to{r:30;opacity:0}}
+#s3 .s3-fade{animation:s3-in .6s ease both}
+@keyframes s3-in{from{opacity:0}to{opacity:1}}
+@media(max-width:600px){
+  #s3 text.s3-t{font-size:32px;stroke-width:6px}
+  #s3 text.s3-tx{font-size:28px}
+  #s3 .s3-mir{stroke-width:8}
+  #s3 svg.stage{max-height:none}
+  #s3 .s3-cap{flex-basis:100%;margin:2px 0 0}
+  #s3 .s3-opts input[type=range]{width:100px}
+  #s3 .ctrl .btn{padding:6px 10px;font-size:15px}
+  #s3 .s3-tag{font-size:14px;padding:3px 10px}
+}
+
+#s4 .s4-head{display:flex;flex-wrap:wrap;align-items:center;gap:6px 18px;margin:2px 0 4px}
+#s4 .s4-head h2{margin:0;font-size:22px}
+#s4 .s4-modes{margin:0}
+#s4 .s4-modes .btn{font-size:18px;padding:4px 22px}
+#s4 .key{padding:6px 14px;margin:6px 0}
+#s4 .s4-keyrow{display:flex;gap:8px;align-items:center;margin:2px 0;font-size:18px}
+#s4 .s4-n{flex:none;display:inline-block;min-width:26px;height:26px;line-height:26px;text-align:center;border-radius:50%;color:#fff;font-weight:700;font-size:16px}
+#s4 .s4-card{padding:8px;margin:6px 0}
+#s4 svg.stage{max-height:max(250px,calc(100vh - 440px));margin:0 auto}
+#s4 svg text{font-family:inherit;font-size:21px;fill:#1f2937;paint-order:stroke;stroke:#fff;stroke-width:4px;stroke-linejoin:round}
+#s4 svg text.s4-sm{font-size:17px}
+#s4 svg text.s4-lg{font-size:24px;font-weight:700}
+#s4 .s4-bar{margin:8px 0 0;gap:8px 14px}
+#s4 .s4-chips{display:inline-flex;gap:6px;flex-wrap:wrap}
+#s4 .s4-chip{display:inline-flex;align-items:center;gap:5px;border:2px solid var(--c);border-radius:999px;padding:2px 12px;cursor:pointer;font-size:17px;background:#fff;color:var(--c);font-weight:700;opacity:.5}
+#s4 .s4-chip input{display:none}
+#s4 .s4-chip.on{background:var(--c);color:#fff;opacity:1}
+#s4 .s4-chip.now{box-shadow:0 0 0 3px #ffe066}
+#s4 .s4-sum{font-size:20px;text-align:center;margin:8px 0 0}
+@media(max-width:640px){
+  #s4 svg text{font-size:28px}#s4 svg text.s4-sm{font-size:23px}#s4 svg text.s4-lg{font-size:32px}
+  #s4 .s4-keyrow{font-size:16px}
+  #s4 .s4-sum{font-size:17px}
+  #s4 svg.stage{max-height:none}
+}
+
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>4-2 光的反射與面鏡成像</h1>
+  <nav class="tabs" role="tablist">
+    <button role="tab" data-tab="s1" class="on">① 看見物體</button>
+    <button role="tab" data-tab="s2">② 實驗4-1 反射定律</button>
+    <button role="tab" data-tab="s3">③ 平面鏡成像</button>
+    <button role="tab" data-tab="s4">④ 凹面鏡・凸面鏡</button>
+  </nav>
+</header>
+<main>
+<section class="part" id="s1" data-mode="1">
+  <div class="ctrl s1-bar">
+    <span class="s1-modes" role="group" aria-label="選擇情況">
+      <button class="btn on" data-s1mode="1" id="s1-m1">物體本身發光</button>
+      <button class="btn" data-s1mode="2" id="s1-m2">物體反射光</button>
+    </span>
+    <span class="s1-steps">
+      <button class="btn" id="s1-reset" title="重置">↺</button>
+      <button class="btn" id="s1-prev">◀</button>
+      <button class="btn primary" id="s1-next">下一步 ▶</button>
+      <button class="btn" id="s1-play">▶ 播放</button>
+      <span class="s1-stepno" id="s1-stepno"></span>
+    </span>
+    <span class="s1-opts">
+      <label class="s1-only2"><input type="checkbox" id="s1-lamp"> 關燈</label>
+      <button class="btn" id="s1-look">看向物體</button>
+      <button class="btn" id="s1-turn">背對</button>
+    </span>
+  </div>
+
+  <div class="s1-steptext" id="s1-steptext" aria-live="polite"></div>
+
+  <div class="grid2 s1-grid">
+    <div class="card">
+      <svg class="stage" id="s1-left" viewBox="0 0 520 400" role="img" aria-label="光線從光源或物體射向眼睛的示意圖"></svg>
+    </div>
+    <div class="card">
+      <svg class="stage" id="s1-right" viewBox="0 0 520 400" role="img" aria-label="光進入眼睛後產生視覺的示意圖"></svg>
+      <div class="s1-status" id="s1-status"><span class="s1-led"></span><span id="s1-statustext">沒有光進入眼睛 → 看不到</span></div>
+    </div>
+  </div>
+
+  <div class="key" id="s1-key">
+    <div><b>發光體</b>：<span class="nw">光 → 進入眼睛 → 看見</span></div>
+    <div><b>非發光體</b>：<span class="nw">光源 → 物體反射 → 進入眼睛 → 看見</span></div>
+    <div><b>沒有光進入眼睛，就看不見。</b></div>
+  </div>
+</section>
+
+<section class="part" id="s2">
+<h2>實驗 4-1　光線反射的定律</h2>
+
+<div class="card" id="s2-lab">
+  <div class="s2-steps" id="s2-steps"></div>
+  <div class="s2-labgrid">
+    <svg id="s2-svg" class="stage" viewBox="0 0 600 480" role="img" aria-label="實驗 4-1 俯視圖：平面鏡、方格紙、電池 A、電池 B 與眼睛"></svg>
+    <div class="s2-panel">
+      <p class="s2-text" id="s2-text"></p>
+      <div class="s2-msg" id="s2-msg" aria-live="polite"></div>
+      <div class="ctrl">
+        <label data-steps="2,3"><input type="checkbox" id="s2-path"> 顯示光路</label>
+        <label data-steps="4,5"><input type="checkbox" id="s2-prot" checked> 量角器</label>
+      </div>
+      <div class="ctrl">
+        <button class="btn" id="s2-hint-eye" data-steps="2,3,4,5">提示：眼睛位置</button>
+        <button class="btn" id="s2-hint-b" data-steps="3,4,5">提示：放 B</button>
+        <button class="btn primary" id="s2-rec" data-steps="5">記錄這一組</button>
+        <button class="btn" id="s2-another" data-steps="5">換位置</button>
+        <button class="btn" id="s2-reset">重設</button>
+      </div>
+      <div class="ctrl s2-nav">
+        <button class="btn" id="s2-prev">← 上一步</button>
+        <button class="btn" id="s2-nextstep">下一步 →</button>
+      </div>
+      <div class="s2-read" id="s2-read" hidden></div>
+    </div>
+  </div>
+</div>
+
+<div class="card" id="s2-rec-card">
+  <h3>記錄表</h3>
+  <div class="s2-tblwrap">
+    <table class="tbl" id="s2-tbl">
+      <thead><tr><th>組</th><th>∠1 入射角</th><th>∠2 反射角</th><th>相差</th></tr></thead>
+      <tbody id="s2-tbody"><tr><td colspan="4" class="s2-empty">—</td></tr></tbody>
+    </table>
+  </div>
+  <div class="ctrl"><button class="btn" id="s2-clear">清除</button><span class="s2-summary" id="s2-summary"></span></div>
+  <details class="ans" id="s2-reveal" hidden>
+    <summary>發現了嗎？</summary>
+    <div class="s2-concl"><b>∠1 = ∠2</b></div>
+  </details>
+</div>
+
+<div class="card" id="s2-verify">
+  <h3>反射定律驗證</h3>
+  <div class="grid2">
+    <div>
+      <h4>① 三線共面：F 板向後摺</h4>
+      <svg id="s2-fold-svg" class="stage" viewBox="0 0 480 330" role="img" aria-label="兩塊紙板立在平面鏡上，右側紙板可向後摺"></svg>
+      <div class="ctrl">
+        <label>後摺 <input type="range" id="s2-fold" min="0" max="90" step="1" value="0"> <b id="s2-fold-val">0°</b></label>
+        <button class="btn" id="s2-fold-flat">攤平</button>
+        <button class="btn" id="s2-fold-back">摺 45°</button>
+      </div>
+      <div class="s2-msg" id="s2-fold-msg" aria-live="polite"></div>
+    </div>
+    <div>
+      <h4>② 光路可逆　③ 垂直入射</h4>
+      <svg id="s2-rev-svg" class="stage" viewBox="0 0 480 330" role="img" aria-label="側視圖：光線在平面鏡反射，可對調光的方向"></svg>
+      <div class="ctrl">
+        <label>入射角 <input type="range" id="s2-ang" min="0" max="75" step="1" value="40"> <b id="s2-ang-val">40°</b></label>
+        <button class="btn" id="s2-rev-btn">對調光的方向</button>
+        <button class="btn" id="s2-zero-btn">垂直入射</button>
+      </div>
+      <div class="s2-msg" id="s2-rev-msg" aria-live="polite"></div>
+    </div>
+  </div>
+</div>
+
+<div class="key">
+  <b>中心思想</b>
+  <ol class="s2-ol">
+    <li>入射線、反射線分居法線兩側</li>
+    <li><b>入射角 = 反射角</b></li>
+    <li>入射線、法線、反射線在同一平面</li>
+    <li>光路可逆</li>
+  </ol>
+</div>
+</section>
+
+<section class="part" id="s3">
+<div class="card s3-main">
+  <div class="ctrl s3-steps">
+    <button class="btn" id="s3-prev" type="button">◀</button>
+    <button class="btn primary" id="s3-next" type="button">下一步 ▶</button>
+    <button class="btn" id="s3-play" type="button">▶ 播放</button>
+    <span class="s3-chips" id="s3-chips"></span>
+    <span class="s3-cap" id="s3-cap" aria-live="polite"></span>
+  </div>
+  <svg class="stage" id="s3-svgA" role="img" aria-label="平面鏡成像：物體、鏡面、眼睛、像與紙屏"></svg>
+  <div class="ctrl s3-opts">
+    <button class="btn" id="s3-scr" type="button">放紙屏</button>
+    <button class="btn" id="s3-hide" type="button">眼睛移到看不到像的位置</button>
+    <label>鏡長 <input type="range" id="s3-len" min="60" max="210" value="140"> <span id="s3-lenv"></span></label>
+  </div>
+  <div class="s3-tags">
+    <span class="s3-tag" id="s3-tag1"></span>
+    <span class="s3-tag" id="s3-tag2"></span>
+    <span class="s3-tag s3-tagv" id="s3-tag3"></span>
+    <span class="s3-tag s3-tagno" id="s3-tag4">這個位置看不到像</span>
+  </div>
+</div>
+<div class="key"><b>平面鏡成像</b>：物與像<b>對稱於鏡面</b>、<b>物距＝像距</b>、<b>大小相等</b>、是<b>虛像</b>（延長線交點，沒有真實光線，接不到）。</div>
+</section>
+
+<section class="part" id="s4">
+  <div class="s4-head">
+    <h2>④ 凹面鏡、凸面鏡</h2>
+    <div class="ctrl s4-modes" role="tablist">
+      <button class="btn on" data-m="cc" type="button">凹面鏡</button>
+      <button class="btn" data-m="cx" type="button">凸面鏡</button>
+    </div>
+  </div>
+
+  <div class="key" id="s4-key-cc">
+    <div class="s4-keyrow"><span class="s4-n" style="background:#e03131">①</span><span>平行主軸 → 過焦點 F</span></div>
+    <div class="s4-keyrow"><span class="s4-n" style="background:#1971c2">②</span><span>過焦點 → 平行主軸</span></div>
+    <div class="s4-keyrow"><span class="s4-n" style="background:#e8590c">③</span><span>射向鏡頂 → 對稱主軸</span></div>
+  </div>
+  <div class="key" id="s4-key-cx" hidden>
+    <div class="s4-keyrow"><span class="s4-n" style="background:#e03131">①</span><span>平行主軸 → 反射線延長線過虛焦點 F</span></div>
+    <div class="s4-keyrow"><span class="s4-n" style="background:#e8590c">②</span><span>射向鏡頂 → 對稱主軸</span></div>
+  </div>
+
+  <div class="card s4-card">
+    <svg id="s4-svg" class="stage" viewBox="160 40 760 350" role="img" aria-label="球面鏡特殊光線示意圖"></svg>
+    <div class="ctrl s4-bar">
+      <span id="s4-chips" class="s4-chips"></span>
+      <button class="btn primary" id="s4-demo" type="button">▶ 逐條演示</button>
+      <label><input type="checkbox" id="s4-normal" checked> 法線</label>
+      <label><input type="checkbox" id="s4-beam"> 平行光束</label>
+    </div>
+  </div>
+
+  <div class="key s4-sum"><b>凹面鏡會聚光；凸面鏡使光發散。</b></div>
+</section>
+
+</main>
+<script>
+/* 共用工具：window.Opt  —— 各分頁 JS 用 IIFE 包起來，只能用 Opt.* 與自己的 id 前綴，不要污染全域 */
+window.Opt = (function(){
+  const NS='http://www.w3.org/2000/svg';
+  /** 建立 SVG 元素：Opt.el('line',{x1:0,...,class:'r-in'},parent) */
+  function el(tag,attrs,parent){
+    const e=document.createElementNS(NS,tag);
+    for(const k in (attrs||{})){ if(k==='text') e.textContent=attrs[k]; else e.setAttribute(k,attrs[k]); }
+    if(parent) parent.appendChild(e);
+    return e;
+  }
+  /** 在 svg 的 <defs> 加箭頭 marker，回傳 url(#id)。color 為顏色字串 */
+  function arrowMarker(svg,id,color){
+    let defs=svg.querySelector('defs'); if(!defs) defs=el('defs',{},svg);
+    if(!defs.querySelector('#'+id)){
+      const m=el('marker',{id,viewBox:'0 0 10 10',refX:'8',refY:'5',markerWidth:'7',markerHeight:'7',orient:'auto-start-reverse'},defs);
+      el('path',{d:'M0,0 L10,5 L0,10 z',fill:color},m);
+    }
+    return 'url(#'+id+')';
+  }
+  /** 滑鼠/觸控座標 → svg 座標 */
+  function svgPoint(svg,evt){
+    const pt=svg.createSVGPoint(); pt.x=evt.clientX; pt.y=evt.clientY;
+    return pt.matrixTransform(svg.getScreenCTM().inverse());
+  }
+  /** 讓元素可拖曳。onMove(x,y,evt) 在拖曳中呼叫，內部可自行限制範圍並回傳修正後 {x,y} */
+  function draggable(node,svg,onMove,onEnd){
+    node.classList.add('drag');
+    node.style.touchAction='none';
+    node.addEventListener('pointerdown',e=>{
+      e.preventDefault(); node.setPointerCapture(e.pointerId);
+      const mv=ev=>{const p=svgPoint(svg,ev); onMove(p.x,p.y,ev);};
+      const up=ev=>{node.removeEventListener('pointermove',mv);node.removeEventListener('pointerup',up);node.removeEventListener('pointercancel',up); if(onEnd) onEnd(ev);};
+      node.addEventListener('pointermove',mv);node.addEventListener('pointerup',up);node.addEventListener('pointercancel',up);
+    });
+  }
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  const deg=r=>r*180/Math.PI, rad=d=>d*Math.PI/180;
+  /** 點 p 對「過 a、b 的直線」的鏡射點。p,a,b 皆 {x,y} */
+  function reflectPoint(p,a,b){
+    const dx=b.x-a.x,dy=b.y-a.y,L2=dx*dx+dy*dy,t=((p.x-a.x)*dx+(p.y-a.y)*dy)/L2;
+    const fx=a.x+t*dx,fy=a.y+t*dy; return {x:2*fx-p.x,y:2*fy-p.y};
+  }
+  /** 兩直線(p1→p2 與 p3→p4)交點，平行回傳 null；t,u 為參數(0~1 表示在線段內) */
+  function intersect(p1,p2,p3,p4){
+    const d=(p2.x-p1.x)*(p4.y-p3.y)-(p2.y-p1.y)*(p4.x-p3.x); if(Math.abs(d)<1e-9) return null;
+    const t=((p3.x-p1.x)*(p4.y-p3.y)-(p3.y-p1.y)*(p4.x-p3.x))/d;
+    const u=((p3.x-p1.x)*(p2.y-p1.y)-(p3.y-p1.y)*(p2.x-p1.x))/d;
+    return {x:p1.x+t*(p2.x-p1.x),y:p1.y+t*(p2.y-p1.y),t,u};
+  }
+  /** 向量 d 對法向量 n（皆不必單位化）的反射方向 */
+  function reflectDir(d,n){
+    const nl=Math.hypot(n.x,n.y),nx=n.x/nl,ny=n.y/nl,k=2*(d.x*nx+d.y*ny);
+    return {x:d.x-k*nx,y:d.y-k*ny};
+  }
+  /** 分頁切換 */
+  function initTabs(){
+    const btns=document.querySelectorAll('.tabs button');
+    function show(id){
+      btns.forEach(b=>b.classList.toggle('on',b.dataset.tab===id));
+      document.querySelectorAll('.part').forEach(p=>p.classList.toggle('on',p.id===id));
+      history.replaceState(null,'','#tab-'+id);
+      window.dispatchEvent(new CustomEvent('tabshow',{detail:id}));
+    }
+    btns.forEach(b=>b.addEventListener('click',()=>{show(b.dataset.tab);window.scrollTo(0,0);}));
+    const fromHash=()=>{const m=/^#tab-(s[1-4])$/.exec(location.hash);return m?m[1]:'s1';};
+    show(fromHash());
+    window.addEventListener('hashchange',()=>show(fromHash()));
+  }
+  return {el,arrowMarker,svgPoint,draggable,clamp,deg,rad,reflectPoint,intersect,reflectDir,initTabs};
+})();
+
+</script>
+<script>
+/* ===== s1 ===== */
+(function(){
+'use strict';
+const root=document.getElementById('s1');
+if(!root) return;
+const el=Opt.el, clamp=Opt.clamp;
+const $=id=>document.getElementById(id);
+const svg=$('s1-left'), rs=$('s1-right');
+const W=520,H=400,R_HEAD=22,R_APPLE=31,CONE=Math.PI/3,MIND=115,D2R=Math.PI/180;
+const FINAL={1:4,2:5}, ENTER={1:3,2:4};
+
+/* ---------- 狀態 ---------- */
+const DEF={
+  1:()=>({src:{x:95,y:200},eye:{x:425,y:200},face:Math.PI}),
+  2:()=>{const p={src:{x:85,y:85},obj:{x:240,y:270},eye:{x:440,y:130}};p.face=Math.atan2(p.obj.y-p.eye.y,p.obj.x-p.eye.x);return p;}
+};
+const POS={1:DEF[1](),2:DEF[2]()};
+let mode=1, step=0, stepT0=0, lampOn=true, timer=null;
+
+/* ---------- 小工具 ---------- */
+const sub=(a,b)=>({x:a.x-b.x,y:a.y-b.y});
+const unit=v=>{const l=Math.hypot(v.x,v.y)||1;return {x:v.x/l,y:v.y/l};};
+const norm=a=>{while(a>Math.PI)a-=2*Math.PI;while(a<-Math.PI)a+=2*Math.PI;return a;};
+const lerp=(a,b,t)=>({x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t});
+const ease=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+
+/* ---------- 圖示 ---------- */
+function makeBulb(parent){
+  const g=el('g',{},parent);
+  const glow=el('circle',{cx:0,cy:-4,r:50,fill:'#ffe066','fill-opacity':0},g);
+  el('rect',{x:-9,y:14,width:18,height:14,rx:3,fill:'#9aa3af'},g);
+  el('path',{d:'M-9,19 H9 M-9,23.5 H9',stroke:'#6b7280','stroke-width':1.5},g);
+  el('circle',{cx:0,cy:-4,r:20,fill:'#e5e7eb',stroke:'#868e96','stroke-width':2.5},g);
+  const on=el('circle',{cx:0,cy:-4,r:20,fill:'#ffe066',stroke:'#f08c00','stroke-width':2.5,'fill-opacity':0,'stroke-opacity':0},g);
+  el('path',{d:'M-6,13 L-6,-1 L-3,-7 L0,-1 L3,-7 L6,-1 L6,13',stroke:'#f08c00','stroke-width':2,fill:'none'},g);
+  return {g,glow,on};
+}
+function makeApple(parent){
+  const g=el('g',{},parent);
+  const body='M0,-22 C14,-32 34,-22 32,2 C30,26 14,34 0,28 C-14,34 -30,26 -32,2 C-34,-22 -14,-32 0,-22 Z';
+  el('path',{d:body,fill:'#6b7280',stroke:'#4b5563','stroke-width':2.5},g);
+  const red=el('path',{d:body,fill:'#f03e3e',stroke:'#c92a2a','stroke-width':2.5,'fill-opacity':0,'stroke-opacity':0},g);
+  const hl=el('ellipse',{cx:0,cy:0,rx:8,ry:5,fill:'#fff','fill-opacity':0},g);
+  el('path',{d:'M0,-22 C0,-30 3,-36 6,-38',stroke:'#7c4a1e','stroke-width':4,fill:'none','stroke-linecap':'round'},g);
+  el('path',{d:'M3,-30 C12,-42 24,-38 26,-36 C20,-28 10,-26 3,-30 Z',fill:'#51cf66',stroke:'#2b8a3e','stroke-width':1.5},g);
+  return {g,red,hl};
+}
+function makeHead(parent){
+  const g=el('g',{},parent);
+  el('circle',{r:R_HEAD,fill:'#ffd8b5',stroke:'#c58b5c','stroke-width':2.5},g);
+  el('path',{d:'M0,-22 A22,22 0 0 0 0,22 Z',fill:'#5b3a29'},g);
+  el('polygon',{points:'20,-5 31,0 20,5',fill:'#ffd8b5',stroke:'#c58b5c','stroke-width':2,'stroke-linejoin':'round'},g);
+  [-9,9].forEach(y=>{
+    el('ellipse',{cx:10,cy:y,rx:6.5,ry:4.5,fill:'#fff',stroke:'#6b7280','stroke-width':1.5},g);
+    el('circle',{cx:12,cy:y,r:2.6,fill:'#1f2937'},g);
+  });
+  return g;
+}
+
+/* ================= 左：空間示意圖 ================= */
+const mIn=Opt.arrowMarker(svg,'s1-ain','#e8590c'), mOut=Opt.arrowMarker(svg,'s1-aout','#1971c2');
+el('rect',{class:'s1-bg',x:0,y:0,width:W,height:H},svg);
+const cone=el('path',{class:'s1-cone'},svg);
+const fanL=[],spokeL=[],inL=[];
+const gFan=el('g',{},svg), gSp=el('g',{},svg), gIn=el('g',{},svg);
+for(let i=0;i<18;i++) fanL.push(el('line',{class:'r-out','marker-end':mOut,'stroke-opacity':.7,'stroke-width':1.5,display:'none'},gFan));
+for(let i=0;i<14;i++) spokeL.push(el('line',{class:'r-in','marker-end':mIn,'stroke-opacity':.55,'stroke-width':1.6,display:'none'},gSp));
+for(let i=0;i<5;i++) inL.push(el('line',{class:'r-in','marker-end':mIn,'stroke-opacity':.55,'stroke-width':2,display:'none'},gIn));
+const handle=el('circle',{class:'s1-handle',r:10},svg);
+const mainB=el('line',{class:'r-in','stroke-width':3.5,display:'none'},svg);
+const apple=makeApple(svg), bulb=makeBulb(svg), headG=makeHead(svg);
+// 拖曳感應區
+[[apple.g,38],[bulb.g,36],[headG,36]].forEach(([g,r])=>el('circle',{r,fill:'#000','fill-opacity':0},g));
+const labBulb=el('text',{class:'s1-lab'},svg), labApple=el('text',{class:'s1-lab'},svg), labEye=el('text',{class:'s1-lab'},svg);
+const dotsA=[0,1].map(()=>el('circle',{class:'s1-dot',r:6,display:'none'},svg));
+const dotsB=[0,1].map(()=>el('circle',{class:'s1-dot s1-dotb',r:6,display:'none'},svg));
+const ring=el('circle',{r:10,fill:'none','stroke-width':3,display:'none'},svg);
+const cross=el('text',{class:'s1-cross',text:'✕',display:'none'},svg);
+
+/* ---------- 拖曳 ---------- */
+function move(key,x,y){
+  const p=POS[mode];
+  let n={x:clamp(x,50,W-50),y:clamp(y,50,H-62)};
+  for(const k of ['src','obj','eye']){
+    if(k===key||!p[k]) continue;
+    const d=Math.hypot(n.x-p[k].x,n.y-p[k].y);
+    if(d<MIND){const u=d<1?{x:1,y:0}:unit(sub(n,p[k]));n={x:p[k].x+u.x*MIND,y:p[k].y+u.y*MIND};}
+  }
+  n={x:clamp(n.x,50,W-50),y:clamp(n.y,50,H-62)};
+  p[key]=n;
+}
+Opt.draggable(bulb.g,svg,(x,y)=>move('src',x,y));
+Opt.draggable(apple.g,svg,(x,y)=>move('obj',x,y));
+Opt.draggable(headG,svg,(x,y)=>move('eye',x,y));
+Opt.draggable(handle,svg,(x,y)=>{const e=POS[mode].eye;POS[mode].face=Math.atan2(y-e.y,x-e.x);});
+
+/* ---------- 幾何 ---------- */
+function geom(){
+  const p=POS[mode],S=p.src,E=p.eye,g={};
+  if(mode===1){
+    const u=unit(sub(E,S));
+    g.origin=S;g.ua=Math.atan2(u.y,u.x);
+    g.b0=lerp(S,S,0);g.b0={x:S.x+u.x*28,y:S.y+u.y*28};
+    g.b1={x:E.x-u.x*(R_HEAD+3),y:E.y-u.y*(R_HEAD+3)};
+  }else{
+    const C=p.obj,uL=unit(sub(S,C)),uE=unit(sub(E,C));
+    const sx=uL.x+uE.x,sy=uL.y+uE.y;
+    const n=Math.hypot(sx,sy)<.25?{x:-uL.y,y:uL.x}:unit({x:sx,y:sy});
+    const P={x:C.x+n.x*R_APPLE,y:C.y+n.y*R_APPLE};
+    g.C=C;g.P=P;g.n=n;g.uL=uL;g.origin=P;
+    const uSP=unit(sub(P,S));
+    g.a0={x:S.x+uSP.x*28,y:S.y+uSP.y*28};g.a1=P;
+    const uPE=unit(sub(E,P));
+    g.b0=P;g.b1={x:E.x-uPE.x*(R_HEAD+3),y:E.y-uPE.y*(R_HEAD+3)};
+    g.decor=[];
+    const aL=Math.atan2(uL.y,uL.x),aN=Math.atan2(n.y,n.x);
+    [-55,-28,28,55].forEach(off=>{
+      const a=aL+off*D2R;
+      if(Math.abs(norm(a-aN))<14*D2R) return;
+      const nn={x:Math.cos(a),y:Math.sin(a)};
+      g.decor.push({Q:{x:C.x+nn.x*R_APPLE,y:C.y+nn.y*R_APPLE},a});
+    });
+  }
+  const aToOrigin=Math.atan2(g.origin.y-E.y,g.origin.x-E.x);
+  g.acc=(mode===1||lampOn)&&Math.abs(norm(aToOrigin-p.face))<=CONE;
+  return g;
+}
+
+/* ---------- 繪線輔助 ---------- */
+function setLine(l,a,b,prog,op){
+  if(!a||prog<=0){l.setAttribute('display','none');return;}
+  l.removeAttribute('display');
+  l.setAttribute('x1',a.x);l.setAttribute('y1',a.y);
+  l.setAttribute('x2',a.x+(b.x-a.x)*prog);l.setAttribute('y2',a.y+(b.y-a.y)*prog);
+  if(op!=null) l.setAttribute('stroke-opacity',op);
+}
+function hide(arr,from){for(let i=from||0;i<arr.length;i++) arr[i].setAttribute('display','none');}
+function placeDots(dots,a,b,show,now,speed){
+  dots.forEach((d,i)=>{
+    if(!show||!a){d.setAttribute('display','none');return;}
+    const L=Math.hypot(b.x-a.x,b.y-a.y)||1;
+    const t=(now/1000*speed/L+i/dots.length)%1;
+    d.removeAttribute('display');
+    d.setAttribute('cx',a.x+(b.x-a.x)*t);d.setAttribute('cy',a.y+(b.y-a.y)*t);
+  });
+}
+function prog(s,dur,now){return step>s?1:step===s?clamp((now-stepT0)/dur,0,1):0;}
+function setLabel(t,pt,str,dyBelow){
+  t.textContent=str;
+  const below=pt.y+dyBelow<H-8;
+  t.setAttribute('x',clamp(pt.x,70,W-70));
+  t.setAttribute('y',below?pt.y+dyBelow:pt.y-dyBelow+14);
+}
+
+/* ================= 右：眼睛與大腦 ================= */
+const EC={x:200,y:190};
+el('rect',{x:0,y:0,width:520,height:400,fill:'#f8fbff'},rs);
+const rLit=el('circle',{cx:442,cy:328,r:78,fill:'#ffe066','fill-opacity':0},rs);
+const eyeG=el('g',{},rs);
+el('ellipse',{cx:200,cy:190,rx:105,ry:95,fill:'#fff',stroke:'#94a3b8','stroke-width':4},eyeG);
+const retina=el('path',{class:'s1-retina',d:'M260.2,112.2 A105,95 0 0 1 260.2,267.8'},eyeG);
+el('path',{d:'M126,100 L118,150 M126,280 L118,230',stroke:'#7c4a1e','stroke-width':16,'stroke-linecap':'round',fill:'none'},eyeG);
+el('path',{d:'M100,150 Q66,190 100,230',fill:'#dbeafe','fill-opacity':.7,stroke:'#60a5fa','stroke-width':4},eyeG);
+el('ellipse',{cx:138,cy:190,rx:13,ry:36,fill:'#bfe3ff',stroke:'#4c9be8','stroke-width':3},eyeG);
+el('text',{class:'s1-cap',x:200,y:318,'text-anchor':'middle',text:'眼睛（剖面）'},rs);
+el('text',{class:'s1-cap',x:316,y:112,text:'視網膜'},rs);
+el('text',{class:'s1-cap',x:300,y:268,text:'視神經'},rs);
+el('text',{class:'s1-cap',x:442,y:392,'text-anchor':'middle',text:'大腦'},rs);
+el('text',{class:'s1-cap',x:10,y:100,text:'光線'},rs);
+const rayPaths=['M20,138 L104,160 L303,190','M20,190 L303,190','M20,242 L104,220 L303,190'].map(d=>el('path',{d,fill:'none','stroke-linecap':'round'},rs));
+const rayDots=rayPaths.map(()=>el('circle',{class:'s1-dot',r:6,display:'none'},rs));
+const nerve=el('path',{class:'s1-nerve',d:'M303,198 C345,226 365,262 408,292'},rs);
+const nerveDot=el('circle',{class:'s1-dot',r:6,display:'none'},rs);
+// 腦
+const brC=[[418,322,24],[446,306,26],[466,332,22],[444,350,24],[420,346,18]];
+const gBr=el('g',{},rs);
+brC.forEach(([x,y,r])=>el('circle',{class:'s1-brainout',cx:x,cy:y,r:r+3},gBr));
+brC.forEach(([x,y,r])=>el('circle',{class:'s1-brainfill',cx:x,cy:y,r},gBr));
+el('path',{class:'s1-brainwr',d:'M436,296 C428,314 448,322 438,342 M454,316 C464,324 460,338 468,346 M418,330 C426,336 424,344 430,350'},gBr);
+const sparks=[];
+for(let i=0;i<10;i++){
+  const a=i*36*D2R,r1=62,r2=76;
+  sparks.push(el('line',{x1:442+Math.cos(a)*r1,y1:328+Math.sin(a)*r1,x2:442+Math.cos(a)*r2,y2:328+Math.sin(a)*r2,stroke:'#f59f00','stroke-width':4,'stroke-linecap':'round','stroke-opacity':0},rs));
+}
+// 想像泡泡：看到的東西
+const bubble=el('g',{opacity:0},rs);
+el('ellipse',{cx:440,cy:150,rx:64,ry:42,fill:'#fff',stroke:'#f59f00','stroke-width':3},bubble);
+[[470,200,6],[476,218,4]].forEach(([x,y,r])=>el('circle',{cx:x,cy:y,r,fill:'#fff',stroke:'#f59f00','stroke-width':2.5},bubble));
+const gSeen=el('g',{transform:'translate(440,150) scale(.95)'},bubble);
+const seenBulb=makeBulb(gSeen), seenApple=makeApple(gSeen);
+seenBulb.glow.setAttribute('fill-opacity',.5);seenBulb.on.setAttribute('fill-opacity',1);seenBulb.on.setAttribute('stroke-opacity',1);
+seenApple.red.setAttribute('fill-opacity',1);seenApple.red.setAttribute('stroke-opacity',1);
+el('text',{x:440,y:105,class:'s1-cap','text-anchor':'middle',text:'看見了！',style:'font-weight:700;fill:#b45f06;font-size:18px'},bubble);
+
+/* ================= 文字 ================= */
+const TXT={
+  1:['按「下一步」開始','① 燈泡發光','② 光向四面八方前進','③ 一條光射進眼睛','④ 光進入眼睛 → 看見'],
+  2:['按「下一步」開始','① 燈發光','② 光射到蘋果','③ 蘋果把光反射出去','④ 一條反射光射進眼睛','⑤ 光進入眼睛 → 看見']
+};
+const TXTFAIL={
+  1:{3:'③ 光沒進入眼睛（在視線外）',4:'④ 沒有光進入眼睛 → 看不到'},
+  2:{4:'④ 光沒進入眼睛（在視線外）',5:'⑤ 沒有光進入眼睛 → 看不到'}
+};
+const TXTDARK='燈關了 → 沒有光可反射 → 看不到';
+
+/* ================= 繪製 ================= */
+let lastTxt='',lastSt='';
+function render(now){
+  const p=POS[mode],g=geom(),S=p.src,E=p.eye;
+  const final=FINAL[mode],enterS=ENTER[mode];
+  const lit=mode===1||lampOn;
+
+  /* 位置 */
+  bulb.g.setAttribute('transform',`translate(${S.x},${S.y})`);
+  headG.setAttribute('transform',`translate(${E.x},${E.y}) rotate(${p.face/D2R})`);
+  if(mode===2) apple.g.setAttribute('transform',`translate(${p.obj.x},${p.obj.y})`);
+  apple.g.style.display=mode===2?'':'none';
+  setLabel(labBulb,S,mode===1?'發光體（燈泡）':'光源（燈）',56);
+  if(mode===2) setLabel(labApple,p.obj,'物體（蘋果）',58); else labApple.textContent='';
+  setLabel(labEye,E,'眼睛',46);
+  svg.classList.toggle('dark',mode===2&&!lampOn);
+  // 視線範圍
+  const r=95,a1=p.face-CONE,a2=p.face+CONE;
+  cone.setAttribute('d',`M${E.x},${E.y} L${E.x+Math.cos(a1)*r},${E.y+Math.sin(a1)*r} A${r},${r} 0 0 1 ${E.x+Math.cos(a2)*r},${E.y+Math.sin(a2)*r} Z`);
+  handle.setAttribute('cx',E.x+Math.cos(p.face)*56);handle.setAttribute('cy',E.y+Math.sin(p.face)*56);
+
+  /* 進度 */
+  let pBulb,pSpoke,pIn,pFan,pMain,pBrain;
+  if(mode===1){
+    pBulb=prog(1,500,now);pSpoke=prog(2,800,now);pIn=0;pFan=0;pMain=prog(3,1000,now);pBrain=prog(4,700,now);
+  }else{
+    pBulb=lampOn?prog(1,500,now):0;pSpoke=lampOn?prog(1,900,now):0;pIn=lampOn?prog(2,900,now):0;
+    pFan=lampOn?prog(3,800,now):0;pMain=lampOn?prog(4,1000,now):0;pBrain=prog(5,700,now);
+  }
+  const appleLit=mode===2?pIn:0;
+
+  /* 燈泡 */
+  const bg=ease(pBulb);
+  bulb.glow.setAttribute('fill-opacity',.45*bg);
+  bulb.on.setAttribute('fill-opacity',bg);bulb.on.setAttribute('stroke-opacity',bg);
+  /* 蘋果 */
+  apple.red.setAttribute('fill-opacity',appleLit);apple.red.setAttribute('stroke-opacity',appleLit);
+  if(mode===2){
+    apple.hl.setAttribute('cx',g.uL.x*17);apple.hl.setAttribute('cy',g.uL.y*17);
+    apple.hl.setAttribute('fill-opacity',.55*appleLit);
+  }
+
+  /* 光線 */
+  hide(fanL);hide(spokeL);hide(inL);
+  if(mode===1){
+    const n=14,L=90;let k=0;
+    for(let i=0;i<n;i++){
+      const a=i*2*Math.PI/n+.12;
+      if(Math.abs(norm(a-g.ua))<17*D2R) continue;
+      const u={x:Math.cos(a),y:Math.sin(a)};
+      setLine(spokeL[k++],{x:S.x+u.x*28,y:S.y+u.y*28},{x:S.x+u.x*(28+L),y:S.y+u.y*(28+L)},pSpoke,.6);
+    }
+    mainB.setAttribute('class','r-in');mainB.setAttribute('marker-end',mIn);
+  }else{
+    const dC=Math.hypot(g.C.x-S.x,g.C.y-S.y),aC=Math.atan2(g.C.y-S.y,g.C.x-S.x);
+    const half=Math.asin(Math.min(1,(R_APPLE+10)/dC));
+    const n=12,L=60;let k=0;
+    for(let i=0;i<n;i++){
+      const a=i*2*Math.PI/n+.2;
+      if(Math.abs(norm(a-aC))<half+.12) continue;
+      const u={x:Math.cos(a),y:Math.sin(a)};
+      setLine(spokeL[k++],{x:S.x+u.x*28,y:S.y+u.y*28},{x:S.x+u.x*(28+L),y:S.y+u.y*(28+L)},pSpoke,.6);
+    }
+    // 光射到蘋果
+    setLine(inL[0],g.a0,g.a1,pIn,1);inL[0].setAttribute('stroke-width',3.5);
+    g.decor.forEach((d,i)=>{
+      const u=unit(sub(d.Q,S));
+      setLine(inL[i+1],{x:S.x+u.x*28,y:S.y+u.y*28},d.Q,pIn,.6);
+    });
+    // 反射的各方向光（散射）
+    const aMain=Math.atan2(g.b1.y-g.P.y,g.b1.x-g.P.x);
+    let f=0;
+    const fan=(Q,aN,offs)=>offs.forEach(o=>{
+      const a=aN+o*D2R;
+      if(Math.abs(norm(a-aMain))<13*D2R&&Q===g.P) return;
+      setLine(fanL[f++],Q,{x:Q.x+Math.cos(a)*50,y:Q.y+Math.sin(a)*50},pFan,.65);
+    });
+    fan(g.P,Math.atan2(g.n.y,g.n.x),[-62,-31,0,31,62]);
+    g.decor.forEach(d=>fan(d.Q,d.a,[-55,0,55]));
+    mainB.setAttribute('class','r-out');mainB.setAttribute('marker-end',mOut);
+  }
+  setLine(mainB,g.b0,g.b1,ease(pMain),1);
+
+  /* 光點 */
+  const mainDone=pMain>=1;
+  placeDots(dotsA,g.a0,g.a1,mode===2&&pIn>=1,now,190);
+  placeDots(dotsB,g.b0,g.b1,mainDone,now,190);
+  // 進入／沒進入眼睛的標示
+  const enterNow=step>=enterS&&mainDone&&lit;
+  if(enterNow&&g.acc){
+    ring.removeAttribute('display');
+    ring.setAttribute('cx',g.b1.x);ring.setAttribute('cy',g.b1.y);
+    ring.setAttribute('r',9+4*Math.sin(now/200));
+    ring.setAttribute('stroke',mode===1?'#e8590c':'#1971c2');
+  }else ring.setAttribute('display','none');
+  if(enterNow&&!g.acc){
+    cross.removeAttribute('display');
+    cross.setAttribute('x',g.b1.x);cross.setAttribute('y',g.b1.y+11);
+  }else cross.setAttribute('display','none');
+
+  /* 右側 */
+  let enterF=0;
+  if(g.acc&&lit){enterF=step>enterS?1:step===enterS?clamp((pMain-.85)/.15,0,1):0;}
+  const brainF=(g.acc&&lit)?pBrain:0;
+  const col=mode===1?'#e8590c':'#1971c2';
+  rayPaths.forEach((rp,i)=>{
+    if(enterF>0){
+      rp.setAttribute('stroke',col);rp.setAttribute('stroke-width',3.5);rp.setAttribute('stroke-dasharray','');
+      rp.setAttribute('stroke-opacity',.25+.75*enterF);
+    }else{
+      rp.setAttribute('stroke','#adb5bd');rp.setAttribute('stroke-width',2.5);rp.setAttribute('stroke-dasharray','7 7');
+      rp.setAttribute('stroke-opacity',.9);
+    }
+    const d=rayDots[i];
+    if(enterF>=1){
+      const L=rp.getTotalLength(),t=(now/1000*210/L+i*.17)%1,pt=rp.getPointAtLength(t*L);
+      d.removeAttribute('display');d.setAttribute('cx',pt.x);d.setAttribute('cy',pt.y);
+      d.setAttribute('class',mode===2?'s1-dot s1-dotb':'s1-dot');
+    }else d.setAttribute('display','none');
+  });
+  rs.classList.toggle('entering',enterF>0.5&&brainF<.3);
+  rs.classList.toggle('lit',brainF>.3);
+  rLit.setAttribute('fill-opacity',.4*brainF);
+  sparks.forEach((s,i)=>s.setAttribute('stroke-opacity',brainF>.3?(.5+.5*Math.sin(now/180+i)):0));
+  if(brainF>.3){
+    const L=nerve.getTotalLength(),t=(now/1000*150/L)%1,pt=nerve.getPointAtLength(t*L);
+    nerveDot.removeAttribute('display');nerveDot.setAttribute('cx',pt.x);nerveDot.setAttribute('cy',pt.y);
+  }else nerveDot.setAttribute('display','none');
+  bubble.setAttribute('opacity',ease(clamp((brainF-.3)/.7,0,1)));
+  seenBulb.g.style.display=mode===1?'':'none';
+  seenApple.g.style.display=mode===2?'':'none';
+
+  /* 文字 */
+  let t;
+  if(mode===2&&!lampOn) t=step===0?'燈關著。按「下一步」':TXTDARK;
+  else{
+    t=TXT[mode][step];
+    if(!g.acc&&TXTFAIL[mode][step]) t=TXTFAIL[mode][step];
+  }
+  if(t!==lastTxt){$('s1-steptext').textContent=t;lastTxt=t;}
+  let st,cls;
+  if(brainF>.3){st='光進入眼睛 → 產生視覺，看見了！';cls='on';}
+  else if(enterF>0&&g.acc){st='光正射進眼睛……';cls='mid';}
+  else{st='沒有光進入眼睛 → 看不到';cls='';}
+  const key=st+cls;
+  if(key!==lastSt){$('s1-statustext').textContent=st;$('s1-status').className='s1-status '+cls;lastSt=key;}
+}
+
+/* ================= 控制 ================= */
+function syncButtons(){
+  $('s1-stepno').textContent=step+' / '+FINAL[mode];
+  $('s1-prev').disabled=step<=0;
+  $('s1-next').disabled=step>=FINAL[mode];
+  $('s1-play').textContent=timer?'❚❚ 暫停':'▶ 播放';
+}
+function setStep(n){step=clamp(n,0,FINAL[mode]);stepT0=performance.now();syncButtons();}
+function stopPlay(){if(timer){clearInterval(timer);timer=null;}syncButtons();}
+function startPlay(){
+  if(step>=FINAL[mode]) setStep(0);
+  stopPlay();
+  if(step===0) setStep(1);
+  timer=setInterval(()=>{
+    if(step>=FINAL[mode]){stopPlay();return;}
+    setStep(step+1);
+    if(step>=FINAL[mode]) stopPlay();
+  },2200);
+  syncButtons();
+}
+function setMode(m){
+  mode=m;stopPlay();lampOn=true;$('s1-lamp').checked=false;
+  root.dataset.mode=String(m);
+  root.querySelectorAll('[data-s1mode]').forEach(b=>b.classList.toggle('on',+b.dataset.s1mode===m));
+  lastTxt='';lastSt='';
+  setStep(0);
+}
+root.querySelectorAll('[data-s1mode]').forEach(b=>b.addEventListener('click',()=>setMode(+b.dataset.s1mode)));
+$('s1-next').addEventListener('click',()=>{stopPlay();setStep(step+1);});
+$('s1-prev').addEventListener('click',()=>{stopPlay();setStep(step-1);});
+$('s1-play').addEventListener('click',()=>{timer?stopPlay():startPlay();});
+$('s1-reset').addEventListener('click',()=>{stopPlay();POS[mode]=DEF[mode]();lampOn=true;$('s1-lamp').checked=false;setStep(0);});
+$('s1-lamp').addEventListener('change',e=>{lampOn=!e.target.checked;});
+function faceToward(){
+  const p=POS[mode],tgt=mode===1?p.src:p.obj;
+  p.face=Math.atan2(tgt.y-p.eye.y,tgt.x-p.eye.x);
+}
+$('s1-look').addEventListener('click',faceToward);
+$('s1-turn').addEventListener('click',()=>{const p=POS[mode];p.face=norm(p.face+Math.PI);});
+
+function frame(now){
+  if(root.offsetParent!==null) render(now);
+  requestAnimationFrame(frame);
+}
+setMode(1);
+requestAnimationFrame(frame);
+})();
+
+/* ===== s2 ===== */
+(function(){
+'use strict';
+const sec=document.getElementById('s2'); if(!sec) return;
+const $=id=>document.getElementById(id);
+const E_=Opt.el, clamp=Opt.clamp, deg=Opt.deg, rad=Opt.rad;
+
+/* ============ 主實驗：俯視圖 ============ */
+const W=600,H=480,MY=120,MX0=120,MX1=480,CX=300,SLIT=12;   // 1 格 = 24 px = 1 cm；狹縫寬 24 px = 1 cm
+const C_IN='#e8590c', C_OUT='#1971c2';
+const O={x:CX,y:MY};
+const svg=$('s2-svg');
+const defs=E_('defs',{},svg);
+const MK_IN=Opt.arrowMarker(svg,'s2-mk-in',C_IN), MK_OUT=Opt.arrowMarker(svg,'s2-mk-out',C_OUT);
+const pg=E_('pattern',{id:'s2-grid',width:24,height:24,patternUnits:'userSpaceOnUse'},defs);
+E_('path',{d:'M24 0H0V24',fill:'none',stroke:'#c6def0','stroke-width':1},pg);
+const pg5=E_('pattern',{id:'s2-grid5',width:120,height:120,patternUnits:'userSpaceOnUse'},defs);
+E_('path',{d:'M120 0H0V120',fill:'none',stroke:'#93c0df','stroke-width':1.5},pg5);
+
+E_('rect',{x:0,y:0,width:W,height:MY,fill:'#e9edf2'},svg);
+E_('rect',{x:0,y:MY,width:W,height:H-MY,fill:'#fff'},svg);
+E_('rect',{x:0,y:MY,width:W,height:H-MY,fill:'url(#s2-grid)'},svg);
+E_('rect',{x:0,y:MY,width:W,height:H-MY,fill:'url(#s2-grid5)'},svg);
+
+const gdyn=E_('g',{},svg);          // 每次重畫
+// ---- 可拖曳物件 ----
+function mkBattery(id,label,fill,stroke){
+  const g=E_('g',{id},svg);
+  E_('circle',{r:36,fill:'#000','fill-opacity':0.001},g);          // 大感應區
+  E_('circle',{class:'ring',r:24,fill:'none',stroke:'#2b8a3e','stroke-width':4,opacity:0},g);
+  E_('circle',{r:13,fill,stroke,'stroke-width':2.5},g);
+  E_('circle',{r:5.5,fill:stroke},g);
+  E_('text',{x:0,y:-22,'text-anchor':'middle','font-size':20,'font-weight':700,fill:stroke,text:label},g);
+  return g;
+}
+const gA=mkBattery('s2-A','A','#8ce99a','#2b8a3e');
+const gB=mkBattery('s2-B','B','#ffc9c9','#c92a2a');
+const gE=E_('g',{id:'s2-E'},svg);
+E_('circle',{r:36,fill:'#000','fill-opacity':0.001},gE);
+E_('circle',{class:'ring',r:25,fill:'none',stroke:'#2b8a3e','stroke-width':4,opacity:0},gE);
+E_('circle',{r:15,fill:'#ffe8cc',stroke:'#495057','stroke-width':2.5},gE);
+const pupil=E_('circle',{r:5.5,fill:'#212529',cx:0,cy:-7},gE);
+E_('text',{x:0,y:-26,'text-anchor':'middle','font-size':19,'font-weight':700,fill:'#495057',text:'眼睛'},gE);
+
+// ---- 狀態橫幅（鏡子後面那一區） ----
+const gBan=E_('g',{},svg); gBan.style.pointerEvents='none';
+const banR=E_('rect',{x:110,y:14,width:380,height:50,rx:12,fill:'#fff',stroke:'#adb5bd','stroke-width':2},gBan);
+const ban1=E_('text',{x:300,y:48,'text-anchor':'middle','font-size':24,'font-weight':700,fill:'#495057',text:''},gBan);
+const ban2=E_('text',{x:300,y:65,'text-anchor':'middle','font-size':16,fill:'#6b7280',text:''},gBan);
+
+const PRESETS=[[-110,210],[-190,190],[-70,250],[150,190],[-230,150],[60,280],[-150,120]];
+let presetIdx=0;
+const RACK={x:548,y:438};
+let step=1;
+let A={x:O.x+PRESETS[0][0],y:O.y+PRESETS[0][1]};
+let Eye={x:470,y:360};
+let B={x:RACK.x,y:RACK.y};
+let trail=[];
+let records=[];
+const done={1:false,2:false,3:false,4:false,5:false};
+let touched=false;
+
+function resetPos(){
+  presetIdx=0;
+  A={x:O.x+PRESETS[0][0],y:O.y+PRESETS[0][1]}; Eye={x:470,y:360}; B={x:RACK.x,y:RACK.y}; trail=[];
+}
+
+/* ---- 幾何（鏡面在 y=MY；像用鏡射點算，不是寫死） ---- */
+function geom(){
+  const Ap=Opt.reflectPoint(A,{x:0,y:MY},{x:1,y:MY});             // A 的像
+  const t=(MY-Eye.y)/(Ap.y-Eye.y);
+  const P={x:Eye.x+t*(Ap.x-Eye.x),y:MY};                          // 眼睛—像 連線與鏡面交點 = 入射點
+  const inMirror=P.x>=MX0&&P.x<=MX1, inSlit=Math.abs(P.x-CX)<=SLIT;
+  const seen=(step===1)?inMirror:inSlit;
+  const Pm=seen?P:O;
+  let matched=false,s=0,dist=1e9;
+  if(step>=3&&seen){
+    const vx=P.x-Eye.x,vy=P.y-Eye.y,L2=vx*vx+vy*vy;
+    s=((B.x-Eye.x)*vx+(B.y-Eye.y)*vy)/L2;
+    dist=Math.abs((B.x-Eye.x)*vy-(B.y-Eye.y)*vx)/Math.sqrt(L2);
+    matched=(s>0.1&&s<0.95&&dist<=12);
+  }
+  const ai=deg(Math.atan2(Math.abs(A.x-Pm.x),A.y-Pm.y));
+  const br=deg(Math.atan2(Math.abs(B.x-Pm.x),B.y-Pm.y));
+  return {Ap,P,Pm,seen,matched,s,dist,ai,br};
+}
+function snapB(g){
+  g=g||geom();
+  if(g.matched){const vx=g.P.x-Eye.x,vy=g.P.y-Eye.y; B={x:Eye.x+g.s*vx,y:Eye.y+g.s*vy};}
+}
+
+/* ---- 小工具：畫一條中間（或指定距離）有箭頭的線 ---- */
+function arrowLine(parent,p,q,cls,marker,at){
+  const len=Math.hypot(q.x-p.x,q.y-p.y); if(len<1) return;
+  const d=Math.min(at===undefined?len/2:at,len-1), ux=(q.x-p.x)/len, uy=(q.y-p.y)/len;
+  const m={x:p.x+ux*d,y:p.y+uy*d};
+  E_('line',{x1:p.x,y1:p.y,x2:m.x,y2:m.y,class:cls,'marker-end':marker},parent);
+  E_('line',{x1:m.x,y1:m.y,x2:q.x,y2:q.y,class:cls},parent);
+}
+function normArc(parent,P,r,angDeg,side,color){
+  if(angDeg<0.6) return;
+  const a=rad(angDeg);
+  const x1=P.x,y1=P.y+r,x2=P.x+side*r*Math.sin(a),y2=P.y+r*Math.cos(a);
+  E_('path',{d:`M${x1},${y1} A${r},${r} 0 0 ${side<0?1:0} ${x2},${y2}`,fill:'none',stroke:color,'stroke-width':4,'stroke-linecap':'round'},parent);
+}
+
+function drawProtractor(P){
+  const R=104;
+  E_('path',{d:`M${P.x-R},${P.y} A${R},${R} 0 0 0 ${P.x+R},${P.y} Z`,fill:'rgba(255,255,255,0.55)',stroke:'#adb5bd','stroke-width':1.5},gdyn);
+  for(let a=-90;a<=90;a+=10){
+    const big=(a%30===0), r2=R-(big?13:7), s=Math.sin(rad(a)),c=Math.cos(rad(a));
+    E_('line',{x1:P.x+R*s,y1:P.y+R*c,x2:P.x+r2*s,y2:P.y+r2*c,stroke:'#868e96','stroke-width':big?1.6:1},gdyn);
+    if(big&&Math.abs(a)<90){
+      const rr=R+14;
+      E_('text',{x:P.x+rr*s,y:P.y+rr*c+4,'text-anchor':'middle','font-size':12,fill:'#6b7280',text:Math.abs(a)+'°'},gdyn);
+    }
+  }
+}
+
+/* ---- 主畫面重畫 ---- */
+function render(){
+  const g=geom();
+  gdyn.replaceChildren();
+  // 足跡（步驟1、2）
+  if(step<=2) trail.forEach(p=>E_('circle',{cx:p.x,cy:p.y,r:3.2,fill:'#40c057',opacity:0.55},gdyn));
+  // 鏡子
+  E_('rect',{x:MX0,y:MY-12,width:MX1-MX0,height:12,fill:'#9be3ee',stroke:'#0b7285','stroke-width':2},gdyn);
+  for(let x=MX0+6;x<MX1-6;x+=12) E_('line',{x1:x,y1:MY-12,x2:x+8,y2:MY-22,stroke:'#0b7285','stroke-width':1.5},gdyn);
+  E_('line',{x1:MX0,y1:MY,x2:MX1,y2:MY,stroke:'#0b7285','stroke-width':4},gdyn);
+  E_('text',{x:MX1+8,y:MY-3,'font-size':16,fill:'#0b7285','font-weight':700,text:'平面鏡'},gdyn);
+  if(step>=2){                                   // 不透明紙：只剩狹縫
+    [[MX0,CX-SLIT],[CX+SLIT,MX1]].forEach(([a,b])=>
+      E_('rect',{x:a,y:MY,width:b-a,height:9,fill:'#e2cfa3',stroke:'#8d7648','stroke-width':1.5},gdyn));
+    E_('text',{x:MX0+4,y:MY+26,'font-size':14,fill:'#8d7648',text:'不透明紙'},gdyn);
+    E_('text',{x:MX1-4,y:MY+26,'font-size':14,fill:'#8d7648','text-anchor':'end',text:'不透明紙'},gdyn);
+    step<4&&E_('text',{x:CX+SLIT+8,y:MY+27,'font-size':14,fill:'#495057','paint-order':'stroke',stroke:'#fff','stroke-width':3,text:'← 狹縫 1 cm'},gdyn);
+  }
+  // 摺線
+  E_('line',{x1:CX,y1:MY,x2:CX,y2:H-4,class:'r-normal'},gdyn);
+  E_('text',{x:CX+7,y:H-10,'font-size':15,fill:'#6b7280',text:step>=4?'法線（摺線）':'摺線'},gdyn);
+
+  const showLines = step>=4;
+  const showPath = (step===2||step===3)&&$('s2-path').checked;
+  const Pm=g.Pm;
+  // 量角器
+  if(step>=4&&$('s2-prot').checked) drawProtractor(Pm);
+  // 光路 / 連線
+  if(showLines||showPath){
+    arrowLine(gdyn,A,Pm,'r-in',MK_IN,Math.min(110,Math.hypot(A.x-Pm.x,A.y-Pm.y)*0.55));
+    if(showLines){
+      arrowLine(gdyn,Pm,B,'r-out',MK_OUT,Math.min(110,Math.hypot(B.x-Pm.x,B.y-Pm.y)*0.55));
+      if(g.seen) E_('line',{x1:B.x,y1:B.y,x2:Eye.x,y2:Eye.y,class:'r-out',opacity:0.3,'stroke-dasharray':'4 5'},gdyn);
+    }else{
+      const d=Opt.reflectDir({x:Pm.x-A.x,y:Pm.y-A.y},{x:0,y:1}), dl=Math.hypot(d.x,d.y);
+      const q={x:Pm.x+d.x/dl*520,y:Pm.y+d.y/dl*520};
+      arrowLine(gdyn,Pm,q,'r-out',MK_OUT,110);
+    }
+    // 被量的角
+    if(showLines){
+      const sA=(A.x<Pm.x)?-1:1, sB=(B.x<Pm.x)?-1:1;
+      normArc(gdyn,Pm,50,g.ai,sA,C_IN);
+      normArc(gdyn,Pm,50,g.br,sB,C_OUT);
+      if(g.ai>=12){const h=rad(g.ai/2);E_('text',{x:Pm.x+sA*30*Math.sin(h)-5,y:Pm.y+34*Math.cos(h)+6,'font-size':17,'font-weight':700,fill:C_IN,text:'1'},gdyn);}
+      if(g.br>=12){const h=rad(g.br/2);E_('text',{x:Pm.x+sB*30*Math.sin(h)-5,y:Pm.y+34*Math.cos(h)+6,'font-size':17,'font-weight':700,fill:C_OUT,text:'2'},gdyn);}
+      if(g.ai>=24){const h=rad(g.ai/2);E_('text',{x:Pm.x+sA*70*Math.sin(h),y:Pm.y+70*Math.cos(h)+6,'text-anchor':'middle','font-size':17,'font-weight':700,fill:C_IN,text:Math.round(g.ai)+'°'},gdyn);}
+      if(g.br>=24){const h=rad(g.br/2);E_('text',{x:Pm.x+sB*70*Math.sin(h),y:Pm.y+70*Math.cos(h)+6,'text-anchor':'middle','font-size':17,'font-weight':700,fill:C_OUT,text:Math.round(g.br)+'°'},gdyn);}
+    }
+  }
+  // 眼睛在鏡面上「看到像」的位置：A 的像亮在這裡；被 B 擋住就變灰
+  if(g.seen){
+    const hit=g.matched;
+    E_('ellipse',{cx:g.P.x,cy:MY-2,rx:step===1?13:10,ry:7,fill:hit?'#ced4da':'#69db7c',stroke:hit?'#868e96':'#2b8a3e','stroke-width':2},gdyn);
+    E_('text',{x:g.P.x,y:MY-28,'text-anchor':'middle','font-size':14,'font-weight':700,'paint-order':'stroke',stroke:'#fff','stroke-width':3,fill:hit?'#868e96':'#2b8a3e',text:hit?'像被B擋住':'A的像'},gdyn);
+  }
+  // 物件位置
+  gA.setAttribute('transform',`translate(${A.x},${A.y})`);
+  gE.setAttribute('transform',`translate(${Eye.x},${Eye.y})`);
+  gB.setAttribute('transform',`translate(${B.x},${B.y})`);
+  gB.style.display=step>=3?'':'none';
+  const tx=g.Pm.x-Eye.x,ty=g.Pm.y-Eye.y,tl=Math.hypot(tx,ty)||1;
+  pupil.setAttribute('cx',tx/tl*7); pupil.setAttribute('cy',ty/tl*7);
+  gE.querySelector('.ring').setAttribute('opacity',g.seen?1:0);
+  gB.querySelector('.ring').setAttribute('opacity',g.matched?1:0);
+  gB.querySelector('.ring').setAttribute('stroke','#2b8a3e');
+
+  // 進度
+  if(touched&&step===1&&g.seen) done[1]=true;
+  if(touched&&step===2&&g.seen) done[2]=true;
+  if(step>=3&&g.matched) done[3]=true;
+  if(step===4&&g.matched) done[4]=true;
+  done[5]=records.length>=3;
+  updateUI(g);
+}
+
+/* ---- 文字 / 面板 ---- */
+const STEPS=[
+ {n:'① 整面鏡',x:'拖曳眼睛，找看得到像的位置'},
+ {n:'② 狹縫',x:'只留狹縫，再找看得到像的位置'},
+ {n:'③ 擋住像',x:'把 B 拖到剛好擋住 A 的像'},
+ {n:'④ 連線量角',x:'量 ∠1、∠2'},
+ {n:'⑤ 換位置',x:'換位置，記錄幾組'}
+];
+function setMsg(cls,txt){const m=$('s2-msg'); m.className='s2-msg '+(cls||''); m.textContent=txt;}
+function updateUI(g){
+  const S=STEPS[step-1];
+  $('s2-text').textContent=S.x;
+  document.querySelectorAll('#s2-steps button').forEach((b,i)=>{
+    b.classList.toggle('on',i+1===step); b.classList.toggle('done',!!done[i+1]);
+  });
+  sec.querySelectorAll('#s2-lab [data-steps]').forEach(e=>{e.hidden=!e.dataset.steps.split(',').includes(String(step));});
+  $('s2-prev').disabled=step===1; $('s2-nextstep').disabled=step===5;
+  $('s2-rec').disabled=!(step===5&&g.matched);
+  let b1='',col='#495057',bc='#adb5bd';
+  const good=()=>{col='#2b8a3e';bc='#69db7c';}, bad=()=>{col='#c92a2a';bc='#ffa8a8';};
+  if(step===1){
+    if(g.seen){good();b1='✓ 看得到 A 的像';setMsg('good',trail.length>=18?'好多位置都看得到！':'✓ 看得到像');}
+    else{bad();b1='✗ 看不到 A 的像';setMsg('bad','✗ 看不到');}
+  }else if(step===2){
+    if(g.seen){good();b1='✓ 看得到 A 的像';setMsg('good','✓ 只有特定位置看得到');}
+    else{bad();b1='✗ 看不到 A 的像';setMsg('bad','✗ 看不到，再找找');}
+  }else if(step===3){
+    if(g.matched){good();b1='✓ B 擋住了 A 的像';setMsg('good','✓ B 在反射光路上（光直進）');}
+    else if(g.seen){good();b1='✓ 看得到 A 的像';setMsg('','拖 B 擋住像');}
+    else{bad();b1='✗ 看不到 A 的像';setMsg('bad','先找到看得到像的位置');}
+  }else{
+    b1=`∠1 = ${Math.round(g.ai)}°　　∠2 = ${Math.round(g.br)}°`;
+    if(g.matched){good();setMsg('good',step===4?'∠1、∠2 一樣嗎？':'✓ 可以記錄');}
+    else setMsg('warn','B 還沒擋住像');
+  }
+  ban1.textContent=b1; ban2.textContent=''; ban1.setAttribute('fill',col); banR.setAttribute('stroke',bc);
+}
+
+/* ---- 步驟切換 ---- */
+const stepsBox=$('s2-steps');
+STEPS.forEach((s,i)=>{const b=document.createElement('button'); b.type='button'; b.textContent=s.n; b.addEventListener('click',()=>goStep(i+1)); stepsBox.appendChild(b);});
+function goStep(n){step=clamp(n,1,5); trail=[]; if(step>=3&&B.x===RACK.x&&B.y===RACK.y){/* B 還在待命區 */} render();}
+$('s2-prev').addEventListener('click',()=>goStep(step-1));
+$('s2-nextstep').addEventListener('click',()=>goStep(step+1));
+$('s2-path').addEventListener('change',render);
+$('s2-prot').addEventListener('change',render);
+$('s2-reset').addEventListener('click',()=>{resetPos();render();});
+
+/* ---- 拖曳 ---- */
+function addTrail(g){
+  if(step>2||!g.seen) return;
+  const l=trail[trail.length-1];
+  if(!l||Math.hypot(l.x-Eye.x,l.y-Eye.y)>9){trail.push({x:Eye.x,y:Eye.y}); if(trail.length>500) trail.shift();}
+}
+Opt.draggable(gA,svg,(x,y)=>{touched=true;A={x:clamp(x,24,W-24),y:clamp(y,MY+50,H-24)}; trail=[]; render();},()=>{snapB();render();});
+Opt.draggable(gE,svg,(x,y)=>{touched=true;Eye={x:clamp(x,30,W-30),y:clamp(y,MY+40,H-30)}; addTrail(geom()); render();},()=>{snapB();render();});
+Opt.draggable(gB,svg,(x,y)=>{touched=true;B={x:clamp(x,24,W-24),y:clamp(y,MY+26,H-24)}; snapB(); render();},()=>{snapB();render();});
+
+/* ---- 提示按鈕 ---- */
+$('s2-hint-eye').addEventListener('click',()=>{
+  // 眼睛放到「A 對摺線鏡射」的位置：從入射點 O 沿反射方向走
+  const a={x:A.x-O.x,y:A.y-O.y}, xmax=a.x<0?(W-30-O.x)/-a.x:(O.x-24)/Math.max(a.x,1e-6), k=Math.min(1.5,(H-30-O.y)/a.y,Math.abs(a.x)<1?9:xmax);
+  Eye={x:clamp(O.x-a.x*k,20,W-20),y:O.y+a.y*k}; trail=[];
+  touched=true;  render();
+});
+$('s2-hint-b').addEventListener('click',()=>{
+  const g=geom();
+  if(!g.seen){setMsg('bad','先找眼睛位置'); return;}
+  const vx=g.P.x-Eye.x,vy=g.P.y-Eye.y; B={x:Eye.x+0.55*vx,y:Eye.y+0.55*vy}; render();
+});
+
+/* ---- 記錄 ---- */
+function renderTable(){
+  const tb=$('s2-tbody');
+  if(!records.length){tb.innerHTML='<tr><td colspan="4" class="s2-empty">—</td></tr>';}
+  else tb.innerHTML=records.map((r,i)=>`<tr><td>${i+1}</td><td>${Math.round(r.i)}°</td><td>${Math.round(r.r)}°</td><td>${Math.abs(Math.round(r.i)-Math.round(r.r))}°</td></tr>`).join('');
+  const n=records.length, sm=$('s2-summary'), rv=$('s2-reveal');
+  rv.hidden=true;
+  if(n<3){sm.textContent=n+' / 3 組';}
+  else{
+    const is=records.map(r=>r.i), spread=Math.max(...is)-Math.min(...is);
+    if(spread<12){sm.textContent='角度再差多一點';}
+    else{sm.textContent='∠1 和 ∠2 有什麼關係？'; rv.hidden=false;}
+  }
+}
+$('s2-rec').addEventListener('click',()=>{
+  const g=geom();
+  if(!(step===5&&g.matched)) return;
+  const last=records[records.length-1];
+  if(last&&Math.abs(last.i-g.ai)<1.5){setMsg('warn','和上一組一樣，換位置'); return;}
+  if(records.length>=8){setMsg('warn','最多 8 組'); return;}
+  records.push({i:g.ai,r:g.br}); renderTable(); render();
+  setMsg('good',`已記錄第 ${records.length} 組`);
+});
+$('s2-clear').addEventListener('click',()=>{records=[];renderTable();render();});
+$('s2-another').addEventListener('click',()=>{
+  presetIdx=(presetIdx+1)%PRESETS.length;
+  A={x:O.x+PRESETS[presetIdx][0],y:O.y+PRESETS[presetIdx][1]};
+  B={x:RACK.x,y:RACK.y}; trail=[]; render();
+  setMsg('','A 換位置了');
+});
+
+/* ============ 驗證①：三線共面（紙板後摺） ============ */
+const fs=$('s2-fold-svg');
+const MKF_IN=Opt.arrowMarker(fs,'s2-mkf-in',C_IN), MKF_OUT=Opt.arrowMarker(fs,'s2-mkf-out',C_OUT);
+const gf=E_('g',{},fs);
+const FX=240,FY=268;
+const pr=(x,y,z)=>[FX+x-0.42*z, FY-y+0.30*z];
+const pts=a=>a.map(p=>pr(...p).map(v=>v.toFixed(1)).join(',')).join(' ');
+function drawFold(){
+  const phi=+$('s2-fold').value, ph=rad(phi);
+  $('s2-fold-val').textContent=phi+'°';
+  gf.replaceChildren();
+  // 平面鏡（水平放）
+  E_('polygon',{points:pts([[-200,0,-80],[200,0,-80],[200,0,80],[-200,0,80]]),fill:'#b8ecf2',stroke:'#0b7285','stroke-width':2},gf);
+  E_('text',{x:pr(150,0,70)[0],y:pr(150,0,70)[1]+16,'font-size':15,fill:'#0b7285','font-weight':700,'text-anchor':'middle',text:'平面鏡'},gf);
+  // F 板（後摺）
+  const c=Math.cos(ph),s=Math.sin(ph),Lb=170,Hb=170;
+  E_('polygon',{points:pts([[0,0,0],[Lb*c,0,-Lb*s],[Lb*c,Hb,-Lb*s],[0,Hb,0]]),fill:'#fff1dc',stroke:'#b8860b','stroke-width':2,'fill-opacity':0.96},gf);
+  const fl=pr(Lb*c*0.6,Hb+16,-Lb*s*0.6);
+  E_('text',{x:fl[0],y:fl[1]-2,'font-size':15,fill:'#9c6a00','text-anchor':'middle','font-weight':700,text:'F 板（可後摺）'},gf);
+  // E 板
+  E_('polygon',{points:pts([[-Lb,0,0],[0,0,0],[0,Hb,0],[-Lb,Hb,0]]),fill:'#e7f1ff',stroke:'#1c64b8','stroke-width':2,'fill-opacity':0.96},gf);
+  const el=pr(-Lb*0.5,Hb+16,0);
+  E_('text',{x:el[0],y:el[1]-2,'font-size':15,fill:'#1c64b8','text-anchor':'middle','font-weight':700,text:'E 板'},gf);
+  // 法線（兩板接縫）
+  const n1=pr(0,0,0),n2=pr(0,Hb+4,0);
+  E_('line',{x1:n1[0],y1:n1[1],x2:n2[0],y2:n2[1],class:'r-normal','stroke-width':2},gf);
+  const nl=pr(0,Hb+4,0); E_('text',{x:nl[0]+6,y:nl[1]+16,'font-size':14,fill:'#6b7280',text:'法線'},gf);
+  // 入射線（在 E 板上）、反射線
+  const S=pr(-130,130,0),Op=pr(0,0,0),R=pr(130,130,0);
+  arrowLine(gf,{x:S[0],y:S[1]},{x:Op[0],y:Op[1]},'r-in',MKF_IN,70);
+  const rayOnF=(phi<=1);
+  if(rayOnF){ arrowLine(gf,{x:Op[0],y:Op[1]},{x:R[0],y:R[1]},'r-out',MKF_OUT,70); }
+  else{ E_('line',{x1:Op[0],y1:Op[1],x2:R[0],y2:R[1],class:'r-out',opacity:0.35,'stroke-dasharray':'5 6'},gf); }
+  E_('text',{x:S[0]-4,y:S[1]-8,'font-size':15,'font-weight':700,fill:C_IN,'text-anchor':'end',text:'入射線'},gf);
+  E_('text',{x:R[0]+4,y:R[1]-8,'font-size':15,'font-weight':700,fill:rayOnF?C_OUT:'#9aa5b1',text:rayOnF?'反射線':'反射線？'},gf);
+  E_('circle',{cx:Op[0],cy:Op[1],r:4,fill:'#212529'},gf);
+  const m=$('s2-fold-msg');
+  if(rayOnF){m.className='s2-msg good'; m.textContent='同一平面：看得到反射線';}
+  else{m.className='s2-msg warn'; m.textContent=`後摺 ${phi}°：F 板上看不到反射線`;}
+}
+$('s2-fold').addEventListener('input',drawFold);
+$('s2-fold-flat').addEventListener('click',()=>{$('s2-fold').value=0;drawFold();});
+$('s2-fold-back').addEventListener('click',()=>{$('s2-fold').value=45;drawFold();});
+
+/* ============ 驗證②③：光路可逆、垂直入射 ============ */
+const rs=$('s2-rev-svg');
+const MKR_IN=Opt.arrowMarker(rs,'s2-mkr-in',C_IN), MKR_OUT=Opt.arrowMarker(rs,'s2-mkr-out',C_OUT);
+const RO={x:240,y:250}, RL=190;
+const gr=E_('g',{},rs), gpulse=E_('g',{},rs);
+const pulses=[0,1,2].map(()=>E_('circle',{r:6,fill:'#fab005',stroke:'#e67700','stroke-width':2},gpulse));
+let rev=false, path=[{x:0,y:0},{x:0,y:0},{x:0,y:0}];
+function drawRev(){
+  const th=+$('s2-ang').value, a=rad(th);
+  $('s2-ang-val').textContent=th+'°';
+  gr.replaceChildren();
+  const d=th<2?5:0;
+  const S={x:RO.x-RL*Math.sin(a)-d,y:RO.y-RL*Math.cos(a)}, Oi={x:RO.x-d,y:RO.y};
+  const Rr={x:RO.x+RL*Math.sin(a)+d,y:RO.y-RL*Math.cos(a)}, Or={x:RO.x+d,y:RO.y};
+  // 鏡子
+  E_('rect',{x:50,y:RO.y,width:380,height:14,fill:'#9be3ee',stroke:'#0b7285','stroke-width':2},gr);
+  for(let x=60;x<420;x+=14) E_('line',{x1:x,y1:RO.y+14,x2:x+9,y2:RO.y+25,stroke:'#0b7285','stroke-width':1.5},gr);
+  E_('text',{x:56,y:RO.y-8,'font-size':15,fill:'#0b7285','font-weight':700,text:'平面鏡'},gr);
+  // 法線
+  E_('line',{x1:RO.x,y1:RO.y,x2:RO.x,y2:34,class:'r-normal','stroke-width':2},gr);
+  E_('text',{x:RO.x+6,y:48,'font-size':14,fill:'#6b7280',text:'法線'},gr);
+  // 角
+  const arc=(side,color)=>{ if(th<1) return; const r=62;
+    E_('path',{d:`M${RO.x},${RO.y-r} A${r},${r} 0 0 ${side<0?0:1} ${RO.x+side*r*Math.sin(a)},${RO.y-r*Math.cos(a)}`,fill:'none',stroke:color,'stroke-width':4,'stroke-linecap':'round'},gr);};
+  arc(-1,C_IN); arc(1,C_OUT);
+  // 光線（顏色依「路徑」固定：左=原入射線，右=原反射線；箭頭依光的方向）
+  if(!rev){
+    arrowLine(gr,S,Oi,'r-in',MKR_IN,RL*0.5);
+    arrowLine(gr,Or,Rr,'r-out',MKR_OUT,RL*0.5);
+    path=[S,Oi,Or,Rr];
+  }else{
+    arrowLine(gr,Rr,Or,'r-out',MKR_OUT,RL*0.5);
+    arrowLine(gr,Oi,S,'r-in',MKR_IN,RL*0.5);
+    path=[Rr,Or,Oi,S];
+  }
+  E_('circle',{cx:RO.x,cy:RO.y,r:4,fill:'#212529'},gr);
+  const L1=rev?'原反射線':'入射線', L2=rev?'原入射線':'反射線';
+  E_('text',{x:S.x-6,y:S.y+4,'font-size':15,'font-weight':700,fill:C_IN,'text-anchor':'end',text:(th<2?'':(rev?'原入射線':'入射線'))},gr);
+  E_('text',{x:Rr.x+6,y:Rr.y+4,'font-size':15,'font-weight':700,fill:C_OUT,text:(th<2?'':(rev?'原反射線':'反射線'))},gr);
+  if(th<2) E_('text',{x:RO.x+14,y:100,'font-size':15,'font-weight':700,fill:'#495057',text:'兩線重合'},gr);
+  // 角度數字
+  E_('text',{x:14,y:24,'font-size':17,'font-weight':700,fill:C_IN,text:(rev?'反射角 ':'入射角 ')+'= '+th+'°'},gr);
+  E_('text',{x:466,y:24,'font-size':17,'font-weight':700,fill:C_OUT,'text-anchor':'end',text:(rev?'入射角 ':'反射角 ')+'= '+th+'°'},gr);
+  $('s2-rev-btn').classList.toggle('on',rev);
+  $('s2-rev-btn').textContent=rev?'恢復方向':'對調光的方向';
+  const m=$('s2-rev-msg');
+  if(th<2){m.className='s2-msg good'; m.textContent='垂直入射：沿原路返回';}
+  else if(!rev){m.className='s2-msg'; m.textContent=`入射角 = 反射角 = ${th}°`;}
+  else{m.className='s2-msg good'; m.textContent='同一條路，方向相反';}
+}
+$('s2-ang').addEventListener('input',drawRev);
+$('s2-rev-btn').addEventListener('click',()=>{rev=!rev;drawRev();});
+$('s2-zero-btn').addEventListener('click',()=>{$('s2-ang').value=0;drawRev();});
+// 光點動畫（只在分頁顯示時跑）
+function frame(ts){
+  if(sec.classList.contains('on')&&!document.hidden){
+    const L1=Math.hypot(path[1].x-path[0].x,path[1].y-path[0].y), L2=Math.hypot(path[3].x-path[2].x,path[3].y-path[2].y), T=L1+L2;
+    pulses.forEach((p,i)=>{
+      const u=(((ts/2600)+i/3)%1)*T;
+      let q; if(u<L1){const f=u/L1;q={x:path[0].x+(path[1].x-path[0].x)*f,y:path[0].y+(path[1].y-path[0].y)*f};}
+      else{const f=(u-L1)/L2;q={x:path[2].x+(path[3].x-path[2].x)*f,y:path[2].y+(path[3].y-path[2].y)*f};}
+      p.setAttribute('cx',q.x); p.setAttribute('cy',q.y);
+    });
+  }
+  requestAnimationFrame(frame);
+}
+
+/* ---- 初始化 ---- */
+renderTable(); drawFold(); drawRev(); render();
+requestAnimationFrame(frame);
+})();
+
+/* ===== s3 ===== */
+(function(){
+  const $ = id => document.getElementById(id);
+  if(!$('s3')) return;
+  const W=780, H=460, MX=390, CY=230, PXCM=30;          // 1 格 = 30 單位 = 1 cm
+  const MA={x:MX,y:0}, MB={x:MX,y:1};                    // 鏡面所在直線上的兩點
+  const HOME={P:{x:150,y:300},E:{x:250,y:90}};
+  const S={P:{x:150,y:300},E:{x:250,y:90},L:140,sc:1,step:0,scr:false,hidden:false,sx:600,timer:null};
+  const clamp=Opt.clamp;
+  let K=1;                                    // 窄螢幕時放大 SVG 文字
+  const lblY=()=>28*S.sc+16+10*K;
+
+  const STEPS=['拖曳旗子或眼睛','① 物發出光線','② 反射進眼睛','③ 眼睛以為光走直線','④ 延長線交點＝像','⑤ 物距＝像距'];
+
+  /* ---------- 幾何 ---------- */
+  function geom(){
+    const top=CY-S.L, bot=CY+S.L;
+    const Pi=Opt.reflectPoint(S.P,MA,MB);                // 像點：物點對鏡面的鏡射
+    const rays=[-7,0,7].map(o=>{
+      const Q={x:S.E.x+14,y:S.E.y+o};                    // 眼睛瞳孔上的進光點
+      const X=Opt.intersect(Q,Pi,MA,MB);                  // 眼睛→像點 的連線與鏡面的交點 = 反射點
+      const M={x:MX,y:X.y};
+      return {Q,M,ok:M.y>=top&&M.y<=bot};
+    });
+    return {top,bot,Pi,rays,vis:rays[1].ok};
+  }
+  const perpDist=p=>Math.abs((p.x-MA.x)*(MB.y-MA.y)-(p.y-MA.y)*(MB.x-MA.x))/Math.hypot(MB.x-MA.x,MB.y-MA.y);
+  const OBJ={pole:[[-3,-28],[3,-28],[3,28],[-3,28]],flag:[[3,-28],[36,-12],[3,4]]};
+  function ptsStr(poly,P,sc,mir){
+    return poly.map(([x,y])=>{let p={x:P.x+x*sc,y:P.y+y*sc}; if(mir) p=Opt.reflectPoint(p,MA,MB); return p.x.toFixed(1)+','+p.y.toFixed(1);}).join(' ');
+  }
+  const mid=(a,b)=>({x:(a.x+b.x)/2,y:(a.y+b.y)/2});
+  const f1=v=>v.toFixed(1);
+
+  /* ---------- 小工具 ---------- */
+  function clear(g){while(g.firstChild) g.removeChild(g.firstChild);}
+  function txt(g,x,y,s,cls,anchor){return Opt.el('text',{x:f1(x),y:f1(y),class:'s3-t '+(cls||''),'text-anchor':anchor||'middle',text:s},g);}
+  function pl(g,pts,cls,extra){
+    return Opt.el('polyline',Object.assign({points:pts.map(p=>f1(p.x)+','+f1(p.y)).join(' '),class:cls},extra||{}),g);
+  }
+  function ln(g,a,b,cls,extra){return Opt.el('line',Object.assign({x1:f1(a.x),y1:f1(a.y),x2:f1(b.x),y2:f1(b.y),class:cls},extra||{}),g);}
+
+  /* ---------- 建立場景 ---------- */
+  function makeScene(id,kind){
+    const svg=$(id); svg.setAttribute('viewBox','0 0 '+W+' '+H);
+    const sc={svg,kind};
+    sc.mi=Opt.arrowMarker(svg,'s3-mi-'+kind,'#e8590c');
+    sc.mo=Opt.arrowMarker(svg,'s3-mo-'+kind,'#1971c2');
+    sc.mg=Opt.arrowMarker(svg,'s3-mg-'+kind,'#2b8a3e');
+    const defs=svg.querySelector('defs');
+    const pat=Opt.el('pattern',{id:'s3-hatch-'+kind,width:'8',height:'8',patternUnits:'userSpaceOnUse',patternTransform:'rotate(45)'},defs);
+    Opt.el('line',{x1:'0',y1:'0',x2:'0',y2:'8',stroke:'#7aa6ad','stroke-width':'3'},pat);
+    const gBase=Opt.el('g',{},svg);
+    for(let x=0;x<=W;x+=PXCM) Opt.el('line',{x1:x,y1:0,x2:x,y2:H,class:'s3-grid'},gBase);
+    for(let y=0;y<=H;y+=PXCM) Opt.el('line',{x1:0,y1:y,x2:W,y2:y,class:'s3-grid'},gBase);
+    const gScr=Opt.el('g',{},svg);
+    sc.gDyn=Opt.el('g',{style:'pointer-events:none'},svg);
+    const gTop=Opt.el('g',{},svg);
+    // 紙屏只在 B 場景（放在光線底下，讓光線與文字蓋在紙上）
+    {
+      sc.scr=Opt.el('g',{},gScr);
+      sc.scrRect=Opt.el('rect',{y:'6',width:'14',height:H-12,x:'-7',rx:'3',class:'s3-paper'},sc.scr);
+      sc.scrLab=Opt.el('text',{y:'28',class:'s3-t','text-anchor':'middle',text:'紙屏'},sc.scr);
+      Opt.el('text',{y:H-14,class:'s3-t s3-tx','text-anchor':'middle',text:'◀ ▶'},sc.scr);
+      Opt.draggable(sc.scr,svg,(x)=>{S.sx=clamp(x,MX+30,W-24); renderAll();});
+    }
+    // 物體
+    sc.obj=Opt.el('g',{},gTop);
+    Opt.el('circle',{r:'38',class:'s3-ring'},sc.obj);
+    sc.oPole=Opt.el('polygon',{class:'s3-obj'},sc.obj);
+    sc.oFlag=Opt.el('polygon',{class:'s3-obj'},sc.obj);
+    Opt.el('circle',{r:'3.5',fill:'#145a26'},sc.obj);
+    sc.oLab=Opt.el('text',{class:'s3-t s3-to','text-anchor':'middle',text:'物'},sc.obj);
+    Opt.draggable(sc.obj,svg,(x,y)=>{setP(x,y);});
+    // 眼睛
+    sc.eye=Opt.el('g',{},gTop);
+    Opt.el('circle',{r:'30',class:'s3-ring'},sc.eye);
+    Opt.el('circle',{r:'16',fill:'#fff',stroke:'#1f2937','stroke-width':'2.5'},sc.eye);
+    Opt.el('ellipse',{cx:'8',cy:'0',rx:'6',ry:'9',fill:'#1f2937'},sc.eye);
+    Opt.el('circle',{cx:'10',cy:'-3',r:'2',fill:'#fff'},sc.eye);
+    Opt.el('text',{y:'-36',class:'s3-t','text-anchor':'middle',text:'眼睛'},sc.eye);
+    Opt.draggable(sc.eye,svg,(x,y)=>{setE(x,y);});
+    return sc;
+  }
+  function setP(x,y){S.P={x:clamp(x,40,MX-40*S.sc-8),y:clamp(y,34,H-34)}; renderAll();}
+  function setE(x,y){S.hidden=false; S.E={x:clamp(x,40,MX-34),y:clamp(y,40,H-30)}; renderAll();}
+
+  /* ---------- 繪製各元件 ---------- */
+  function drawMirror(g,G,board){
+    Opt.el('line',{x1:MX,y1:0,x2:MX,y2:H,class:'s3-plane'},g);                       // 鏡面所在直線
+    if(board){
+      Opt.el('rect',{x:MX-5,y:G.top,width:10,height:2*S.L,class:'s3-board'},g);
+      txt(g,MX+16,G.top+22,'透明塑膠板','s3-tm','start');
+    }else{
+      Opt.el('rect',{x:MX,y:G.top,width:15,height:2*S.L,fill:'url(#s3-hatch-'+g.__k+')'},g);
+      ln(g,{x:MX,y:G.top},{x:MX,y:G.bot},'s3-mir');
+      txt(g,MX+22,G.top+22,'平面鏡','s3-tm','start');
+    }
+  }
+  function drawImage(g,G,label,real){
+    Opt.el('polygon',{points:ptsStr(OBJ.pole,S.P,S.sc,true),class:real?'s3-real':'s3-img'},g);
+    Opt.el('polygon',{points:ptsStr(OBJ.flag,S.P,S.sc,true),class:real?'s3-real':'s3-img'},g);
+    return G.Pi;
+  }
+  function drawFan(g,G,op){
+    const n=9,y0=G.top+10,y1=G.bot-10;
+    for(let k=0;k<n;k++){
+      const M={x:MX,y:y0+(y1-y0)*k/(n-1)};
+      const d={x:M.x-S.P.x,y:M.y-S.P.y}, r=Opt.reflectDir(d,{x:1,y:0}), rl=Math.hypot(r.x,r.y);
+      const E2={x:M.x+r.x/rl*520,y:M.y+r.y/rl*520};
+      ln(g,S.P,M,'r-in',{style:'stroke-width:1.6;opacity:'+op});
+      ln(g,M,E2,'r-out',{style:'stroke-width:1.6;opacity:'+op});
+    }
+    // 向鏡子以外方向發出的光
+    [150,185,215,250,120,290].forEach(a=>{
+      const t=Opt.rad(a), e={x:S.P.x+Math.cos(t)*58*S.sc+0,y:S.P.y-Math.sin(t)*58*S.sc};
+      const s={x:S.P.x+Math.cos(t)*16,y:S.P.y-Math.sin(t)*16};
+      ln(g,s,e,'r-in',{style:'stroke-width:1.6;opacity:'+op,'marker-end':'none'});
+    });
+  }
+  function drawMain(g,G,sc,withNormal){
+    G.rays.forEach((R,i)=>{
+      if(!R.ok) return;
+      const w=i===1?3:2;
+      pl(g,[S.P,mid(S.P,R.M),R.M],'r-in',{style:'stroke-width:'+w,'marker-mid':sc.mi});
+      pl(g,[R.M,mid(R.M,R.Q),R.Q],'r-out',{style:'stroke-width:'+w,'marker-mid':sc.mo});
+    });
+    const c=G.rays[1];
+    if(withNormal&&c.ok){
+      ln(g,{x:MX-120,y:c.M.y},{x:MX+26,y:c.M.y},'r-normal');
+      Opt.el('circle',{cx:MX,cy:f1(c.M.y),r:'5',fill:'#e8590c',stroke:'#fff','stroke-width':'1.5'},g);
+    }
+    return c;
+  }
+  function drawAngles(g,G){
+    const c=G.rays[1]; if(!c.ok) return;
+    const M=c.M, R=44;
+    [[S.P,'i'],[c.Q,'r']].forEach(([T,nm])=>{
+      const v={x:T.x-M.x,y:T.y-M.y}, l=Math.hypot(v.x,v.y), u={x:v.x/l,y:v.y/l};
+      const sweep=u.y>0?0:1;
+      Opt.el('path',{d:'M'+f1(M.x-R)+','+f1(M.y)+' A'+R+','+R+' 0 0 '+sweep+' '+f1(M.x+u.x*R)+','+f1(M.y+u.y*R),fill:'none',stroke:nm==='i'?'#e8590c':'#1971c2','stroke-width':'2.5'},g);
+      txt(g,M.x-R-30,M.y+(u.y>0?30:-14),nm,nm==='i'?'':'s3-ti',null).setAttribute('style','fill:'+(nm==='i'?'#e8590c':'#1971c2'));
+    });
+  }
+  function drawExt(g,G){
+    G.rays.forEach(R=>{ if(R.ok) ln(g,R.M,G.Pi,'r-ext',{style:'stroke-width:2'}); });
+  }
+  function drawNoMirror(g,G){            // 看不到像：反射點落在鏡外
+    const c=G.rays[1], y=c.M.y;
+    ln(g,c.Q,{x:MX,y:y},'r-ext',{style:'stroke:#adb5bd;opacity:.9'});
+    const s=11;
+    ln(g,{x:MX-s,y:y-s},{x:MX+s,y:y+s},'',{style:'stroke:#c92a2a;stroke-width:4'});
+    ln(g,{x:MX-s,y:y+s},{x:MX+s,y:y-s},'',{style:'stroke:#c92a2a;stroke-width:4'});
+    const up=y<G.top;
+  }
+
+  /* ---------- 繪製 ---------- */
+  function renderScene(sc,anim){
+    const G=geom(), g=sc.gDyn; clear(g); g.__k=sc.kind;
+    const st=S.step;
+    sc.obj.setAttribute('transform','translate('+f1(S.P.x)+','+f1(S.P.y)+')');
+    sc.oPole.setAttribute('points',ptsStr(OBJ.pole,{x:0,y:0},S.sc));
+    sc.oFlag.setAttribute('points',ptsStr(OBJ.flag,{x:0,y:0},S.sc));
+    sc.oLab.setAttribute('y',f1(lblY())); sc.oLab.setAttribute('x','0');
+    sc.eye.setAttribute('transform','translate('+f1(S.E.x)+','+f1(S.E.y)+')');
+    sc.eye.querySelector('text').setAttribute('y',S.E.y<40+16*K?f1(36+10*K):f1(-(20+10*K)));
+    drawMirror(g,G,false);
+    const fade=n=>Opt.el('g',{class:anim&&st===n?'s3-fade':''},g);
+    if(st>=4){
+      const gi=fade(4);
+      drawImage(gi,G);
+      txt(gi,G.Pi.x,G.Pi.y+lblY(),'像（虛）','s3-ti');
+      Opt.el('circle',{cx:f1(G.Pi.x),cy:f1(G.Pi.y),r:'5',fill:'#9c36b5'},gi);
+      if(anim&&st===4) Opt.el('circle',{cx:f1(G.Pi.x),cy:f1(G.Pi.y),r:'8',class:'s3-pulse'},gi);
+    }
+    if(st>=1) drawFan(fade(1),G,st===1?0.55:0.16);
+    if(st>=2){
+      const gm=fade(2);
+      if(G.vis){ drawMain(gm,G,sc,true); drawAngles(gm,G); } else drawNoMirror(gm,G);
+    }
+    if(st>=3&&G.vis){
+      const ge=fade(3); drawExt(ge,G);
+      const m=mid(G.rays[1].M,G.Pi);
+      if(!S.scr) txt(ge,m.x+10,m.y-(10+6*K),'延長線（沒有光）','s3-tm','start');
+    }
+    if(st>=5) drawDims(g,G,anim);
+    if(st>=4&&!G.vis) txt(g,W/2,H-12,'這裡看不到像（像還在原處）','s3-tr');
+    // 紙屏
+    sc.scr.style.display=S.scr?'':'none';
+    S.atImg=false;
+    if(S.scr){
+      sc.scr.setAttribute('transform','translate('+f1(S.sx)+',0)');
+      S.atImg=Math.abs(S.sx-G.Pi.x)<=14*S.sc+6;
+      const c=G.rays[1];
+      if(G.vis){
+        const t=(S.sx-c.Q.x)/(G.Pi.x-c.Q.x), y=c.Q.y+(G.Pi.y-c.Q.y)*t;
+        if(y>8&&y<H-8){
+          Opt.el('circle',{cx:f1(S.sx),cy:f1(y),r:'13',fill:'#fff','fill-opacity':'.7',stroke:'#c92a2a','stroke-width':'3','stroke-dasharray':'4 3'},g);
+          txt(g,S.sx,y-20,'沒有光','s3-tr');
+        }
+      }
+      if(S.atImg){
+        Opt.el('circle',{cx:f1(G.Pi.x),cy:f1(G.Pi.y),r:'46',fill:'none',stroke:'#c92a2a','stroke-width':'3','stroke-dasharray':'5 4'},g);
+        txt(g,G.Pi.x,G.Pi.y-62,'接不到 → 虛像','s3-tr');
+      }
+    }
+  }
+  function drawDims(g,G,anim){
+    const gd=Opt.el('g',{class:anim?'s3-fade':''},g);
+    const P=S.P,Pi=G.Pi, M0={x:MX,y:P.y};
+    ln(gd,P,Pi,'s3-dim');
+    [[3,-28],[36,-12]].forEach(([x,y])=>{
+      const a={x:P.x+x*S.sc,y:P.y+y*S.sc}, b=Opt.reflectPoint(a,MA,MB); ln(gd,a,b,'s3-link');
+    });
+    const s=9;
+    Opt.el('path',{d:'M'+f1(MX-s)+','+f1(P.y)+' l0,'+(-s)+' l'+s+',0',fill:'none',stroke:'#495057','stroke-width':'1.5'},gd);
+    [mid(P,M0),mid(M0,Pi)].forEach(m=>{ ln(gd,{x:m.x-3,y:m.y-8},{x:m.x-3,y:m.y+8},'',{style:'stroke:#495057;stroke-width:2.5'}); ln(gd,{x:m.x+3,y:m.y-8},{x:m.x+3,y:m.y+8},'',{style:'stroke:#495057;stroke-width:2.5'}); });
+    txt(gd,(P.x+MX)/2,P.y-(6+8*K),'物距 '+f1(perpDist(P)/PXCM),'s3-to');
+    txt(gd,(Pi.x+MX)/2,Pi.y+(16+18*K),'像距 '+f1(perpDist(Pi)/PXCM),'s3-ti');
+    txt(gd,MX,P.y>CY?P.y+(30+22*K):P.y-(26+22*K),'＝','s3-tx').setAttribute('style','fill:#212529;font-weight:700');
+  }
+
+  /* ---------- 標籤條 ---------- */
+  function updateText(G){
+    $('s3-cap').textContent=STEPS[S.step];
+    const dO=perpDist(S.P)/PXCM, dI=perpDist(G.Pi)/PXCM;
+    const top=OBJ.pole[0],bot=OBJ.pole[3];
+    const hO=Math.hypot((bot[0]-top[0])*S.sc,(bot[1]-top[1])*S.sc)/PXCM;
+    const a=Opt.reflectPoint({x:S.P.x+top[0]*S.sc,y:S.P.y+top[1]*S.sc},MA,MB), b=Opt.reflectPoint({x:S.P.x+bot[0]*S.sc,y:S.P.y+bot[1]*S.sc},MA,MB);
+    const hI=Math.hypot(a.x-b.x,a.y-b.y)/PXCM;
+    $('s3-tag1').textContent='大小　物 '+f1(hO)+' ＝ 像 '+f1(hI)+' cm';
+    $('s3-tag2').textContent='物距 '+f1(dO)+' ＝ 像距 '+f1(dI)+' cm';
+    let virt='虛像';
+    const r0=G.rays[0], r2=G.rays[2];
+    if(r0.ok&&r2.ok){ const X=Opt.intersect(r0.M,r0.Q,r2.M,r2.Q); if(!(X&&X.t<0)) virt='實像'; }
+    $('s3-tag3').textContent=virt+'（反射線延長線的交點）';
+    $('s3-tag4').style.display=G.vis?'none':'';
+  }
+
+  /* ---------- 總繪製 ---------- */
+  let SA,animNext=false;
+  function renderAll(){
+    K=window.innerWidth<=600?1.6:1;
+    const G=geom();
+    renderScene(SA,animNext); animNext=false;
+    updateText(G);
+    $('s3-lenv').textContent=f1(S.L*2/PXCM)+' cm';
+    document.querySelectorAll('#s3-chips button').forEach((b,i)=>{b.classList.toggle('on',i===S.step);b.classList.toggle('done',i<S.step);});
+    $('s3-prev').disabled=S.step===0; $('s3-next').disabled=S.step===5;
+    $('s3-scr').classList.toggle('on',S.scr);
+    $('s3-hide').classList.toggle('on',S.hidden);
+    $('s3-hide').textContent=S.hidden?'↩ 回到看得到':'眼睛移到看不到像的位置';
+  }
+  function goStep(n,anim){S.step=clamp(n,0,5); animNext=anim!==false; renderAll();}
+  function stopPlay(){ if(S.timer){clearInterval(S.timer);S.timer=null;} $('s3-play').textContent='▶ 播放'; }
+  function tween(toE){
+    const from={x:S.E.x,y:S.E.y}, t0=performance.now(), dur=600;
+    (function f(now){
+      const k=clamp((now-t0)/dur,0,1), e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
+      S.E={x:from.x+(toE.x-from.x)*e,y:from.y+(toE.y-from.y)*e}; renderAll();
+      if(k<1) requestAnimationFrame(f);
+    })(t0);
+  }
+  function solveEy(Ex,My,Pi){ const Qx=Ex+14,t=(MX-Qx)/(Pi.x-Qx); return (My-Pi.y*t)/(1-t); }
+  function init(){
+    SA=makeScene('s3-svgA','A');
+    const chips=$('s3-chips');
+    for(let i=0;i<=5;i++){const b=document.createElement('button');b.type='button';b.textContent=i;b.addEventListener('click',()=>{stopPlay();goStep(i);});chips.appendChild(b);}
+    $('s3-next').addEventListener('click',()=>{stopPlay();goStep(S.step+1);});
+    $('s3-prev').addEventListener('click',()=>{stopPlay();goStep(S.step-1,false);});
+    $('s3-play').addEventListener('click',()=>{
+      if(S.timer){stopPlay();return;}
+      if(S.step>=5) goStep(0,false);
+      $('s3-play').textContent='❚❚ 暫停';
+      S.timer=setInterval(()=>{ if(S.step>=5){stopPlay();return;} goStep(S.step+1); if(S.step>=5) stopPlay(); },2200);
+      goStep(S.step+1);
+    });
+    $('s3-len').addEventListener('input',e=>{S.L=+e.target.value;renderAll();});
+    $('s3-hide').addEventListener('click',()=>{
+      const G=geom();
+      if(S.hidden){ S.hidden=false; tween({x:S.E.x,y:clamp(solveEy(S.E.x,CY,G.Pi),40,H-30)}); return; }
+      const top=CY-S.L, bot=CY+S.L, best=[];
+      for(const off of [60,40,25,15]) for(const Ex of [clamp(S.E.x,40,MX-60),MX-60,MX-48]) for(const My of [bot+off,top-off]){
+        const Ey=solveEy(Ex,My,G.Pi); if(Ey>=50&&Ey<=H-30) best.push({x:Ex,y:Ey,c:Math.abs(Ex-S.E.x)+Math.abs(Ey-S.E.y)});
+      }
+      if(!best.length){ S.L=100; $('s3-len').value=100; renderAll(); return; }
+      S.hidden=true; if(S.step<4) S.step=4; best.sort((a,b)=>a.c-b.c); tween(best[0]);
+    });
+    $('s3-scr').addEventListener('click',()=>{
+      S.scr=!S.scr;
+      if(S.scr){ if(S.step<4) S.step=4; const G=geom(); S.sx=clamp(G.Pi.x,MX+30,W-24); animNext=true; }
+      renderAll();
+    });
+    window.addEventListener('resize',renderAll);
+    goStep(0,false);
+  }
+  init();
+})();
+
+/* ===== s4 ===== */
+(function(){
+  const root=document.getElementById('s4'); if(!root) return;
+  const $=s=>root.querySelector(s), $$=s=>Array.from(root.querySelectorAll(s));
+  const E=Opt.el, clamp=Opt.clamp;
+
+  /* 幾何（SVG 座標，y 向下）：主軸 y=AY，鏡頂 (V,AY)，光從左來，鏡在右。
+     鏡面畫成拋物線（頂點曲率半徑 2f，近軸同球面），使平行光嚴格過焦點。
+     凹：x=V−Y²/4f，F 在鏡前 V−f；凸：x=V+Y²/4f，虛焦點 F 在鏡後 V+f。 */
+  const V=700, AY=215, f=120, HM=165, H=45, UMIN=30, UMAX=504, XL=165, XR=915;
+  const COL={1:'#e03131',2:'#1971c2',3:'#e8590c'};   // 平行主軸／過焦點／射向鏡頂
+  const sgn=m=>m==='cc'?1:-1;
+  const surfX=(m,Y)=>V-sgn(m)*Y*Y/(4*f);
+  const FP=m=>({x:m==='cc'?V-f:V+f,y:AY});
+  const unit=v=>{const l=Math.hypot(v.x,v.y);return {x:v.x/l,y:v.y/l};};
+  const dot=(a,b)=>a.x*b.x+a.y*b.y;
+
+  function hit(m,p,d){
+    const s=sgn(m), Y0=p.y-AY;
+    const A=s*d.y*d.y/(4*f), B=s*2*Y0*d.y/(4*f)+d.x, C=p.x-V+s*Y0*Y0/(4*f);
+    let ts=[];
+    if(Math.abs(A)<1e-9){ if(Math.abs(B)>1e-9) ts=[-C/B]; }
+    else{ const D=B*B-4*A*C; if(D<0) return null; const q=Math.sqrt(D); ts=[(-B-q)/(2*A),(-B+q)/(2*A)]; }
+    ts=ts.filter(t=>t>1e-6).sort((a,b)=>a-b);
+    if(!ts.length) return null;
+    const t=ts[0]; return {x:p.x+t*d.x,y:p.y+t*d.y,t};
+  }
+  function normalL(m,Y){ const s=sgn(m); return unit({x:-1,y:-s*Y/(2*f)}); }
+  function trace(m,T,d,forceP){
+    d=unit(d);
+    const h=forceP||hit(m,T,d); if(!h) return null;
+    const Y=h.y-AY, n=normalL(m,Y), r=Opt.reflectDir(d,n);
+    const angIn=Opt.deg(Math.acos(clamp(Math.abs(dot(d,n)),0,1)));
+    const angOut=Opt.deg(Math.acos(clamp(dot(r,n),-1,1)));
+    return {P:{x:h.x,y:h.y},T,n,d,r:unit(r),Y,ok:Math.abs(Y)<=HM,angIn,angOut};
+  }
+  function specialRay(m,k,u){
+    const T={x:V-u,y:AY-H};
+    if(k===1) return trace(m,T,{x:1,y:0});
+    if(k===3) return trace(m,T,{x:V-T.x,y:AY-T.y},{x:V,y:AY});
+    const Fp=FP(m);
+    if(Math.abs(u-f)<1) return null;
+    const d=u>f?{x:Fp.x-T.x,y:Fp.y-T.y}:{x:T.x-Fp.x,y:T.y-Fp.y};
+    return trace(m,T,d);
+  }
+
+  function drawStatic(g,tg,m){
+    E('line',{x1:XL,y1:AY,x2:V,y2:AY,stroke:'#9aa3ad','stroke-width':1.6},g);
+    E('line',{x1:V,y1:AY,x2:XR,y2:AY,stroke:'#c5ccd4','stroke-width':1.5,'stroke-dasharray':'5 5'},g);
+    E('text',{x:XL+6,y:AY-9,class:'s4-sm',text:'主軸'},tg);
+    for(let Y=-HM;Y<=HM;Y+=15){ const x=surfX(m,Y); E('line',{x1:x+3,y1:AY+Y,x2:x+15,y2:AY+Y+12,stroke:'#7fb3bd','stroke-width':2},g); }
+    let d=''; for(let Y=-HM;Y<=HM;Y+=11) d+=(Y===-HM?'M':'L')+surfX(m,Y).toFixed(1)+','+(AY+Y).toFixed(1);
+    E('path',{d,fill:'none',stroke:'#0b7285','stroke-width':5,'stroke-linecap':'round'},g);
+    E('circle',{cx:V,cy:AY,r:4,fill:'#0b7285'},g);
+    E('text',{x:V+12,y:AY+30,class:'s4-sm',text:'鏡頂'},tg);
+    const Fp=FP(m);
+    if(m==='cc'){
+      E('circle',{cx:Fp.x,cy:Fp.y,r:6,fill:'#c92a2a',stroke:'#fff','stroke-width':1.5},g);
+      E('text',{x:Fp.x,y:Fp.y+32,'text-anchor':'middle',class:'s4-lg',text:'F'},tg);
+      E('text',{x:Fp.x,y:Fp.y+54,'text-anchor':'middle',class:'s4-sm',text:'焦點'},tg);
+    }else{
+      E('circle',{cx:Fp.x,cy:Fp.y,r:7,fill:'#fff',stroke:'#c92a2a','stroke-width':2.5,'stroke-dasharray':'3 2'},g);
+      E('text',{x:Fp.x,y:Fp.y+32,'text-anchor':'middle',class:'s4-lg',text:'F'},tg);
+      E('text',{x:Fp.x,y:Fp.y+54,'text-anchor':'middle',class:'s4-sm',text:'虛焦點'},tg);
+    }
+  }
+
+  function arrowAt(g,p,dir,col,size){
+    size=size||11; const nx=-dir.y,ny=dir.x;
+    const a={x:p.x+dir.x*size,y:p.y+dir.y*size}, b={x:p.x-dir.x*size*.6+nx*size*.55,y:p.y-dir.y*size*.6+ny*size*.55}, c={x:p.x-dir.x*size*.6-nx*size*.55,y:p.y-dir.y*size*.6-ny*size*.55};
+    E('polygon',{points:`${a.x},${a.y} ${b.x},${b.y} ${c.x},${c.y}`,fill:col},g);
+  }
+  const seg=(g,p,q,attrs)=>E('line',Object.assign({x1:p.x,y1:p.y,x2:q.x,y2:q.y},attrs),g);
+  const along=(p,d,t)=>({x:p.x+d.x*t,y:p.y+d.y*t});
+  function drawNormal(g,ray){
+    const P=ray.P,n=ray.n;
+    seg(g,along(P,n,-48),along(P,n,60),{stroke:'#868e96','stroke-width':1.6,'stroke-dasharray':'4 4'});
+  }
+  function drawRay(g,k,ray,col,normals){
+    const {T,P,r,d}=ray;
+    seg(g,T,P,{stroke:col,'stroke-width':3,'stroke-linecap':'round'});
+    arrowAt(g,{x:(T.x+P.x)/2,y:(T.y+P.y)/2},d,col);
+    seg(g,P,along(P,r,1500),{stroke:col,'stroke-width':3,'stroke-linecap':'round'});
+    arrowAt(g,along(P,r,95),r,col);
+    E('circle',{cx:P.x,cy:P.y,r:4.5,fill:col,stroke:'#fff','stroke-width':1.2},g);
+    if(normals) drawNormal(g,ray);
+  }
+  const dashed=(g,p,q,col)=>seg(g,p,q,{stroke:col,'stroke-width':2.5,'stroke-dasharray':'7 6',opacity:.9});
+
+  /* ---------- 狀態與圖層 ---------- */
+  const svg=$('#s4-svg');
+  let mode='cc', u=3*f, on={1:true,2:false,3:false}, demoTimer=null;
+  const gS=E('g',{},svg), gB=E('g',{},svg), gR=E('g',{},svg), gI=E('g',{},svg), gT=E('g',{},svg), gO=E('g',{},svg);
+  const clear=g=>{while(g.firstChild) g.removeChild(g.firstChild);};
+  function vArrow(g,cx,yb,yt,col,dash){
+    const dir=yt<yb?-1:1, hl=16;
+    E('line',Object.assign({x1:cx,y1:yb,x2:cx,y2:yt-dir*hl+dir*2,stroke:col,'stroke-width':6},dash?{'stroke-dasharray':'9 6'}:{}),g);
+    E('polygon',{points:`${cx},${yt} ${cx-10},${yt-dir*hl} ${cx+10},${yt-dir*hl}`,fill:col},g);
+  }
+  const obj=E('g',{},gO);
+  E('rect',{x:-26,y:AY-H-34,width:52,height:H+60,fill:'transparent'},obj);
+  vArrow(obj,0,AY,AY-H,'#2f9e44');
+  E('line',{x1:-12,y1:AY,x2:12,y2:AY,stroke:'#2f9e44','stroke-width':3},obj);
+  E('text',{x:0,y:AY+28,'text-anchor':'middle',class:'s4-lg',style:'fill:#2f9e44',text:'物'},obj);
+  Opt.draggable(obj,svg,x=>{ u=clamp(Math.round(V-x),UMIN,UMAX); render(); });
+
+  /** 像：由 ①（平行主軸）與 ③（射向鏡頂）反射線（或其延長線）的交點決定，與光線按鈕無關 */
+  function imageOf(){
+    if(mode==='cc'&&Math.abs(u-f)<4) return null;
+    const r1=specialRay(mode,1,u), r3=specialRay(mode,3,u); if(!r1||!r3) return null;
+    const X=Opt.intersect(r1.P,along(r1.P,r1.r,100),r3.P,along(r3.P,r3.r,100)); if(!X) return null;
+    return {tip:{x:X.x,y:X.y},real:X.x<V,far:(X.x<XL+16||X.x>XR-10||X.y<48||X.y>384)};
+  }
+  const IMGCOL='#9c36b5';
+
+  const CHIPS={cc:[[1,'① 平行主軸'],[2,'② 過焦點'],[3,'③ 射向鏡頂']], cx:[[1,'① 平行主軸'],[3,'② 射向鏡頂']]};
+  function buildChips(){
+    const box=$('#s4-chips'); box.innerHTML='';
+    CHIPS[mode].forEach(([k,t])=>{
+      const lb=document.createElement('label'); lb.className='s4-chip'; lb.style.setProperty('--c',COL[k]); lb.dataset.k=k;
+      lb.innerHTML='<input type="checkbox">'+t;
+      lb.querySelector('input').addEventListener('change',e=>{ stopDemo(); on[k]=e.target.checked; render(); });
+      box.appendChild(lb);
+    });
+  }
+
+  function render(){
+    const showN=$('#s4-normal').checked, beam=$('#s4-beam').checked;
+    clear(gS);clear(gB);clear(gR);clear(gI);clear(gT);
+    drawStatic(gS,gT,mode);
+    obj.setAttribute('transform','translate('+(V-u)+',0)');
+    if(beam){
+      for(let Y=-150;Y<=150;Y+=30){ if(Y===0) continue;
+        const T={x:XL+6,y:AY+Y}, ry=trace(mode,T,{x:1,y:0}); if(!ry) continue;
+        seg(gB,T,ry.P,{stroke:'#f4a261','stroke-width':1.8,opacity:.9});
+        seg(gB,ry.P,along(ry.P,ry.r,1500),{stroke:'#4d9de0','stroke-width':1.8,opacity:.9});
+        if(mode==='cx') seg(gB,ry.P,FP('cx'),{stroke:'#4d9de0','stroke-width':1.5,'stroke-dasharray':'5 5',opacity:.9});
+      }
+      seg(gB,{x:XL+6,y:AY},{x:V,y:AY},{stroke:'#f4a261','stroke-width':1.8});
+    }
+    $$('.s4-chip').forEach(c=>{ const k=+c.dataset.k; c.classList.toggle('on',!!on[k]); c.querySelector('input').checked=!!on[k]; });
+    const im=imageOf();
+    if(im){
+      if(im.far) E('text',{x:XL+8,y:62,class:'s4-sm',style:'fill:'+IMGCOL,text:'像在很遠處'},gT);
+      else{
+        vArrow(gI,im.tip.x,AY,im.tip.y,IMGCOL,!im.real);
+        E('line',{x1:im.tip.x-12,y1:AY,x2:im.tip.x+12,y2:AY,stroke:IMGCOL,'stroke-width':3},gI);
+        E('text',{x:im.tip.x+(im.real?-16:16),'text-anchor':im.real?'end':'start',y:im.tip.y+(im.tip.y<AY?12:-4),class:'s4-lg',style:'fill:'+IMGCOL,text:'像'},gT);
+      }
+    }
+    CHIPS[mode].forEach(([k])=>{
+      if(!on[k]) return;
+      const ray=specialRay(mode,k,u);
+      if(!ray||!ray.ok){ E('text',{x:XL+8,y:92+(k-1)*24,class:'s4-sm',style:'fill:'+COL[k],text:'（這條光線打不到鏡面）'},gT); return; }
+      drawRay(gR,k,ray,COL[k],showN);
+      if(mode==='cx'&&k===1){ const Fp=FP('cx'); dashed(gR,ray.P,along(ray.P,ray.r,-(Math.hypot(Fp.x-ray.P.x,Fp.y-ray.P.y)+22)),COL[k]); }
+      if(mode==='cc'&&k===2&&u<f) dashed(gR,ray.T,FP('cc'),COL[k]);
+      if(im&&!im.far&&!im.real&&!(mode==='cx'&&k===1)){ const t=(im.tip.x-ray.P.x)/(-ray.r.x); if(isFinite(t)&&t>0) dashed(gR,ray.P,along(ray.P,ray.r,-t),COL[k]); }
+    });
+  }
+
+  function stopDemo(){ if(demoTimer){ clearTimeout(demoTimer); demoTimer=null; } $$('.s4-chip').forEach(r=>r.classList.remove('now')); $('#s4-demo').textContent='▶ 逐條演示'; }
+  function demo(){
+    if(demoTimer){ stopDemo(); return; }
+    const seq=CHIPS[mode].map(c=>c[0]); on={1:false,2:false,3:false}; render();
+    $('#s4-demo').textContent='■ 停止';
+    let i=0;
+    const step=()=>{
+      $$('.s4-chip').forEach(r=>r.classList.remove('now'));
+      if(i>=seq.length){ demoTimer=null; $('#s4-demo').textContent='▶ 逐條演示'; return; }
+      const k=seq[i++]; on[k]=true; render();
+      const c=$$('.s4-chip').find(r=>+r.dataset.k===k); if(c) c.classList.add('now');
+      demoTimer=setTimeout(step,2300);
+    };
+    step();
+  }
+  function setMode(m){
+    stopDemo(); mode=m;
+    $$('.s4-modes .btn').forEach(b=>b.classList.toggle('on',b.dataset.m===m));
+    $('#s4-key-cc').hidden=m!=='cc'; $('#s4-key-cx').hidden=m!=='cx';
+    if(m==='cx') on[2]=false;
+    buildChips(); render();
+  }
+  $$('.s4-modes .btn').forEach(b=>b.addEventListener('click',()=>setMode(b.dataset.m)));
+  ['#s4-normal','#s4-beam'].forEach(s=>$(s).addEventListener('change',render));
+  $('#s4-demo').addEventListener('click',demo);
+  buildChips(); render();
+})();
+
+Opt.initTabs();
+</script>
+</body>
+</html>

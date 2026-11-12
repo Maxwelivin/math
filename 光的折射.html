@@ -91,6 +91,7 @@ ol.steps li{margin:.15rem 0}
 .q .opts button.right{background:#ebfbee;border-color:var(--good);color:var(--good);font-weight:700}
 .q .opts button.wrong{background:#fff0f0;border-color:var(--bad);color:var(--bad)}
 .q .why{margin-top:.7rem;font-size:1.2rem;color:var(--ink);min-height:1.5rem}
+@media (max-height:800px){.goal{padding:.2rem .3rem}.check h2{margin-bottom:.2rem}.alldone{margin:.15rem .2rem;padding:.25rem .6rem}}
 @media (max-width:980px){
   body{height:auto;overflow:auto}
   .top{flex-wrap:wrap}.tabs{overflow-x:auto;flex-basis:100%}
@@ -106,7 +107,7 @@ ol.steps li{margin:.15rem 0}
     <button role="tab" data-tab="s1" class="on">① 把杯底變淺了</button>
     <button role="tab" data-tab="s2">② 折射實驗箱</button>
     <button role="tab" data-tab="s3">③ 水 vs 玻璃</button>
-    <button role="tab" data-tab="s4">④ 視深與實深</button>
+    <button role="tab" data-tab="s4">④ 烏龜與小鳥</button>
     <button role="tab" data-tab="s5">⑤ 檢核</button>
   </nav>
   <div class="prog">已達成 <b id="pc">0</b> / 9</div>
@@ -119,7 +120,7 @@ ol.steps li{margin:.15rem 0}
 <section class="part on" id="s1">
   <div class="lead"><b>探討活動 4-3　杯底的燈具</b>　先預測：眼睛不動，慢慢往杯子裡加水，原本看不到的燈具會怎樣？光是怎麼走的？</div>
   <div class="row">
-    <div class="stagebox"><svg class="stage" id="svg1" viewBox="140 0 820 600" preserveAspectRatio="xMidYMid meet"><g id="g1"></g></svg></div>
+    <div class="stagebox"><svg class="stage" id="svg1" viewBox="130 0 840 600" preserveAspectRatio="xMidYMid meet"><g id="g1"></g></svg></div>
     <div class="side">
       <div class="card">
         <label class="sl">水位 <b id="v1">0%</b><input type="range" id="r1" min="0" max="240" value="0"></label>
@@ -142,10 +143,11 @@ ol.steps li{margin:.15rem 0}
     <div class="side">
       <div class="card"><h3>介質</h3><div class="seg" id="med"><button data-m="water" class="on">水</button><button data-m="glass">玻璃</button></div></div>
       <div class="card">
-        <label class="sl"><span id="l2">入射角</span> <b id="v2">50°</b><input type="range" id="r2" min="0" max="80" step="1" value="50"></label>
+        <label class="sl"><span id="l2">入射角</span> <b id="v2">60°</b><input type="range" id="r2" min="0" max="80" step="1" value="60"></label>
         <button class="btn primary big" id="rev">⇄ 反向發射</button>
         <div class="dirtxt" id="dirtxt"></div>
         <div class="tgl"><button class="btn" id="nm">隱藏名稱（考考學生）</button>
+          <label class="chk" style="margin:0"><input type="checkbox" id="str2" checked> 顯示「不偏折的路」</label>
           <label class="chk" style="margin:0"><input type="checkbox" id="dot" checked> 光速動畫</label></div>
       </div>
       <div class="card"><h3>隨堂筆記（觀察後自動填入）</h3>
@@ -169,7 +171,8 @@ ol.steps li{margin:.15rem 0}
   <div class="row">
     <div class="stagebox"><svg class="stage" id="svg3" viewBox="0 0 1000 700" preserveAspectRatio="xMidYMid meet"></svg></div>
     <div class="side">
-      <div class="card"><label class="sl">入射角（兩邊相同） <b id="v3">50°</b><input type="range" id="r3" min="20" max="70" step="5" value="50"></label></div>
+      <div class="card"><label class="sl">入射角（兩邊相同） <b id="v3">60°</b><input type="range" id="r3" min="20" max="70" step="5" value="60"></label>
+        <label class="chk"><input type="checkbox" id="str3" checked> 顯示「不偏折的路」</label></div>
       <div class="card"><h3>哪一個介質的光速比較慢？</h3>
         <div class="seg" id="q3"><button data-a="water">水</button><button data-a="glass">玻璃</button></div>
         <div class="fb" id="fb3"></div></div>
@@ -178,16 +181,17 @@ ol.steps li{margin:.15rem 0}
   <div class="cap" id="cap3"></div>
 </section>
 
-<!-- ④ 視深與實深 -->
+<!-- ④ 烏龜與小鳥 -->
 <section class="part" id="s4">
-  <div class="lead"><b>視深與實深</b>　站在池邊往下看，池底的硬幣看起來在哪裡？先猜，再揭曉。可以拖曳眼睛，換個位置看。</div>
+  <div class="lead"><b>烏龜與小鳥</b>　烏龜在水裡、小鳥在天上，彼此看對方，位置會和實際一樣嗎？先猜，再揭曉；兩隻動物都可以拖曳。</div>
   <div class="row">
-    <div class="stagebox"><svg class="stage" id="svg4" viewBox="20 0 860 690" preserveAspectRatio="xMidYMid meet"></svg></div>
+    <div class="stagebox"><svg class="stage" id="svg4" viewBox="0 0 900 760" preserveAspectRatio="xMidYMid meet"></svg></div>
     <div class="side">
-      <div class="card"><label class="sl">水深 <b id="v4">實深</b><input type="range" id="r4" min="130" max="340" value="280"></label></div>
-      <div class="card"><button class="btn primary big" id="rev4">揭曉：看起來在哪裡？</button></div>
+      <div class="card"><h3>誰在看？</h3><div class="seg" id="v4"><button data-v="A" class="on">烏龜看小鳥</button><button data-v="B">小鳥看烏龜</button></div></div>
+      <div class="card"><button class="btn primary big" id="rev4">揭曉：看起來在哪裡？</button>
+        <button class="btn big" id="al4" style="margin-top:.5rem">↕ 兩隻上下對齊</button></div>
       <div class="card"><h3>怎麼做</h3>
-        <ol class="steps"><li>先猜：硬幣看起來比實際深、一樣，還是淺？</li><li>按「揭曉」，看光怎麼走</li><li>把水加深，看「看起來的池底」往哪動</li></ol>
+        <ol class="steps"><li>先猜：看起來比實際高（深）、一樣，還是低（淺）？</li><li>按「揭曉」，看光怎麼走</li><li>拖曳動物換位置，再切換另一個視角</li></ol>
       </div>
     </div>
   </div>
@@ -278,7 +282,7 @@ document.addEventListener('keydown',e=>{
 });
 
 /* ================= ① 把杯底變淺了 ================= */
-const C1={wl:344,wr:626,rimY:230,floor:486,E:{x:805,y:50},lamp:{x:430,y:466},maxH:240};
+const C1={wl:230,wr:700,rimY:230,floor:486,E:{x:850,y:180},lamp:{x:320,y:456},maxH:240};   // lamp＝燈具右上角（光的出發點）
 const A1={h:0,show:false,pour:false};
 // 空氣中從 T 射到水面（高度 ys），折射後剛好到燈具的水面點 px
 function surfRay(T,ys){
@@ -306,18 +310,18 @@ function draw1(){
     el('line',{x1:C1.wl,y1:ys,x2:C1.wr,y2:ys,stroke:'#1c7ed6','stroke-width':3},g);
     txt(g,C1.wr+14,ys+6,'水面',{'font-size':20,fill:'#1c7ed6','font-weight':700});
   }
-  el('path',{d:'M330 230 V500 H640 V230 H626 V486 H344 V230 Z',fill:'#f8f9fa',stroke:'#495057','stroke-width':3,'stroke-linejoin':'round'},g);
+  el('path',{d:'M216 230 V500 H714 V230 H700 V486 H230 V230 Z',fill:'#f8f9fa',stroke:'#495057','stroke-width':3,'stroke-linejoin':'round'},g);
   // 燈具
-  if(ev.vis)el('circle',{cx:393,cy:476,r:58,fill:'#ffd43b','fill-opacity':.4},g);
-  el('rect',{x:356,y:466,width:74,height:20,rx:4,fill:'#2563eb',stroke:'#1e3a8a','stroke-width':2},g);
-  txt(g,393,520,'燈具',{'font-size':20,'text-anchor':'middle',fill:'#475569','font-weight':700});
-  // 眼睛（位置固定）
+  if(ev.vis)el('circle',{cx:L.x-42,cy:L.y+15,r:70,fill:'#ffd43b','fill-opacity':.4},g);
+  el('rect',{x:L.x-84,y:L.y,width:84,height:30,rx:6,fill:'#2563eb',stroke:'#1e3a8a','stroke-width':2},g);
+  txt(g,L.x-42,524,'燈具',{'font-size':20,'text-anchor':'middle',fill:'#475569','font-weight':700});
+  // 眼睛（位置固定，在杯口上方不高處）
   const eg=el('g',{},g);
-  el('ellipse',{cx:E.x,cy:E.y,rx:34,ry:22,fill:'#fff',stroke:'#334155','stroke-width':3},eg);
-  el('circle',{cx:E.x-12,cy:E.y+4,r:10,fill:'#1f2937'},eg);
-  txt(g,E.x-48,E.y+7,'眼睛（位置不動）',{'font-size':20,'text-anchor':'end',fill:'#475569','font-weight':700});
+  el('ellipse',{cx:E.x,cy:E.y,rx:32,ry:21,fill:'#fff',stroke:'#334155','stroke-width':3},eg);
+  el('circle',{cx:E.x-12,cy:E.y+4,r:9,fill:'#1f2937'},eg);
+  txt(g,E.x+10,E.y+50,'眼睛（位置不動）',{'font-size':20,'text-anchor':'middle',fill:'#475569','font-weight':700});
   // 眼睛看到的畫面
-  const ix=268;
+  const ix=272;
   el('rect',{x:ix-118,y:24,width:236,height:160,rx:12,fill:'#111827'},g);
   txt(g,ix,52,'眼睛看到的畫面',{'font-size':19,'text-anchor':'middle',fill:'#cbd5e1'});
   el('line',{x1:ix-98,y1:142,x2:ix+98,y2:142,stroke:'#475569','stroke-width':3},g);
@@ -333,17 +337,28 @@ function draw1(){
 }
 function line(g,a,b,color,w,dash){return el('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:color,'stroke-width':w||5,'stroke-linecap':'round','stroke-dasharray':dash||''},g)}
 function ray1(g,ev,L,E,R){
+  const halo={'font-weight':700,stroke:'#fff','stroke-width':5,'paint-order':'stroke'};
+  const origin=()=>el('circle',{cx:L.x,cy:L.y,r:8,fill:COL.in,stroke:'#fff','stroke-width':3},g);   // 光從燈具出發的起點
   if(ev.vis){
-    if(ev.dry){ line(g,L,E,COL.in,5); return }
-    const P=ev.P;
+    if(ev.dry){ line(g,L,E,COL.in,5); origin(); return }
+    const P=ev.P,r=62;
+    // 眼睛以為光走直線：把 E→P 往水中延長，到燈具正上方就是「看起來的燈具」
+    const dir={x:P.x-E.x,y:P.y-E.y},yg=P.y+(P.x-L.x)*dir.y/(-dir.x),G={x:L.x,y:yg};
+    el('rect',{x:L.x-84,y:yg,width:84,height:30,rx:6,fill:'#2563eb','fill-opacity':.22,stroke:COL.img,'stroke-width':3,'stroke-dasharray':'7 5'},g);
+    txt(g,L.x-42,yg+22,'看起來',{'font-size':18,'text-anchor':'middle',fill:COL.img,'font-weight':700});
+    line(g,P,G,COL.img,3,'9 7');
+    // 真正的光路：燈具 → 水面 → 眼睛
+    line(g,{x:P.x,y:P.y-r-8},{x:P.x,y:P.y+r+8},COL.normal,2,'6 5');
     line(g,L,P,COL.in,5); line(g,P,E,COL.out,5);
-    line(g,{x:P.x,y:P.y-50},{x:P.x,y:P.y+50},COL.normal,2,'6 5');
-    // 眼睛以為光走直線：把 E→P 往水中延長
-    const d={x:P.x-E.x,y:P.y-E.y}; let t=(C1.floor-P.y)/d.y; let end={x:P.x+d.x*t,y:C1.floor};
-    if(end.x<C1.wl){t=(C1.wl-P.x)/d.x;end={x:C1.wl,y:P.y+d.y*t}}
-    line(g,P,end,COL.img,3,'9 7');
-    txt(g,P.x-14,P.y-62,'光在水面偏折',{'font-size':21,'text-anchor':'end',fill:COL.in,'font-weight':700,stroke:'#fff','stroke-width':5,'paint-order':'stroke'});
-    txt(g,C1.wr-8,Math.min(P.y+100,C1.floor-24),'眼睛以為光走直線',{'font-size':18,'text-anchor':'end',fill:COL.img,'font-weight':700,stroke:'#fff','stroke-width':5,'paint-order':'stroke'});
+    origin();
+    // 折射點的兩個角度：空氣中大、水中小，光線在水面明顯轉彎
+    const ta=deg(Math.atan((E.x-P.x)/(P.y-E.y))),tw=deg(Math.atan((P.x-L.x)/(L.y-P.y)));
+    el('path',{d:`M${P.x},${P.y-r} A${r},${r} 0 0 1 ${P.x+r*sinD(ta)},${P.y-r*cosD(ta)}`,fill:'none',stroke:COL.out,'stroke-width':4},g);
+    el('path',{d:`M${P.x},${P.y+r} A${r},${r} 0 0 1 ${P.x-r*sinD(tw)},${P.y+r*cosD(tw)}`,fill:'none',stroke:COL.in,'stroke-width':4},g);
+    txt(g,P.x+14,P.y-r-6,`空氣中 ${Math.round(ta)}°`,Object.assign({'font-size':21,fill:COL.out},halo));
+    txt(g,P.x+14,P.y+r+24,`水中 ${Math.round(tw)}°`,Object.assign({'font-size':21,fill:COL.in},halo));
+    txt(g,P.x-14,P.y-r-6,'光在水面轉彎',Object.assign({'font-size':21,'text-anchor':'end',fill:COL.in},halo));
+    txt(g,C1.wr-8,Math.min(P.y+120,C1.floor-24),'眼睛以為光走直線',Object.assign({'font-size':18,'text-anchor':'end',fill:COL.img},halo));
     return;
   }
   // 看不到：畫出剛好擦過杯緣的那條光，它到不了眼睛
@@ -352,9 +367,12 @@ function ray1(g,ev,L,E,R){
   else if(ev.Pg){ line(g,L,ev.Pg,COL.in,5); line(g,ev.Pg,R,COL.out,5);
     line(g,{x:ev.Pg.x,y:ev.Pg.y-50},{x:ev.Pg.x,y:ev.Pg.y+50},COL.normal,2,'6 5'); pts=[ev.Pg,R]; }
   else return;
-  const a=pts[0],b=pts[1],d={x:b.x-a.x,y:b.y-a.y},t=(930-b.x)/d.x,end={x:930,y:b.y+d.y*t};
+  origin();
+  // 虛線畫到眼睛前面一小段就停，打紅叉：這條光從眼睛上方過去，進不了眼睛
+  const a=pts[0],b=pts[1],d={x:b.x-a.x,y:b.y-a.y},t=Math.min((E.x-100-b.x)/d.x,(30-b.y)/d.y),end={x:b.x+d.x*t,y:b.y+d.y*t};
   line(g,b,end,ev.dry?COL.in:COL.out,4,'3 8');
-  txt(g,end.x-4,Math.max(24,end.y-14),'光到不了眼睛',{'font-size':21,'text-anchor':'end',fill:'#c92a2a','font-weight':700,stroke:'#fff','stroke-width':5,'paint-order':'stroke'});
+  line(g,{x:end.x-10,y:end.y-10},{x:end.x+10,y:end.y+10},'#c92a2a',5);line(g,{x:end.x-10,y:end.y+10},{x:end.x+10,y:end.y-10},'#c92a2a',5);
+  txt(g,end.x+22,end.y-22,'光到不了眼睛',Object.assign({'font-size':21,'text-anchor':'end',fill:'#c92a2a'},halo));
 }
 function cap1(){
   const ev=eval1(A1.h),pct=Math.round(A1.h/C1.maxH*100);
@@ -391,7 +409,7 @@ const MED={
 };
 function makeBox(svg,o){
   const g=el('g',{},svg);
-  const st={a:50,dir:'down',names:true,dots:true,med:MED.water};
+  const st={a:60,dir:'down',names:true,dots:true,straight:true,med:MED.water};
   let dotEls=[],segs=[],Tt=0,K=0;
   const PERIOD=420;
   function geom(){
@@ -414,9 +432,27 @@ function makeBox(svg,o){
     txt(g,o.x0+14,o.y1-16,`${med.name}（${med.sp}）`,{'font-size':22,fill:'#475569','font-weight':700});
     line(g,{x:o.ox,y:o.y0+10},{x:o.ox,y:o.y1-10},COL.normal,2,'7 6');
     const inc=down?Pu:Pl, ref=down?Pl:Pu;
+    // 「若不偏折會走的路」：入射線直直延長（灰色虛線），和真正的折射線之間的夾角就是偏折量
+    const showDev=st.straight&&Math.abs(a-b)>0.5;
+    if(showDev){
+      const unit=v=>{const l=Math.hypot(v.x,v.y);return {x:v.x/l,y:v.y/l}};
+      const uC=unit({x:O.x-inc.x,y:O.y-inc.y}),uR=unit({x:ref.x-O.x,y:ref.y-O.y}),rw=118;
+      const ang=deg(Math.atan2(uC.x*uR.y-uC.y*uR.x,uC.x*uR.x+uC.y*uR.y)),sw=ang>0?1:0;   // 螢幕座標：正＝順時針
+      const p1={x:O.x+uC.x*rw,y:O.y+uC.y*rw},p2={x:O.x+uR.x*rw,y:O.y+uR.y*rw};
+      el('path',{d:`M${O.x},${O.y} L${p1.x},${p1.y} A${rw},${rw} 0 0 ${sw} ${p2.x},${p2.y} Z`,fill:COL.img,'fill-opacity':.22},g);
+      el('path',{d:`M${p1.x},${p1.y} A${rw},${rw} 0 0 ${sw} ${p2.x},${p2.y}`,fill:'none',stroke:COL.img,'stroke-width':3},g);
+      line(g,O,{x:O.x+uC.x*o.L,y:O.y+uC.y*o.L},'#64748b',3,'4 8');
+    }
     line(g,inc,O,COL.in,11).setAttribute('stroke-opacity',.18); line(g,O,ref,COL.out,11).setAttribute('stroke-opacity',.18);
     line(g,inc,O,COL.in,5); line(g,O,ref,COL.out,5);
     arrow(inc,O,COL.in); arrow(O,ref,COL.out);
+    if(showDev){                                                    // 圖例放右下角，不壓到光線
+      const lx=o.x1-16,r1=o.y1-52,r2=o.y1-22;
+      el('rect',{x:lx-176,y:r1-15,width:32,height:17,fill:COL.img,'fill-opacity':.3,stroke:COL.img,'stroke-width':2},g);
+      txt(g,lx,r1,`偏折 ${Math.round(Math.abs(a-b))}°`,{'font-size':21,'text-anchor':'end','font-weight':700,fill:COL.img});
+      line(g,{x:lx-176,y:r2-6},{x:lx-144,y:r2-6},'#64748b',3,'4 6');
+      txt(g,lx,r2,'不偏折的路',{'font-size':21,'text-anchor':'end','font-weight':700,fill:'#64748b'});
+    }
     // 角度弧線與數字
     const aInc=down?a:b, aRef=down?b:a, r=64;
     const arcU=a>1.5, arcL=b>1.5;
@@ -433,13 +469,13 @@ function makeBox(svg,o){
     if(!arcU&&!arcL)halo(0,o.ox+22,o.oy-16,'0°',COL.ink,'start');
     // 名稱
     if(st.names){
-      const nm=(P,txtS,color)=>{                       // 名稱放在光線中點、遠離法線的一側
-        const m={x:O.x+(P.x-O.x)*.5,y:O.y+(P.y-O.y)*.5},left=P.x<=O.x;
+      const nm=(P,txtS,color,flip)=>{                  // 名稱放在光線旁、遠離法線的一側；flip＝改放法線那一側（讓開偏折色塊）
+        const f=flip?.8:.5,m={x:O.x+(P.x-O.x)*f,y:O.y+(P.y-O.y)*f},left=(P.x<=O.x)!==!!flip;
         if(deg(Math.atan2(Math.abs(P.x-O.x),Math.abs(P.y-O.y)))>62)   // 光線近乎水平：名稱改放線的上／下方，避免壓線
           halo(0,m.x,m.y+(P.y<O.y?-22:38),txtS,color,'middle',22);
         else halo(0,m.x+(left?-24:24),m.y+7,txtS,color,left?'end':'start',22);
       };
-      nm(inc,'入射線',COL.in); nm(ref,'折射線',COL.out);
+      nm(inc,'入射線',COL.in); nm(ref,'折射線',COL.out,showDev&&down);
       halo(0,o.ox+12,o.y0+62,'法線',COL.normal,'start',22);
     }
     // 可拖曳光源端點
@@ -505,8 +541,8 @@ function upd2(){
   const a=Math.round(st.a),b=Math.round(refrAngle(st.a,med.n)),A=down?a:b,Bv=down?b:a;
   let s;
   if(th<0.5)s=`<b>垂直入射：</b>光線不會偏折，但光速改變（${down?'空氣快 → '+med.name+med.sp:med.name+med.sp+' → 空氣快'}）。`;
-  else if(down)s=`<b>光由空氣（快）進入${med.name}（${med.sp}）：</b>偏向法線，折射角 ${b}° ＜ 入射角 ${a}°。`;
-  else s=`<b>光由${med.name}（${med.sp}）進入空氣（快）：</b>偏離法線，折射角 ${a}° ＞ 入射角 ${b}°。`;
+  else if(down)s=`<b>光由空氣（快）進入${med.name}（${med.sp}）：</b>偏向法線，折射角 ${b}° ＜ 入射角 ${a}°，光線比原來的方向轉了 ${a-b}°。`;
+  else s=`<b>光由${med.name}（${med.sp}）進入空氣（快）：</b>偏離法線，折射角 ${a}° ＞ 入射角 ${b}°，光線比原來的方向轉了 ${a-b}°。`;
   setCap('cap2',s);
 }
 $('#r2').addEventListener('input',e=>{setIncident(+e.target.value);upd2()});
@@ -520,6 +556,7 @@ $('#nm').addEventListener('click',()=>{
   upd2();
 });
 $('#dot').addEventListener('change',e=>{B2.st.dots=e.target.checked;upd2()});
+$('#str2').addEventListener('change',e=>{B2.st.straight=e.target.checked;upd2()});
 // 拖曳光線端點
 let drag2=false;
 svg2.addEventListener('pointerdown',e=>{if(e.target.dataset.h){drag2=true;svg2.setPointerCapture(e.pointerId)}});
@@ -539,7 +576,7 @@ const B3g=makeBox(svg3,{x0:510,y0:68,x1:980,y1:684,ox:745,oy:380,L:235});
 B3w.st.med=MED.water;B3g.st.med=MED.glass;
 txt(svg3,255,46,'空氣 → 水',{'font-size':30,'text-anchor':'middle','font-weight':700,fill:COL.ink});
 txt(svg3,745,46,'空氣 → 玻璃',{'font-size':30,'text-anchor':'middle','font-weight':700,fill:COL.ink});
-let A3=50,solved3=false;
+let A3=60,solved3=false;
 function upd3(){
   B3w.st.a=B3g.st.a=A3;B3w.draw();B3g.draw();
   $('#v3').textContent=A3+'°';$('#r3').value=A3;
@@ -549,6 +586,7 @@ function upd3(){
     :`同樣是入射角 ${A3}°，看看水和玻璃的折射角各是幾度？光線偏折得比較多的，是哪一個？`);
 }
 $('#r3').addEventListener('input',e=>{A3=+e.target.value;upd3()});
+$('#str3').addEventListener('change',e=>{B3w.st.straight=B3g.st.straight=e.target.checked;upd3()});
 $('#q3').addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b)return;
   const ok=b.dataset.a==='glass';
@@ -557,68 +595,91 @@ $('#q3').addEventListener('click',e=>{
   if(ok){solved3=true;tick(5);upd3()}
 });
 
-/* ================= ④ 視深與實深 ================= */
-const P4={surf:250,ox:360,x0:60,x1:700,ey:100};
-const A4={H:280,ex:600,reveal:false};
+/* ================= ④ 烏龜與小鳥 ================= */
+const S4={surf:400,bird:{x:330,y:260},turtle:{x:570,y:600},view:'A',rev:{A:false,B:false}};
+const svg4=$('#svg4');
+// 小鳥和烏龜之間只有一條光路，在水面折射點 P 滿足折射定律；兩個方向都走同一條
 function solve4(){
-  const Hd=A4.H-9,hE=P4.surf-P4.ey;                          // 硬幣中心的深度、眼睛高出水面的高度
-  const g=px=>{const sa=N_WATER*Math.sin(Math.atan((px-P4.ox)/Hd));if(sa>=1)return 1e9;return px+hE*Math.tan(Math.asin(sa))-A4.ex};
-  let lo=P4.ox,hi=A4.ex;for(let i=0;i<60;i++){const m=(lo+hi)/2;if(g(m)<0)lo=m;else hi=m}
-  const px=(lo+hi)/2,tw=Math.atan((px-P4.ox)/Hd),ta=Math.asin(N_WATER*Math.sin(tw));
-  const d=(px-P4.ox)>0.5?(px-P4.ox)/Math.tan(ta):Hd/N_WATER;
-  return {px,d,Hd};
+  const B=S4.bird,T=S4.turtle,s=S4.surf,hb=s-B.y,dt=T.y-s;
+  const px=u=>B.x+(T.x-B.x)*u;
+  const g=u=>{const x=px(u),a=Math.abs(x-B.x),w=Math.abs(T.x-x);return a/Math.hypot(a,hb)-N_WATER*w/Math.hypot(w,dt)};
+  let lo=0,hi=1;for(let i=0;i<60;i++){const m=(lo+hi)/2;if(g(m)<0)lo=m;else hi=m}
+  const P={x:px((lo+hi)/2),y:s};
+  const ta=Math.atan(Math.abs(P.x-B.x)/hb),tw=Math.atan(Math.abs(T.x-P.x)/dt),near=Math.abs(T.x-B.x)<2;
+  return {P,hb,dt,ta:deg(ta),
+    hApp:near?N_WATER*hb:hb*Math.tan(ta)/Math.tan(tw),      // 烏龜看到的小鳥高度（比實際高）
+    dApp:near?dt/N_WATER:dt*Math.tan(tw)/Math.tan(ta)};     // 小鳥看到的烏龜深度（比實際淺）
+}
+function triArrow(g,a,b,color){
+  const d={x:b.x-a.x,y:b.y-a.y},l=Math.hypot(d.x,d.y)||1,u={x:d.x/l,y:d.y/l},p={x:a.x+d.x*.5,y:a.y+d.y*.5},q={x:-u.y,y:u.x};
+  el('path',{d:`M${p.x+u.x*13},${p.y+u.y*13} L${p.x-u.x*9+q.x*11},${p.y-u.y*9+q.y*11} L${p.x-u.x*9-q.x*11},${p.y-u.y*9-q.y*11} Z`,fill:color},g);
 }
 function upd4(){
   const g=svg4;g.replaceChildren();
-  const s=P4.surf,H=A4.H,sv=solve4(),Oy=s+sv.Hd,E={x:A4.ex,y:P4.ey};
-  // 地面與池
-  el('rect',{x:-300,y:s,width:300+P4.x0,height:800,fill:'#e9edf3'},g);
-  el('rect',{x:P4.x1,y:s,width:600,height:800,fill:'#e9edf3'},g);
-  el('rect',{x:P4.x0,y:s+H,width:P4.x1-P4.x0,height:800,fill:'#e9edf3'},g);
-  el('rect',{x:P4.x0,y:s,width:P4.x1-P4.x0,height:H,fill:'#9fd3f0','fill-opacity':.7},g);
-  el('path',{d:`M${P4.x0} ${s} V${s+H} H${P4.x1} V${s}`,fill:'none',stroke:'#495057','stroke-width':4},g);
-  el('line',{x1:P4.x0,y1:s,x2:P4.x1,y2:s,stroke:'#1c7ed6','stroke-width':3},g);
-  txt(g,P4.x1+14,s+6,'水面',{'font-size':20,fill:'#1c7ed6','font-weight':700});
-  // 硬幣（實際位置）
-  el('ellipse',{cx:P4.ox,cy:Oy,rx:24,ry:10,fill:'#fcc419',stroke:'#e67700','stroke-width':3},g);
-  txt(g,P4.ox,Oy+34,'硬幣（實際位置）',{'font-size':19,'text-anchor':'middle',fill:'#475569','font-weight':700});
-  if(A4.reveal){
-    const P={x:sv.px,y:s},gy=s+sv.d;
-    // 看起來的池底
-    line(g,{x:P4.x0+6,y:gy},{x:P4.x1-6,y:gy},COL.img,3,'10 7');
-    txt(g,P4.x1-12,gy-10,'看起來的池底',{'font-size':20,'text-anchor':'end',fill:COL.img,'font-weight':700,stroke:'#fff','stroke-width':5,'paint-order':'stroke'});
-    // 延長線與看起來的硬幣
-    line(g,P,{x:P4.ox,y:gy},COL.img,3,'9 7');
-    el('ellipse',{cx:P4.ox,cy:gy,rx:24,ry:10,fill:'#fcc419','fill-opacity':.35,stroke:COL.img,'stroke-width':3,'stroke-dasharray':'6 4'},g);
-    // 光路
-    line(g,{x:P4.ox,y:Oy},P,COL.in,5); line(g,P,E,COL.out,5);
-    line(g,{x:P.x,y:s-55},{x:P.x,y:s+55},COL.normal,2,'6 5');
-    // 深度標示
-    const dim=(x,y1,y2,label,color)=>{
-      line(g,{x,y:y1},{x,y:y2},color,3);
-      line(g,{x:x-10,y:y1},{x:x+10,y:y1},color,3); line(g,{x:x-10,y:y2},{x:x+10,y:y2},color,3);
-      txt(g,x-14,(y1+y2)/2+8,label,{'font-size':24,'text-anchor':'end',fill:color,'font-weight':700});
+  const s=S4.surf,B=S4.bird,T=S4.turtle,V=S4.view,rv=S4.rev[V],sv=solve4(),P=sv.P;
+  const halo={'font-weight':700,stroke:'#fff','stroke-width':5,'paint-order':'stroke'};
+  // 天空與水
+  el('rect',{x:-300,y:-100,width:1500,height:100+s,fill:'#f3f9ff'},g);
+  el('rect',{x:-300,y:s,width:1500,height:600,fill:'#bfe3f5','fill-opacity':.85},g);
+  el('line',{x1:-300,y1:s,x2:1200,y2:s,stroke:'#1c7ed6','stroke-width':4},g);
+  txt(g,16,36,'空氣（天空）',{'font-size':22,fill:'#475569','font-weight':700});
+  txt(g,16,s+36,'水裡',{'font-size':22,fill:'#475569','font-weight':700});
+  txt(g,884,s-10,'水面',{'font-size':22,'text-anchor':'end',fill:'#1c7ed6','font-weight':700});
+  const gb={x:B.x,y:s-sv.hApp},gt={x:T.x,y:s+sv.dApp};          // 看起來的小鳥／烏龜
+  if(rv){
+    const ghost=V==='A'?gb:gt,real=V==='A'?B:T,icon=V==='A'?'🐦':'🐢';
+    // 眼睛（觀察者）以為光走直線：把觀察者那一側的光線延長到動物正上／下方
+    line(g,P,ghost,COL.img,3,'9 7');
+    line(g,{x:P.x,y:P.y-70},{x:P.x,y:P.y+70},COL.normal,2,'6 5');
+    // 真正的光路：同一條，箭頭方向看誰在看
+    line(g,B,P,COL.in,5);line(g,P,T,COL.out,5);
+    if(V==='A'){triArrow(g,B,P,COL.in);triArrow(g,P,T,COL.out)}            // 小鳥 → 烏龜
+    else{triArrow(g,P,B,COL.in);triArrow(g,T,P,COL.out)}                    // 烏龜 → 小鳥
+    // 看起來的位置（淡色動物＋虛線圈）
+    el('circle',{cx:ghost.x,cy:ghost.y,r:46,fill:'#fff','fill-opacity':.5,stroke:COL.img,'stroke-width':3,'stroke-dasharray':'7 5'},g);
+    txt(g,ghost.x,ghost.y,icon,{'font-size':64,'text-anchor':'middle','dominant-baseline':'central',opacity:.4});
+    const side=(V==='A'?(T.x>B.x):(B.x>T.x))?-1:1;                       // 標示線放在另一隻動物的反方向，避開光路
+    txt(g,ghost.x-side*58,ghost.y+7,V==='A'?'烏龜看到的小鳥':'小鳥看到的烏龜',Object.assign({'font-size':20,'text-anchor':side>0?'end':'start',fill:COL.img},halo));
+    // 實高／視高，或實深／視深
+    const dim=(x,y1,y2,label,color,side)=>{
+      line(g,{x,y:y1},{x,y:y2},color,3);line(g,{x:x-10,y:y1},{x:x+10,y:y1},color,3);line(g,{x:x-10,y:y2},{x:x+10,y:y2},color,3);
+      txt(g,x+side*12,(y1+y2)/2+8,label,Object.assign({'font-size':24,'text-anchor':side<0?'end':'start',fill:color},halo));
     };
-    dim(P4.x0+250,s,Oy,'實深','#e8590c'); dim(P4.x0+150,s,gy,'視深',COL.img);
+    dim(real.x+side*90,s,ghost.y,V==='A'?'視高':'視深',COL.img,side);
+    dim(real.x+side*170,s,real.y,V==='A'?'實高':'實深','#e8590c',side);
   }
-  // 眼睛（可拖曳）
-  const eg=el('g',{style:'cursor:grab'},g); eg.dataset.e=1;
-  el('ellipse',{cx:E.x,cy:E.y,rx:36,ry:24,fill:'#fff',stroke:'#334155','stroke-width':3,'data-e':1},eg);
-  el('circle',{cx:E.x-14,cy:E.y+6,r:11,fill:'#1f2937','data-e':1},eg);
-  txt(g,E.x,E.y-36,'◀ 拖曳眼睛 ▶',{'font-size':19,'text-anchor':'middle',fill:'#64748b'});
-  $('#v4').textContent='';
-  $('#r4').value=A4.H;
-  setCap('cap4',A4.reveal
-    ?`<b>視深 ＜ 實深：</b>硬幣發出的光由水進入空氣，偏離法線後進入眼睛；眼睛以為光走直線，所以覺得硬幣在比較淺的地方。水愈深，池底看起來愈往上升。`
-    :`先猜猜：從池邊往下看，水底的硬幣看起來是比實際深、一樣深，還是比較淺？`);
+  // 動物（可拖曳）
+  const animal=(o,icon,name,key,dy)=>{                              // dy：名字放在動物上方或下方，避開光路
+    el('circle',{cx:o.x,cy:o.y,r:48,fill:'#fff','fill-opacity':.01,'data-a':key,style:'cursor:grab'},g);
+    txt(g,o.x,o.y,icon,{'font-size':64,'text-anchor':'middle','dominant-baseline':'central','pointer-events':'none'});
+    txt(g,o.x,o.y+dy,name,Object.assign({'font-size':20,'text-anchor':'middle',fill:'#475569'},halo));
+  };
+  animal(B,'🐦','小鳥','bird',-56);animal(T,'🐢','烏龜','turtle',66);
+  // 說明
+  const both=S4.rev.A&&S4.rev.B;
+  setCap('cap4',V==='A'
+    ?(rv?`<b>烏龜看小鳥：</b>小鳥的光從空氣進入水中，偏向法線；烏龜以為光是直線來的，所以覺得小鳥比實際<b>更高</b>（視高 ＞ 實高）。`
+        :`先猜猜：烏龜抬頭看天上的小鳥，小鳥看起來會比實際<b>高、一樣高，還是低</b>？`)
+    :(rv?`<b>小鳥看烏龜：</b>烏龜的光從水中進入空氣，偏離法線；小鳥以為光是直線來的，所以覺得烏龜比實際<b>更淺</b>（視深 ＜ 實深）。`
+        :`先猜猜：小鳥低頭看水裡的烏龜，烏龜看起來會比實際<b>深、一樣深，還是淺</b>？`)
+    +((rv&&both)?'　兩個方向走的是同一條光路。':''));
+  $$('#v4 button').forEach(b=>b.classList.toggle('on',b.dataset.v===V));
+  $('#rev4').textContent=rv?'收起，重新猜':'揭曉：看起來在哪裡？';
+  if(S4.rev.B&&V==='B')tick(9);
 }
-const svg4=$('#svg4');
-$('#r4').addEventListener('input',e=>{A4.H=+e.target.value;upd4()});
-$('#rev4').addEventListener('click',()=>{A4.reveal=!A4.reveal;$('#rev4').textContent=A4.reveal?'收起，重新猜':'揭曉：看起來在哪裡？';if(A4.reveal)tick(9);upd4()});
-let drag4=false;
-svg4.addEventListener('pointerdown',e=>{if(e.target.dataset.e){drag4=true;svg4.setPointerCapture(e.pointerId)}});
-svg4.addEventListener('pointermove',e=>{if(!drag4)return;A4.ex=clamp(svgPoint(svg4,e).x,440,700);upd4()});
-const endDrag4=()=>{drag4=false};
+$('#v4').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;S4.view=b.dataset.v;upd4()});
+$('#rev4').addEventListener('click',()=>{S4.rev[S4.view]=!S4.rev[S4.view];upd4()});
+$('#al4').addEventListener('click',()=>{S4.bird.x=S4.turtle.x=450;upd4()});
+let drag4=null;
+svg4.addEventListener('pointerdown',e=>{const a=e.target.dataset.a;if(a){drag4=a;svg4.setPointerCapture(e.pointerId)}});
+svg4.addEventListener('pointermove',e=>{
+  if(!drag4)return;
+  const p=svgPoint(svg4,e),an=drag4==='bird'?S4.bird:S4.turtle,other=drag4==='bird'?S4.turtle:S4.bird;
+  an.x=clamp(p.x,250,650);an.y=drag4==='bird'?clamp(p.y,200,340):clamp(p.y,470,700);
+  for(let i=0;i<60&&solve4().ta>52;i++)an.x+=other.x>an.x?8:-8;   // 視線太斜時，往另一隻靠攏
+  upd4();
+});
+const endDrag4=()=>{drag4=null};
 svg4.addEventListener('pointerup',endDrag4);svg4.addEventListener('pointercancel',endDrag4);
 
 /* ================= ⑤ 檢核 ================= */

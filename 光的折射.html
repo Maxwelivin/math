@@ -52,6 +52,14 @@ input[type=range]{width:100%;height:2.1rem;accent-color:var(--accent);margin:.15
 .chk input{width:1.2rem;height:1.2rem}
 .dirtxt{margin:.45rem 0;font-size:1.1rem;font-weight:700;text-align:center;color:var(--ink)}
 .tgl{display:flex;flex-direction:column;gap:.4rem;align-items:flex-start}
+.stagebox.col{flex-direction:column}
+.stagebox.col svg.stage{flex:1;min-height:0;height:auto}
+.stepbar{flex:none;display:flex;flex-wrap:wrap;gap:.35rem;align-items:center;padding:.45rem .6rem;border-bottom:1px solid var(--line);background:#fafcff}
+.stepbar .chip{font:inherit;font-size:.98rem;border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:.2rem .7rem;cursor:pointer;color:var(--muted);white-space:nowrap}
+.stepbar .chip b{margin-right:.3rem}
+.stepbar .chip.past{border-color:var(--good);color:var(--good)}
+.stepbar .chip.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
+.stepbar .sp{flex:1}
 ol.stp{list-style:none;margin:0 0 .6rem;padding:0}
 ol.stp li{display:flex;gap:.55rem;align-items:flex-start;padding:.3rem .4rem;border-radius:.45rem;cursor:pointer;font-size:1.03rem;line-height:1.35;color:var(--muted)}
 ol.stp li b{flex:none;width:1.55rem;height:1.55rem;border-radius:50%;background:#e2e8f0;color:#475569;display:grid;place-items:center;font-size:.9rem}
@@ -140,9 +148,9 @@ ol.steps li{margin:.15rem 0}
 
 <!-- ② 折射實驗箱 -->
 <section class="part" id="s2">
-  <div class="lead"><b>折射實驗箱</b>　光從空氣射進水或玻璃，行進方向會怎樣改變？拖曳光線端點的圓點，或用滑桿調整入射角。</div>
+  <div class="lead"><b>折射實驗箱</b>　跟著上方的步驟，一步一步演示折射；也可以隨時拖曳光源、換介質、反向發射。</div>
   <div class="row">
-    <div class="stagebox"><svg class="stage" id="svg2" viewBox="0 0 800 580" preserveAspectRatio="xMidYMid meet"></svg></div>
+    <div class="stagebox col"><div class="stepbar" id="sb2"></div><svg class="stage" id="svg2" viewBox="0 0 800 580" preserveAspectRatio="xMidYMid meet"></svg></div>
     <div class="side">
       <div class="card"><h3>介質</h3><div class="seg" id="med"><button data-m="water" class="on">水</button><button data-m="glass">玻璃</button></div></div>
       <div class="card">
@@ -153,7 +161,7 @@ ol.steps li{margin:.15rem 0}
           <label class="chk" style="margin:0"><input type="checkbox" id="str2" checked> 顯示「不偏折的路」</label>
           <label class="chk" style="margin:0"><input type="checkbox" id="dot" checked> 光速動畫</label></div>
       </div>
-      <div class="card"><h3>隨堂筆記（觀察後自動填入）</h3>
+      <div class="card" id="noteCard" style="display:none"><h3>隨堂筆記（觀察後自動填入）</h3>
         <table class="tbl" id="note">
           <thead><tr><th></th><th>快 → 慢<small>空氣 → 水/玻璃</small></th><th>慢 → 快<small>水/玻璃 → 空氣</small></th></tr></thead>
           <tbody>
@@ -170,9 +178,9 @@ ol.steps li{margin:.15rem 0}
 
 <!-- ③ 水 vs 玻璃 -->
 <section class="part" id="s3">
-  <div class="lead"><b>水 vs 玻璃</b>　同樣的入射角、都從空氣射入，水和玻璃的偏折一樣嗎？哪一個介質的光速比較慢？</div>
+  <div class="lead"><b>水 vs 玻璃</b>　同樣的入射角、都從空氣射入，一步一步比較：水和玻璃的偏折一樣嗎？哪一個介質的光速比較慢？</div>
   <div class="row">
-    <div class="stagebox"><svg class="stage" id="svg3" viewBox="0 0 1000 700" preserveAspectRatio="xMidYMid meet"></svg></div>
+    <div class="stagebox col"><div class="stepbar" id="sb3"></div><svg class="stage" id="svg3" viewBox="0 0 1000 700" preserveAspectRatio="xMidYMid meet"></svg></div>
     <div class="side">
       <div class="card"><label class="sl">入射角（兩邊相同） <b id="v3">60°</b><input type="range" id="r3" min="20" max="70" step="5" value="60"></label>
         <label class="chk"><input type="checkbox" id="str3" checked> 顯示「不偏折的路」</label></div>
@@ -283,6 +291,8 @@ document.addEventListener('keydown',e=>{
   if(e.target.tagName==='INPUT'&&e.target.type!=='checkbox')return;
   if(e.key>='1'&&e.key<='5')show('s'+e.key);
   if(cur==='s1'){if(e.key==='ArrowRight')setStep1(A1.step+1);else if(e.key==='ArrowLeft')setStep1(A1.step-1)}
+  if(cur==='s2'){if(e.key==='ArrowRight')setStep2(T2.step+1);else if(e.key==='ArrowLeft')setStep2(T2.step-1)}
+  if(cur==='s3'){if(e.key==='ArrowRight')setStep3(S3+1);else if(e.key==='ArrowLeft')setStep3(S3-1)}
 });
 
 /* ================= ① 把杯底變淺了（一步一步畫光路） ================= */
@@ -416,15 +426,28 @@ STEPS1.forEach((t,i)=>{
 $('#prev1').addEventListener('click',()=>setStep1(A1.step-1));
 $('#next1').addEventListener('click',()=>setStep1(A1.step+1));
 
-/* ================= 折射箱（②③共用） ================= */
+/* ================= 折射箱（②③共用，一步一步演示） ================= */
 const MED={
   water:{name:'水',n:N_WATER,fill:'#cfe8f7',sp:'慢'},
   glass:{name:'玻璃',n:N_GLASS,fill:'#d3e2d6',sp:'更慢'}
 };
+// 步驟：0 光源 → 1 界面‧法線 → 2 不偏折 → 3 偏折 → 4 角度 → 5 方向 → 6 速大角大
+const SB_LABELS=['光源','界面‧法線','不偏折','偏折','角度','方向','速大角大'];
+const STEP_N=SB_LABELS.length;
+function mkBar(hostId,go){
+  const host=$('#'+hostId);let cur=0;
+  const prev=document.createElement('button');prev.className='btn';prev.textContent='← 上一步';
+  const next=document.createElement('button');next.className='btn primary';next.textContent='下一步 →';
+  const sp=document.createElement('span');sp.className='sp';
+  const chips=SB_LABELS.map((t,i)=>{const b=document.createElement('button');b.className='chip';b.innerHTML=`<b>${i}</b>${t}`;b.addEventListener('click',()=>go(i));return b});
+  prev.addEventListener('click',()=>go(cur-1));next.addEventListener('click',()=>go(cur+1));
+  host.append(prev,...chips,sp,next);
+  return {refresh(s){cur=s;chips.forEach((c,i)=>{c.classList.toggle('on',i===s);c.classList.toggle('past',i<s)});prev.disabled=s===0;next.disabled=s===STEP_N-1}};
+}
 function makeBox(svg,o){
   const g=el('g',{},svg);
-  const st={a:60,dir:'down',names:true,dots:true,straight:true,med:MED.water};
-  let dotEls=[],segs=[],Tt=0,K=0;
+  const st={a:60,dir:'down',names:true,dots:true,straight:true,step:0,med:MED.water};
+  let dotEls=[],segs=[],Tt=0,K=0,T0=0;
   const PERIOD=420;
   function geom(){
     const a=st.a,b=refrAngle(a,st.med.n);
@@ -437,81 +460,111 @@ function makeBox(svg,o){
   function halo(t,x,y,str,color,anchor,size){txt(g,x,y,str,{'font-size':size||21,'font-weight':700,fill:color,'text-anchor':anchor||'middle',stroke:'#fff','stroke-width':6,'paint-order':'stroke'})}
   function draw(){
     g.replaceChildren();dotEls=[];
-    const {a,b,O,Pu,Pl}=geom(),down=st.dir==='down',med=st.med;
+    const {a,b,O,Pu,Pl}=geom(),down=st.dir==='down',med=st.med,s=st.step;
+    const inc=down?Pu:Pl, ref=down?Pl:Pu;
+    // 介質與界面
     el('rect',{x:o.x0,y:o.y0,width:o.x1-o.x0,height:o.oy-o.y0,fill:'#fbfdff'},g);
     el('rect',{x:o.x0,y:o.oy,width:o.x1-o.x0,height:o.y1-o.oy,fill:med.fill},g);
     el('rect',{x:o.x0,y:o.y0,width:o.x1-o.x0,height:o.y1-o.y0,fill:'none',stroke:COL.ink,'stroke-width':2.5,rx:8},g);
     line(g,{x:o.x0,y:o.oy},{x:o.x1,y:o.oy},COL.ink,2.5);
-    txt(g,o.x0+14,o.y0+30,'空氣（快）',{'font-size':22,fill:'#475569','font-weight':700});
-    txt(g,o.x0+14,o.y1-16,`${med.name}（${med.sp}）`,{'font-size':22,fill:'#475569','font-weight':700});
-    line(g,{x:o.ox,y:o.y0+10},{x:o.ox,y:o.y1-10},COL.normal,2,'7 6');
-    const inc=down?Pu:Pl, ref=down?Pl:Pu;
-    // 「若不偏折會走的路」：入射線直直延長（灰色虛線），和真正的折射線之間的夾角就是偏折量
-    const showDev=st.straight&&Math.abs(a-b)>0.5;
-    if(showDev){
-      const unit=v=>{const l=Math.hypot(v.x,v.y);return {x:v.x/l,y:v.y/l}};
-      const uC=unit({x:O.x-inc.x,y:O.y-inc.y}),uR=unit({x:ref.x-O.x,y:ref.y-O.y}),rw=118;
-      const ang=deg(Math.atan2(uC.x*uR.y-uC.y*uR.x,uC.x*uR.x+uC.y*uR.y)),sw=ang>0?1:0;   // 螢幕座標：正＝順時針
-      const p1={x:O.x+uC.x*rw,y:O.y+uC.y*rw},p2={x:O.x+uR.x*rw,y:O.y+uR.y*rw};
-      el('path',{d:`M${O.x},${O.y} L${p1.x},${p1.y} A${rw},${rw} 0 0 ${sw} ${p2.x},${p2.y} Z`,fill:COL.img,'fill-opacity':.22},g);
-      el('path',{d:`M${p1.x},${p1.y} A${rw},${rw} 0 0 ${sw} ${p2.x},${p2.y}`,fill:'none',stroke:COL.img,'stroke-width':3},g);
-      line(g,O,{x:O.x+uC.x*o.L,y:O.y+uC.y*o.L},'#64748b',3,'4 8');
+    txt(g,o.x0+14,o.y0+30,s>=5?'空氣（快）':'空氣',{'font-size':22,fill:'#475569','font-weight':700});
+    txt(g,o.x0+14,o.y1-16,s>=5?`${med.name}（${med.sp}）`:med.name,{'font-size':22,fill:'#475569','font-weight':700});
+    // 步驟 1：法線、界面、入射點
+    if(s>=1){
+      line(g,{x:o.ox,y:o.y0+10},{x:o.ox,y:o.y1-10},COL.normal,2,'7 6');
+      if(st.names){halo(0,o.ox+12,o.y0+62,'法線',COL.normal,'start',22);halo(0,o.x1-16,o.oy-12,'界面',COL.ink,'end',22)}
     }
-    line(g,inc,O,COL.in,11).setAttribute('stroke-opacity',.18); line(g,O,ref,COL.out,11).setAttribute('stroke-opacity',.18);
-    line(g,inc,O,COL.in,5); line(g,O,ref,COL.out,5);
-    arrow(inc,O,COL.in); arrow(O,ref,COL.out);
-    if(showDev){                                                    // 圖例放右下角，不壓到光線
+    // 步驟 2：原本不偏折的光路（入射線直直延長）；步驟 3 起另有偏折量色塊
+    const showDash=s===2||(s>=3&&st.straight), showDev=s>=3&&st.straight&&Math.abs(a-b)>0.5;
+    if(showDash){
+      const unit=v=>{const l=Math.hypot(v.x,v.y);return {x:v.x/l,y:v.y/l}};
+      const uC=unit({x:O.x-inc.x,y:O.y-inc.y});
+      if(showDev){
+        const uR=unit({x:ref.x-O.x,y:ref.y-O.y}),rw=118;
+        const ang=deg(Math.atan2(uC.x*uR.y-uC.y*uR.x,uC.x*uR.x+uC.y*uR.y)),sw=ang>0?1:0;   // 螢幕座標：正＝順時針
+        const p1={x:O.x+uC.x*rw,y:O.y+uC.y*rw},p2={x:O.x+uR.x*rw,y:O.y+uR.y*rw};
+        el('path',{d:`M${O.x},${O.y} L${p1.x},${p1.y} A${rw},${rw} 0 0 ${sw} ${p2.x},${p2.y} Z`,fill:COL.img,'fill-opacity':.22},g);
+        el('path',{d:`M${p1.x},${p1.y} A${rw},${rw} 0 0 ${sw} ${p2.x},${p2.y}`,fill:'none',stroke:COL.img,'stroke-width':3},g);
+      }
+      line(g,O,{x:O.x+uC.x*o.L,y:O.y+uC.y*o.L},s===2?'#475569':'#64748b',s===2?5:3,s===2?'9 8':'4 8');
+    }
+    // 入射線：步驟 0 還沒到界面（只畫 70%），之後到達入射點
+    const frac0=s===0?0.7:1,e0={x:inc.x+(O.x-inc.x)*frac0,y:inc.y+(O.y-inc.y)*frac0};
+    line(g,inc,e0,COL.in,11).setAttribute('stroke-opacity',.18);line(g,inc,e0,COL.in,5);arrow(inc,e0,COL.in);
+    // 步驟 3：偏折的光路
+    if(s>=3){line(g,O,ref,COL.out,11).setAttribute('stroke-opacity',.18);line(g,O,ref,COL.out,5);arrow(O,ref,COL.out)}
+    if(s>=1){
+      el('circle',{cx:O.x,cy:O.y,r:8,fill:'#334155',stroke:'#fff','stroke-width':3},g);
+      if(st.names)halo(0,O.x-16,O.y+32,'入射點',COL.ink,'end',21);
+    }
+    if(showDash||showDev){                                          // 圖例放右下角，不壓到光線
       const lx=o.x1-16,r1=o.y1-52,r2=o.y1-22;
-      el('rect',{x:lx-176,y:r1-15,width:32,height:17,fill:COL.img,'fill-opacity':.3,stroke:COL.img,'stroke-width':2},g);
-      txt(g,lx,r1,`偏折 ${Math.round(Math.abs(a-b))}°`,{'font-size':21,'text-anchor':'end','font-weight':700,fill:COL.img});
+      if(showDev){
+        el('rect',{x:lx-176,y:r1-15,width:32,height:17,fill:COL.img,'fill-opacity':.3,stroke:COL.img,'stroke-width':2},g);
+        txt(g,lx,r1,`偏折 ${Math.round(Math.abs(a-b))}°`,{'font-size':21,'text-anchor':'end','font-weight':700,fill:COL.img});
+      }
       line(g,{x:lx-176,y:r2-6},{x:lx-144,y:r2-6},'#64748b',3,'4 6');
       txt(g,lx,r2,'不偏折的路',{'font-size':21,'text-anchor':'end','font-weight':700,fill:'#64748b'});
     }
-    // 角度弧線與數字
-    const aInc=down?a:b, aRef=down?b:a, r=64;
-    const arcU=a>1.5, arcL=b>1.5;
+    // 步驟 4：入射角、折射角
+    const r=64,arcU=a>1.5,arcL=b>1.5;
     const colU=down?COL.in:COL.out, colL=down?COL.out:COL.in;
     const nameU=down?'入射角':'折射角', nameL=down?'折射角':'入射角';
-    if(arcU){
-      el('path',{d:`M${o.ox},${o.oy-r} A${r},${r} 0 0 0 ${o.ox-r*sinD(a)},${o.oy-r*cosD(a)}`,fill:'none',stroke:colU,'stroke-width':4},g);
-      halo(0,o.ox+14,o.oy-r-10,(st.names?nameU+' ':'')+Math.round(a)+'°',colU,'start');
+    if(s>=4){
+      if(arcU){
+        el('path',{d:`M${o.ox},${o.oy-r} A${r},${r} 0 0 0 ${o.ox-r*sinD(a)},${o.oy-r*cosD(a)}`,fill:'none',stroke:colU,'stroke-width':4},g);
+        halo(0,o.ox+14,o.oy-r-10,(st.names?nameU+' ':'')+Math.round(a)+'°',colU,'start');
+      }
+      if(arcL){
+        el('path',{d:`M${o.ox},${o.oy+r} A${r},${r} 0 0 0 ${o.ox+r*sinD(b)},${o.oy+r*cosD(b)}`,fill:'none',stroke:colL,'stroke-width':4},g);
+        halo(0,o.ox-14,o.oy+r+30,(st.names?nameL+' ':'')+Math.round(b)+'°',colL,'end');
+      }
+      if(!arcU&&!arcL)halo(0,o.ox+22,o.oy-16,'0°',COL.ink,'start');
     }
-    if(arcL){
-      el('path',{d:`M${o.ox},${o.oy+r} A${r},${r} 0 0 0 ${o.ox+r*sinD(b)},${o.oy+r*cosD(b)}`,fill:'none',stroke:colL,'stroke-width':4},g);
-      halo(0,o.ox-14,o.oy+r+30,(st.names?nameL+' ':'')+Math.round(b)+'°',colL,'end');
+    // 步驟 6：速大角大，速小角小
+    if(s>=6){
+      if(arcU)halo(0,o.ox+14,o.oy-r+16,'快 → 角大',colU,'start',19);
+      if(arcL)halo(0,o.ox-14,o.oy+r+58,med.sp==='慢'?'慢 → 角小':'更慢 → 角更小',colL,'end',19);
     }
-    if(!arcU&&!arcL)halo(0,o.ox+22,o.oy-16,'0°',COL.ink,'start');
-    // 名稱
-    if(st.names){
+    // 步驟 5：怎麼知道偏折的方向（目前這個方向那一句亮起）
+    if(s>=5){
+      const rules=[{t:'快 → 慢：偏向法線',on:down},{t:'慢 → 快：偏離法線',on:!down}];
+      (o.rule==='both'?rules:[rules[0]]).forEach((ln,i)=>
+        txt(g,o.x1-16,o.y0+34+i*30,ln.t,{'font-size':o.rule==='both'?22:20,'text-anchor':'end','font-weight':ln.on?700:400,fill:ln.on?COL.img:'#94a3b8'}));
+    }
+    // 名稱：入射線（步驟 1 起）、折射線（步驟 3 起）
+    if(st.names&&s>=1){
       const nm=(P,txtS,color,flip)=>{                  // 名稱放在光線旁、遠離法線的一側；flip＝改放法線那一側（讓開偏折色塊）
         const f=flip?.8:.5,m={x:O.x+(P.x-O.x)*f,y:O.y+(P.y-O.y)*f},left=(P.x<=O.x)!==!!flip;
         if(deg(Math.atan2(Math.abs(P.x-O.x),Math.abs(P.y-O.y)))>62)   // 光線近乎水平：名稱改放線的上／下方，避免壓線
           halo(0,m.x,m.y+(P.y<O.y?-22:38),txtS,color,'middle',22);
         else halo(0,m.x+(left?-24:24),m.y+7,txtS,color,left?'end':'start',22);
       };
-      nm(inc,'入射線',COL.in); nm(ref,'折射線',COL.out,showDev&&down);
-      halo(0,o.ox+12,o.y0+62,'法線',COL.normal,'start',22);
+      nm(inc,'入射線',COL.in);
+      if(s>=3)nm(ref,'折射線',COL.out,showDev&&down);
     }
-    // 可拖曳光源端點
-    if(o.handle){
-      el('circle',{cx:inc.x,cy:inc.y,r:20,fill:'#fff',stroke:COL.in,'stroke-width':4,'data-h':1,style:'cursor:grab'},g);
-      el('circle',{cx:inc.x,cy:inc.y,r:7,fill:COL.in,'data-h':1,style:'cursor:grab'},g);
-    }
-    // 光速動畫：等時間間隔送出光點，介質中間隔變小＝光速變慢
+    // 光源（手電筒圖示）；② 可拖曳它來改變入射角
+    const th=deg(Math.atan2(O.y-inc.y,O.x-inc.x)),ig=el('g',{transform:`translate(${inc.x},${inc.y}) rotate(${th})`},g);
+    const hit=o.handle?{'data-h':1,style:'cursor:grab'}:{};
+    el('rect',Object.assign({x:-46,y:-13,width:34,height:26,rx:6,fill:'#475569'},hit),ig);
+    el('rect',Object.assign({x:-14,y:-17,width:16,height:34,rx:4,fill:'#94a3b8'},hit),ig);
+    el('circle',Object.assign({cx:2,cy:0,r:7,fill:'#fde68a',stroke:'#f59e0b','stroke-width':2},hit),ig);
+    if(o.handle)el('circle',{cx:-18,cy:0,r:34,fill:'#fff','fill-opacity':.01,'data-h':1,style:'cursor:grab'},ig);
+    // 光速動畫：等時間間隔送出光點，介質中間隔變小＝光速變慢（步驟 3 前只走入射線）
     if(st.dots){
-      const vA=o.L/1100,vM=vA/med.n;
-      segs=down?[{A:Pu,B:O,v:vA,c:COL.in},{A:O,B:Pl,v:vM,c:COL.out}]:[{A:Pl,B:O,v:vM,c:COL.in},{A:O,B:Pu,v:vA,c:COL.out}];
-      Tt=o.L/segs[0].v+o.L/segs[1].v; K=Math.ceil(Tt/PERIOD)+1;
+      const vA=o.L/1100,vM=vA/med.n,vI=down?vA:vM,vR=down?vM:vA;
+      segs=[{A:inc,B:O,v:vI,c:COL.in}];if(s>=3)segs.push({A:O,B:ref,v:vR,c:COL.out});
+      T0=o.L*frac0/segs[0].v;Tt=segs.length>1?T0+o.L/segs[1].v:T0;K=Math.ceil(Tt/PERIOD)+1;
       for(let k=0;k<K;k++)dotEls.push(el('circle',{r:8,fill:'#fff','stroke-width':3.5,cx:-50,cy:-50},g));
     }
   }
   function frame(t){
     if(!st.dots||!dotEls.length)return;
-    const cycle=K*PERIOD,t0=o.L/segs[0].v;
+    const cycle=K*PERIOD;
     dotEls.forEach((d,k)=>{
       const tau=(((t-k*PERIOD)%cycle)+cycle)%cycle;
       if(tau>Tt){d.setAttribute('cx',-50);return}
-      const s=tau<=t0?{S:segs[0],f:tau*segs[0].v/o.L}:{S:segs[1],f:(tau-t0)*segs[1].v/o.L};
+      const s=tau<=T0?{S:segs[0],f:tau*segs[0].v/o.L}:{S:segs[1],f:(tau-T0)*segs[1].v/o.L};
       d.setAttribute('cx',s.S.A.x+(s.S.B.x-s.S.A.x)*s.f);d.setAttribute('cy',s.S.A.y+(s.S.B.y-s.S.A.y)*s.f);
       d.setAttribute('stroke',s.S.c);
     });
@@ -521,8 +574,8 @@ function makeBox(svg,o){
 
 /* ================= ② 折射實驗箱 ================= */
 const svg2=$('#svg2');
-const B2=makeBox(svg2,{x0:30,y0:20,x1:770,y1:560,ox:400,oy:290,L:235,handle:true});
-const T2={names:true,hiddenOnce:false,rec:[false,false]};
+const B2=makeBox(svg2,{x0:30,y0:20,x1:770,y1:560,ox:400,oy:290,L:235,handle:true,rule:'both'});
+const T2={names:true,rec:[false,false],step:0};
 const NOTE=[['變慢','變快'],['偏向法線','偏離法線'],['比入射角小','比入射角大']];
 const slVal=()=>B2.st.dir==='down'?B2.st.a:refrAngle(B2.st.a,B2.st.med.n);
 const slMax=()=>B2.st.dir==='down'?80:Math.ceil(refrAngle(80,B2.st.med.n));
@@ -530,48 +583,55 @@ function setIncident(v){
   v=clamp(v,0,slMax());
   B2.st.a=B2.st.dir==='down'?v:airAngle(v,B2.st.med.n);
 }
+const bar2=mkBar('sb2',n=>setStep2(n));
+function setStep2(n){T2.step=clamp(n,0,STEP_N-1);B2.st.step=T2.step;upd2()}
 function upd2(){
-  const st=B2.st,med=st.med,down=st.dir==='down';
-  B2.draw();
+  const st=B2.st,med=st.med,down=st.dir==='down',S=T2.step;
+  B2.draw();bar2.refresh(S);
   const th=slVal();
   $('#r2').max=slMax();$('#r2').value=th;
   $('#l2').textContent=down?'入射角（空氣中）':`入射角（${med.name}中）`;
   $('#v2').textContent=Math.round(th)+'°';
   $('#dirtxt').textContent=down?`空氣（快） → ${med.name}（${med.sp}）`:`${med.name}（${med.sp}） → 空氣（快）`;
   $('#nm').textContent=T2.names?'隱藏名稱（考考學生）':'揭曉名稱';
-  // 觀察 → 筆記、勾選
+  $('#noteCard').style.display=S>=5?'':'none';                      // 筆記表到「怎麼知道偏折方向」才出現，避免劇透
+  // 要看到折射線（步驟 3 起）才算觀察過 → 筆記、勾選
   if(cur==='s2'){
-    if(th>=10){
-      tick(1);
-      const c=down?0:1; T2.rec[c]=true;
+    if(S>=3){
+      if(th>=10){tick(1);T2.rec[down?0:1]=true}
+      if(th<0.5)tick(3);
+      if(T2.rec[0]&&T2.rec[1])tick(4);
     }
-    if(th<0.5)tick(3);
-    if(T2.rec[0]&&T2.rec[1])tick(4);
+    if(S>=4&&T2.names)tick(2);
   }
   $$('#note tbody tr').forEach((tr,r)=>{ [...tr.querySelectorAll('td')].forEach((td,c)=>{
     td.textContent=T2.rec[c]?NOTE[r][c]:'？';td.classList.toggle('got',!!T2.rec[c]);
   })});
-  // 即時說明
-  const a=Math.round(st.a),b=Math.round(refrAngle(st.a,med.n)),A=down?a:b,Bv=down?b:a;
-  let s;
-  if(th<0.5)s=`<b>垂直入射：</b>光線不會偏折，但光速改變（${down?'空氣快 → '+med.name+med.sp:med.name+med.sp+' → 空氣快'}）。`;
-  else if(down)s=`<b>光由空氣（快）進入${med.name}（${med.sp}）：</b>偏向法線，折射角 ${b}° ＜ 入射角 ${a}°，光線比原來的方向轉了 ${a-b}°。`;
-  else s=`<b>光由${med.name}（${med.sp}）進入空氣（快）：</b>偏離法線，折射角 ${a}° ＞ 入射角 ${b}°，光線比原來的方向轉了 ${a-b}°。`;
-  setCap('cap2',s);
+  // 每一步的說明
+  const a=Math.round(st.a),b=Math.round(refrAngle(st.a,med.n)),fast='空氣（快）',slow=`${med.name}（${med.sp}）`,from=down?fast:slow,to=down?slow:fast;
+  const vert=th<0.5;
+  const CAP=[
+    `<b>光源發出光線。</b>拖曳光源，可以改變光射出的方向。`,
+    `光線到達<b>界面</b>：標出<b>入射點</b>、<b>界面</b>、<b>法線</b>。`,
+    `顯示<b>原本不偏折的光路</b>：光若不轉彎，就會這樣直直走。`,
+    `顯示<b>偏折的光路</b>，標出<b>折射線</b>${vert?'：垂直入射，光線不會偏折。':`：光線比原來的方向轉了 ${Math.abs(a-b)}°。`}`,
+    vert?`<b>垂直入射：</b>入射角、折射角都是 0°，光線不會偏折，但光速改變（${from} → ${to}）。`
+        :`標出<b>入射角</b>、<b>折射角</b>：入射角 ${down?a:b}°，折射角 ${down?b:a}°。`,
+    `<b>怎麼知道光偏折的方向？</b>快到慢，偏向法線；慢到快，偏離法線。（現在：${from} → ${to}${vert?'，垂直入射不偏折':'，'+(down?'偏向':'偏離')+'法線'}）`,
+    vert?`<b>垂直入射：</b>光線不會偏折，但光速改變（${from} → ${to}）。`
+        :`<b>速大角大，速小角小。</b>${fast}的角 ${down?a:b}°，${slow}的角 ${down?b:a}°：光速大的一邊，角度也大。`
+  ];
+  setCap('cap2',CAP[S]);
 }
 $('#r2').addEventListener('input',e=>{setIncident(+e.target.value);upd2()});
 $('#med').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
   $$('#med button').forEach(x=>x.classList.toggle('on',x===b));
   B2.st.med=MED[b.dataset.m];upd2()});
-$('#rev').addEventListener('click',()=>{B2.st.dir=B2.st.dir==='down'?'up':'down';upd2();if(B2.st.a>=10)tick(6)});
-$('#nm').addEventListener('click',()=>{
-  T2.names=!T2.names;B2.st.names=T2.names;
-  if(!T2.names)T2.hiddenOnce=true; else if(T2.hiddenOnce)tick(2);
-  upd2();
-});
+$('#rev').addEventListener('click',()=>{B2.st.dir=B2.st.dir==='down'?'up':'down';upd2();if(B2.st.a>=10&&T2.step>=3)tick(6)});
+$('#nm').addEventListener('click',()=>{T2.names=!T2.names;B2.st.names=T2.names;upd2()});
 $('#dot').addEventListener('change',e=>{B2.st.dots=e.target.checked;upd2()});
 $('#str2').addEventListener('change',e=>{B2.st.straight=e.target.checked;upd2()});
-// 拖曳光線端點
+// 拖曳光源
 let drag2=false;
 svg2.addEventListener('pointerdown',e=>{if(e.target.dataset.h){drag2=true;svg2.setPointerCapture(e.pointerId)}});
 svg2.addEventListener('pointermove',e=>{
@@ -585,19 +645,29 @@ svg2.addEventListener('pointerup',endDrag2);svg2.addEventListener('pointercancel
 
 /* ================= ③ 水 vs 玻璃 ================= */
 const svg3=$('#svg3');
-const B3w=makeBox(svg3,{x0:20,y0:68,x1:490,y1:684,ox:255,oy:380,L:235});
-const B3g=makeBox(svg3,{x0:510,y0:68,x1:980,y1:684,ox:745,oy:380,L:235});
+const B3w=makeBox(svg3,{x0:20,y0:68,x1:490,y1:684,ox:255,oy:380,L:220,rule:'down'});
+const B3g=makeBox(svg3,{x0:510,y0:68,x1:980,y1:684,ox:745,oy:380,L:220,rule:'down'});
 B3w.st.med=MED.water;B3g.st.med=MED.glass;
 txt(svg3,255,46,'空氣 → 水',{'font-size':30,'text-anchor':'middle','font-weight':700,fill:COL.ink});
 txt(svg3,745,46,'空氣 → 玻璃',{'font-size':30,'text-anchor':'middle','font-weight':700,fill:COL.ink});
-let A3=60,solved3=false;
+let A3=60,solved3=false,S3=0;
+const bar3=mkBar('sb3',n=>setStep3(n));
+function setStep3(n){S3=clamp(n,0,STEP_N-1);B3w.st.step=B3g.st.step=S3;upd3()}
 function upd3(){
-  B3w.st.a=B3g.st.a=A3;B3w.draw();B3g.draw();
+  B3w.st.a=B3g.st.a=A3;B3w.draw();B3g.draw();bar3.refresh(S3);
   $('#v3').textContent=A3+'°';$('#r3').value=A3;
   const bw=Math.round(refrAngle(A3,N_WATER)),bg=Math.round(refrAngle(A3,N_GLASS));
-  setCap('cap3',solved3
-    ?`<b>入射角都是 ${A3}°：</b>水中折射角 ${bw}°、玻璃中折射角 ${bg}°。玻璃讓光走得更慢，光線轉彎更多、折射角更小；所以比較折射角，就能比較光在兩種介質裡誰快誰慢。`
-    :`同樣是入射角 ${A3}°，看看水和玻璃的折射角各是幾度？光線偏折得比較多的，是哪一個？`);
+  const CAP=[
+    `<b>光源發出光線。</b>兩邊的入射角相同（${A3}°）。`,
+    `光線到達<b>界面</b>：標出<b>入射點</b>、<b>界面</b>、<b>法線</b>。`,
+    `顯示<b>原本不偏折的光路</b>：兩邊的入射角相同，不偏折的路也一模一樣。猜猜看，哪一邊會轉得比較多？`,
+    `顯示<b>偏折的光路</b>，標出<b>折射線</b>：水和玻璃的折射線不一樣！`,
+    `標出<b>入射角</b>、<b>折射角</b>：水 ${bw}°、玻璃 ${bg}°。`,
+    `<b>怎麼知道光偏折的方向？</b>快到慢，偏向法線：兩邊都是由空氣（快）進入介質（慢），所以都偏向法線。`,
+    `<b>速大角大，速小角小：</b>空氣（快）${A3}° ＞ 水（慢）${bw}° ＞ 玻璃（更慢）${bg}°。`
+  ];
+  setCap('cap3',CAP[S3]);
+  if(solved3&&S3>=4)tick(5);                                         // 要看到兩邊的偏折，答對才算
 }
 $('#r3').addEventListener('input',e=>{A3=+e.target.value;upd3()});
 $('#str3').addEventListener('change',e=>{B3w.st.straight=B3g.st.straight=e.target.checked;upd3()});
@@ -606,7 +676,7 @@ $('#q3').addEventListener('click',e=>{
   const ok=b.dataset.a==='glass';
   $$('#q3 button').forEach(x=>x.classList.toggle('on',x===b));
   $('#fb3').innerHTML=ok?`<span class="ok">答對了：玻璃的光速比水更慢。</span>`:`<span class="ng">再看看：折射角比較小（偏折比較多）的是哪一個？</span>`;
-  if(ok){solved3=true;tick(5);upd3()}
+  if(ok){solved3=true;upd3()}
 });
 
 /* ================= ④ 烏龜與小鳥 ================= */

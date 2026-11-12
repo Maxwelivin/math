@@ -52,6 +52,13 @@ input[type=range]{width:100%;height:2.1rem;accent-color:var(--accent);margin:.15
 .chk input{width:1.2rem;height:1.2rem}
 .dirtxt{margin:.45rem 0;font-size:1.1rem;font-weight:700;text-align:center;color:var(--ink)}
 .tgl{display:flex;flex-direction:column;gap:.4rem;align-items:flex-start}
+ol.stp{list-style:none;margin:0 0 .6rem;padding:0}
+ol.stp li{display:flex;gap:.55rem;align-items:flex-start;padding:.3rem .4rem;border-radius:.45rem;cursor:pointer;font-size:1.03rem;line-height:1.35;color:var(--muted)}
+ol.stp li b{flex:none;width:1.55rem;height:1.55rem;border-radius:50%;background:#e2e8f0;color:#475569;display:grid;place-items:center;font-size:.9rem}
+ol.stp li.past b{background:var(--good);color:#fff}
+ol.stp li.on{background:#eef4ff;color:var(--ink);font-weight:700}
+ol.stp li.on b{background:var(--accent);color:#fff}
+.btn:disabled{opacity:.4;cursor:default}
 ol.steps{margin:0;padding-left:1.3rem;font-size:1rem}
 ol.steps li{margin:.15rem 0}
 .tbl{border-collapse:collapse;width:100%;font-size:.98rem}
@@ -118,17 +125,13 @@ ol.steps li{margin:.15rem 0}
 
 <!-- ① 探討活動 4-3 -->
 <section class="part on" id="s1">
-  <div class="lead"><b>探討活動 4-3　杯底的燈具</b>　先預測：眼睛不動，慢慢往杯子裡加水，原本看不到的燈具會怎樣？光是怎麼走的？</div>
+  <div class="lead"><b>探討活動 4-3　杯底的燈具</b>　跟著步驟，一步一步把光路畫出來：為什麼加水以後，就看得到燈具了？</div>
   <div class="row">
     <div class="stagebox"><svg class="stage" id="svg1" viewBox="130 0 840 600" preserveAspectRatio="xMidYMid meet"><g id="g1"></g></svg></div>
     <div class="side">
-      <div class="card">
-        <label class="sl">水位 <b id="v1">0%</b><input type="range" id="r1" min="0" max="240" value="0"></label>
-        <div class="btns"><button class="btn primary" id="pour">▶ 慢慢加水</button><button class="btn" id="empty">倒掉重來</button></div>
-        <label class="chk"><input type="checkbox" id="ray1"> 顯示光路</label>
-      </div>
-      <div class="card"><h3>怎麼做</h3>
-        <ol class="steps"><li>先預測：加水後，看得到燈具嗎？</li><li>慢慢加水，看左上「眼睛看到的畫面」</li><li>勾選「顯示光路」，說明光怎麼走</li></ol>
+      <div class="card"><h3>步驟（鍵盤 ← → 也可以換步驟）</h3>
+        <ol class="stp" id="stp1"></ol>
+        <div class="btns"><button class="btn" id="prev1">← 上一步</button><button class="btn primary" id="next1">下一步 →</button></div>
       </div>
     </div>
   </div>
@@ -279,11 +282,12 @@ $$('.tabs button').forEach(b=>b.addEventListener('click',()=>show(b.dataset.tab)
 document.addEventListener('keydown',e=>{
   if(e.target.tagName==='INPUT'&&e.target.type!=='checkbox')return;
   if(e.key>='1'&&e.key<='5')show('s'+e.key);
+  if(cur==='s1'){if(e.key==='ArrowRight')setStep1(A1.step+1);else if(e.key==='ArrowLeft')setStep1(A1.step-1)}
 });
 
-/* ================= ① 把杯底變淺了 ================= */
+/* ================= ① 把杯底變淺了（一步一步畫光路） ================= */
 const C1={wl:230,wr:700,rimY:230,floor:486,E:{x:850,y:180},lamp:{x:320,y:456},maxH:240};   // lamp＝燈具右上角（光的出發點）
-const A1={h:0,show:false,pour:false};
+const A1={step:0,h:0,target:0};
 // 空氣中從 T 射到水面（高度 ys），折射後剛好到燈具的水面點 px
 function surfRay(T,ys){
   const L=C1.lamp, D=L.y-ys;
@@ -295,15 +299,25 @@ function surfRay(T,ys){
 function eval1(h){
   const ys=C1.floor-h,L=C1.lamp,E=C1.E,R={x:C1.wr,y:C1.rimY};
   const clear=P=>E.y+(P.y-E.y)*(E.x-R.x)/(E.x-P.x)<=R.y+0.01;   // 眼睛看向 P 的視線，能從杯緣上方通過
-  if(ys>=L.y)return {vis:clear(L),P:null,Pg:null,ys,dry:true};
-  const px=surfRay(E,ys),pg=surfRay(R,ys);
+  if(ys>=L.y)return {vis:clear(L),P:null,ys,dry:true};
+  const px=surfRay(E,ys);
   const P=px==null?null:{x:px,y:ys};
-  return {vis:!!P&&clear(P),P,Pg:pg==null?null:{x:pg,y:ys},ys,dry:false};
+  return {vis:!!P&&clear(P),P,ys,dry:false};
 }
-let H1=null; for(let h=0;h<=C1.maxH;h++){ if(eval1(h).vis){H1=h;break} }   // 剛好看到燈具的水位
+// 剛好看到燈具的水位：視線恰好擦過杯緣
+let HSTAR=0;{let h0=0;while(h0<=C1.maxH&&!eval1(h0).vis)h0++;let lo=h0-1,hi=h0;for(let i=0;i<40;i++){const m=(lo+hi)/2;if(eval1(m).vis)hi=m;else lo=m}HSTAR=hi}
+const STEPS1=['原本看不到','後來看得到（自動加水）','眼睛 → 水面，連一條直線','穿出點 → 發光點，連一條線','比較：是同一條直線嗎？','結論'];
+const CAP1=[
+ `<b>原本看不到：</b>光源發出的光沒辦法到達眼睛，光線被杯子邊緣擋住了。`,
+ `<b>後來看得到：</b>光源的光有辦法到達眼睛，眼睛在杯子邊緣現在看得到了。`,
+ `代表從水面穿出的光線會到達眼睛，所以連接一條直線<b>從眼睛到水面</b>。`,
+ `這條穿出的光線是怎麼來的？光源在水裡發光、穿過水面才穿出來，所以連接<b>穿出點與發光點</b>，這條線段就是光在水中行進的路線。`,
+ `<b>比較兩條線：</b>是同一條直線嗎？如果不是，代表什麼？`,
+ `<b>代表光從水穿出水面後，行進方向改變</b>，簡單說，光的行進方向發生偏折。眼睛以為光是直線來的，所以覺得燈具變淺了。`
+];
 function draw1(){
   const g=$('#g1');g.replaceChildren();
-  const h=A1.h,ev=eval1(h),ys=ev.ys,L=C1.lamp,E=C1.E,R={x:C1.wr,y:C1.rimY};
+  const h=A1.h,ev=eval1(h),ys=ev.ys,L=C1.lamp,E=C1.E;
   el('rect',{x:-300,y:500,width:1600,height:200,fill:'#e9edf3'},g);
   if(h>0){
     el('rect',{x:C1.wl,y:ys,width:C1.wr-C1.wl,height:h,fill:'#9fd3f0','fill-opacity':.7},g);
@@ -315,7 +329,7 @@ function draw1(){
   if(ev.vis)el('circle',{cx:L.x-42,cy:L.y+15,r:70,fill:'#ffd43b','fill-opacity':.4},g);
   el('rect',{x:L.x-84,y:L.y,width:84,height:30,rx:6,fill:'#2563eb',stroke:'#1e3a8a','stroke-width':2},g);
   txt(g,L.x-42,524,'燈具',{'font-size':20,'text-anchor':'middle',fill:'#475569','font-weight':700});
-  // 眼睛（位置固定，在杯口上方不高處）
+  // 眼睛（位置固定，從杯緣上方看過去）
   const eg=el('g',{},g);
   el('ellipse',{cx:E.x,cy:E.y,rx:32,ry:21,fill:'#fff',stroke:'#334155','stroke-width':3},eg);
   el('circle',{cx:E.x-12,cy:E.y+4,r:9,fill:'#1f2937'},eg);
@@ -333,74 +347,74 @@ function draw1(){
     txt(g,ix,112,'？',{'font-size':44,'text-anchor':'middle',fill:'#64748b'});
     txt(g,ix,172,'看不到燈具',{'font-size':22,'text-anchor':'middle',fill:'#ff8787','font-weight':700});
   }
-  if(A1.show)ray1(g,ev,L,E,R);
+  steps1(g,ev);
 }
 function line(g,a,b,color,w,dash){return el('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:color,'stroke-width':w||5,'stroke-linecap':'round','stroke-dasharray':dash||''},g)}
-function ray1(g,ev,L,E,R){
+// 依步驟逐步畫出光路
+function steps1(g,ev){
+  const L=C1.lamp,E=C1.E,R={x:C1.wr,y:C1.rimY},s=A1.step,settled=Math.abs(A1.h-A1.target)<0.01;
   const halo={'font-weight':700,stroke:'#fff','stroke-width':5,'paint-order':'stroke'};
   const origin=()=>el('circle',{cx:L.x,cy:L.y,r:8,fill:COL.in,stroke:'#fff','stroke-width':3},g);   // 光從燈具出發的起點
-  if(ev.vis){
-    if(ev.dry){ line(g,L,E,COL.in,5); origin(); return }
-    const P=ev.P,r=62;
-    // 眼睛以為光走直線：把 E→P 往水中延長，到燈具正上方就是「看起來的燈具」
+  if(!settled)return;
+  if(s===0){                                       // 光走直線，被杯緣擋住
+    line(g,L,R,COL.in,5);origin();
+    line(g,{x:R.x-12,y:R.y-12},{x:R.x+12,y:R.y+12},'#c92a2a',6);line(g,{x:R.x-12,y:R.y+12},{x:R.x+12,y:R.y-12},'#c92a2a',6);
+    txt(g,R.x-22,R.y-24,'被杯緣擋住',Object.assign({'font-size':22,'text-anchor':'end',fill:'#c92a2a'},halo));
+    return;
+  }
+  // 杯緣標記：視線剛好從這裡上方擦過
+  el('circle',{cx:R.x,cy:R.y,r:11,fill:'none',stroke:'#334155','stroke-width':3},g);
+  txt(g,R.x+20,R.y+36,'杯緣',Object.assign({'font-size':20,fill:'#334155'},halo));
+  if(s<2||!ev.P)return;
+  const P=ev.P,mid=(a,b)=>({x:(a.x+b.x)/2,y:(a.y+b.y)/2});
+  // 步驟 4：把眼睛到水面的線往水裡延長，和真正的水中光線比較
+  if(s>=4){
     const dir={x:P.x-E.x,y:P.y-E.y},yg=P.y+(P.x-L.x)*dir.y/(-dir.x),G={x:L.x,y:yg};
+    const unit=v=>{const l=Math.hypot(v.x,v.y);return {x:v.x/l,y:v.y/l}};
+    const uG=unit({x:G.x-P.x,y:G.y-P.y}),uL=unit({x:L.x-P.x,y:L.y-P.y}),rw=95,sw=(uG.x*uL.y-uG.y*uL.x)>0?1:0;
+    const p1={x:P.x+uG.x*rw,y:P.y+uG.y*rw},p2={x:P.x+uL.x*rw,y:P.y+uL.y*rw};
+    el('path',{d:`M${P.x},${P.y} L${p1.x},${p1.y} A${rw},${rw} 0 0 ${sw} ${p2.x},${p2.y} Z`,fill:COL.img,'fill-opacity':.22},g);
     el('rect',{x:L.x-84,y:yg,width:84,height:30,rx:6,fill:'#2563eb','fill-opacity':.22,stroke:COL.img,'stroke-width':3,'stroke-dasharray':'7 5'},g);
     txt(g,L.x-42,yg+22,'看起來',{'font-size':18,'text-anchor':'middle',fill:COL.img,'font-weight':700});
     line(g,P,G,COL.img,3,'9 7');
-    // 真正的光路：燈具 → 水面 → 眼睛
-    line(g,{x:P.x,y:P.y-r-8},{x:P.x,y:P.y+r+8},COL.normal,2,'6 5');
-    line(g,L,P,COL.in,5); line(g,P,E,COL.out,5);
-    origin();
-    // 折射點的兩個角度：空氣中大、水中小，光線在水面明顯轉彎
-    const ta=deg(Math.atan((E.x-P.x)/(P.y-E.y))),tw=deg(Math.atan((P.x-L.x)/(L.y-P.y)));
-    el('path',{d:`M${P.x},${P.y-r} A${r},${r} 0 0 1 ${P.x+r*sinD(ta)},${P.y-r*cosD(ta)}`,fill:'none',stroke:COL.out,'stroke-width':4},g);
-    el('path',{d:`M${P.x},${P.y+r} A${r},${r} 0 0 1 ${P.x-r*sinD(tw)},${P.y+r*cosD(tw)}`,fill:'none',stroke:COL.in,'stroke-width':4},g);
-    txt(g,P.x+14,P.y-r-6,`空氣中 ${Math.round(ta)}°`,Object.assign({'font-size':21,fill:COL.out},halo));
-    txt(g,P.x+14,P.y+r+24,`水中 ${Math.round(tw)}°`,Object.assign({'font-size':21,fill:COL.in},halo));
-    txt(g,P.x-14,P.y-r-6,'光在水面轉彎',Object.assign({'font-size':21,'text-anchor':'end',fill:COL.in},halo));
-    txt(g,C1.wr-8,Math.min(P.y+120,C1.floor-24),'眼睛以為光走直線',Object.assign({'font-size':18,'text-anchor':'end',fill:COL.img},halo));
-    return;
+    txt(g,G.x-6,G.y-16,'藍線延長',Object.assign({'font-size':19,'text-anchor':'end',fill:COL.img},halo));
+    txt(g,P.x+18,P.y+48,'兩條線沒有重合',Object.assign({'font-size':21,'text-anchor':'start',fill:COL.img},halo));
   }
-  // 看不到：畫出剛好擦過杯緣的那條光，它到不了眼睛
-  let pts;
-  if(ev.dry){ pts=[L,R]; line(g,L,R,COL.in,5); }
-  else if(ev.Pg){ line(g,L,ev.Pg,COL.in,5); line(g,ev.Pg,R,COL.out,5);
-    line(g,{x:ev.Pg.x,y:ev.Pg.y-50},{x:ev.Pg.x,y:ev.Pg.y+50},COL.normal,2,'6 5'); pts=[ev.Pg,R]; }
-  else return;
-  origin();
-  // 虛線畫到眼睛前面一小段就停，打紅叉：這條光從眼睛上方過去，進不了眼睛
-  const a=pts[0],b=pts[1],d={x:b.x-a.x,y:b.y-a.y},t=Math.min((E.x-100-b.x)/d.x,(30-b.y)/d.y),end={x:b.x+d.x*t,y:b.y+d.y*t};
-  line(g,b,end,ev.dry?COL.in:COL.out,4,'3 8');
-  line(g,{x:end.x-10,y:end.y-10},{x:end.x+10,y:end.y+10},'#c92a2a',5);line(g,{x:end.x-10,y:end.y+10},{x:end.x+10,y:end.y-10},'#c92a2a',5);
-  txt(g,end.x+22,end.y-22,'光到不了眼睛',Object.assign({'font-size':21,'text-anchor':'end',fill:'#c92a2a'},halo));
+  // 步驟 2：眼睛 → 水面（從水面穿出的光）
+  line(g,P,E,COL.out,5);
+  el('circle',{cx:P.x,cy:P.y,r:8,fill:COL.out,stroke:'#fff','stroke-width':3},g);
+  txt(g,P.x-16,P.y-18,'穿出點',Object.assign({'font-size':21,'text-anchor':'end',fill:COL.out},halo));
+  if(s===2){const m=mid(P,E);txt(g,m.x-40,m.y-22,'從水面穿出的光',Object.assign({'font-size':21,'text-anchor':'middle',fill:COL.out},halo))}
+  // 步驟 3：穿出點 → 發光點（光在水中的路線）
+  if(s>=3){
+    line(g,L,P,COL.in,5);origin();
+    if(s===3){const m=mid(L,P);txt(g,m.x-20,m.y+8,'光在水中的路線',Object.assign({'font-size':21,'text-anchor':'end',fill:COL.in},halo))}
+  }
+  // 步驟 5：結論
+  if(s>=5){
+    el('circle',{cx:P.x,cy:P.y,r:20,fill:'none',stroke:COL.in,'stroke-width':4},g);
+    txt(g,P.x-16,P.y-52,'光在這裡轉彎',Object.assign({'font-size':22,'text-anchor':'end',fill:COL.in},halo));
+  }
 }
-function cap1(){
-  const ev=eval1(A1.h),pct=Math.round(A1.h/C1.maxH*100);
-  let s;
-  if(ev.vis){
-    s=(H1!=null&&A1.h<=H1+10)?`<b>剛好看到燈具的邊緣！</b>`:`<b>加水後，看得到燈具了。</b>`;
-    s+=`　光從燈具出發，離開水面進入空氣時轉了彎，才傳得進眼睛；眼睛卻以為光是直線來的，所以覺得燈具變淺、變近了。`;
-  }else if(A1.h===0){
-    s=`<b>加水前：</b>光走直線，被杯緣擋住，到不了眼睛，所以看不到燈具。`;
-  }else{
-    s=`水位 ${pct}%：光在水面已經開始偏折，但還是到不了眼睛，再多加一點水看看。`;
-  }
-  setCap('cap1',s);
+function setStep1(n){
+  A1.step=clamp(n,0,STEPS1.length-1);
+  A1.target=A1.step===0?0:HSTAR;
+  upd1();
 }
 function upd1(){
-  $('#v1').textContent=Math.round(A1.h/C1.maxH*100)+'%';
-  $('#r1').value=A1.h;
-  draw1();cap1();
-  if(A1.show&&eval1(A1.h).vis)tick(8);
+  draw1();
+  const settled=Math.abs(A1.h-A1.target)<0.01;
+  setCap('cap1',settled?CAP1[A1.step]:(A1.target>A1.h?'加水中…':'倒水中…'));
+  $$('#stp1 li').forEach((li,i)=>{li.classList.toggle('on',i===A1.step);li.classList.toggle('past',i<A1.step)});
+  $('#prev1').disabled=A1.step===0;$('#next1').disabled=A1.step===STEPS1.length-1;
+  if(A1.step===STEPS1.length-1&&settled)tick(8);
 }
-$('#r1').addEventListener('input',e=>{A1.pour=false;$('#pour').textContent='▶ 慢慢加水';A1.h=+e.target.value;upd1()});
-$('#ray1').addEventListener('change',e=>{A1.show=e.target.checked;upd1()});
-$('#pour').addEventListener('click',()=>{
-  if(A1.pour){A1.pour=false;$('#pour').textContent='▶ 慢慢加水';return}
-  if(A1.h>=C1.maxH)A1.h=0;
-  A1.pour=true;$('#pour').textContent='⏸ 暫停';
+STEPS1.forEach((t,i)=>{
+  const li=document.createElement('li');li.innerHTML=`<b>${i}</b><span>${t}</span>`;
+  li.addEventListener('click',()=>setStep1(i));$('#stp1').appendChild(li);
 });
-$('#empty').addEventListener('click',()=>{A1.pour=false;$('#pour').textContent='▶ 慢慢加水';A1.h=0;upd1()});
+$('#prev1').addEventListener('click',()=>setStep1(A1.step-1));
+$('#next1').addEventListener('click',()=>setStep1(A1.step+1));
 
 /* ================= 折射箱（②③共用） ================= */
 const MED={
@@ -706,9 +720,9 @@ QUIZ.forEach((Q,i)=>{
 let last=0;
 function loop(t){
   const dt=Math.min(50,t-last);last=t;
-  if(cur==='s1'&&A1.pour){
-    A1.h=Math.min(C1.maxH,A1.h+dt*0.032);
-    if(A1.h>=C1.maxH){A1.pour=false;$('#pour').textContent='▶ 慢慢加水'}
+  if(cur==='s1'&&Math.abs(A1.h-A1.target)>1e-6){                    // 加水／倒水動畫
+    const d=A1.target-A1.h,sp=dt*0.16;
+    A1.h=Math.abs(d)<=sp?A1.target:A1.h+Math.sign(d)*sp;
     upd1();
   }
   if(cur==='s2')B2.frame(t);

@@ -379,9 +379,10 @@ function solve(pieces, state) {
 }
 
 // ---------- 畫面 ----------
+const EDGE = 26;  // 手機上盤面左右各留的空白（右邊放出口箭頭）
 function layout() {
   const narrow = innerWidth <= 980;
-  const availW = narrow ? innerWidth - 32 - 56 : simple() ? innerWidth - 48 - 70 : innerWidth - 48 - 250 * 2 - 40 - 70;
+  const availW = narrow ? innerWidth - 32 - 2 * EDGE : simple() ? innerWidth - 48 - 70 : innerWidth - 48 - 250 * 2 - 40 - 70;
   const availH = narrow ? innerHeight * 0.7 : simple() ? innerHeight - 70 - 26 - 130 : innerHeight - 70 - 26 - 60;
   const size = Math.min(availW, availH);
   const cell = Math.max(narrow ? 34 : 40, Math.min(118, Math.floor((size - 36) / 6.12)));
@@ -405,7 +406,9 @@ function buildBoard() {
   tray.innerHTML = '';
   tray.style.width = inner + pad * 2 + 'px';
   tray.style.height = inner + pad * 2 + 'px';
-  tray.style.marginRight = cell * 0.9 + 'px';
+  const narrow = innerWidth <= 980;
+  tray.style.marginRight = (narrow ? EDGE : cell * 0.9) + 'px';
+  tray.style.marginLeft = (narrow ? EDGE : 0) + 'px';
   for (let r = 0; r < 6; r++) for (let c = 0; c < 6; c++) {
     const d = document.createElement('div'); d.className = 'cell';
     Object.assign(d.style, { left: pad + c * cell + geo.gap / 2 + 'px', top: pad + r * cell + geo.gap / 2 + 'px', width: cell - geo.gap + 'px', height: cell - geo.gap + 'px' });
@@ -414,8 +417,8 @@ function buildBoard() {
   const ex = document.createElement('div'); ex.className = 'exit';
   Object.assign(ex.style, { left: pad + inner - geo.gap / 2 + 'px', top: pad + 2 * cell + geo.gap / 2 + 'px', width: pad + geo.gap / 2 + 'px', height: cell - geo.gap + 'px' });
   tray.appendChild(ex);
-  const lab = document.createElement('div'); lab.className = 'exit-label'; lab.textContent = '出口 ▶';
-  Object.assign(lab.style, { left: inner + pad * 2 + 8 + 'px', top: pad + 2 * cell + 'px', height: cell + 'px', fontSize: Math.max(13, cell * 0.2) + 'px' });
+  const lab = document.createElement('div'); lab.className = 'exit-label'; lab.textContent = narrow ? '▶' : '出口 ▶';
+  Object.assign(lab.style, { left: inner + pad * 2 + (narrow ? 4 : 8) + 'px', top: pad + 2 * cell + 'px', height: cell + 'px', fontSize: Math.max(13, cell * 0.2) + 'px' });
   tray.appendChild(lab);
 
   game.pieces.forEach((p, i) => {

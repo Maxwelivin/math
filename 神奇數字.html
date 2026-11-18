@@ -6,9 +6,10 @@
 <title>神奇數字</title>
 <style>
 :root {
-  --bg: #f4f1fb; --ink: #27223a; --muted: #756e8c; --panel: #fff; --line: #e3ddf2;
-  --btn: #ece7f8; --btn-h: #ddd4f3; --accent: #6c4ee3; --accent-h: #5939d1;
-  --a: #2f9e44; --b: #f08c00; --no: #b8b2c8; --yes: #2f9e44; --bad: #e03131;
+  --bg: #eef3ec; --ink: #2f3a33; --muted: #68786d; --panel: #fbfcf9; --line: #d8e2d4;
+  --btn: #e2eadf; --btn-h: #d3dfce; --accent: #4f8a6b; --accent-h: #417559;
+  --a: #3b8a55; --b: #c9862c; --no: #aeb8ad; --yes: #3b8a55; --bad: #c4534b;
+  --soft: #f1f5ef; --knob: #c3cdc1; --ring: rgba(79,138,107,.18);
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; }
@@ -29,7 +30,7 @@ header .sp { flex: 1; }
   background: var(--btn); border-radius: 999px; padding: 6px 14px 6px 6px; font-size: 14px;
 }
 .toggle:hover { background: var(--btn-h); }
-.toggle .knob { width: 34px; height: 20px; border-radius: 999px; background: #c9c2db; position: relative; transition: background .2s; }
+.toggle .knob { width: 34px; height: 20px; border-radius: 999px; background: var(--knob); position: relative; transition: background .2s; }
 .toggle .knob::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: left .2s; }
 .toggle[aria-pressed="true"] .knob { background: var(--accent); }
 .toggle[aria-pressed="true"] .knob::after { left: 16px; }
@@ -59,14 +60,14 @@ main {
 .hist { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; min-height: 0; padding-right: 4px; }
 .empty { color: var(--muted); font-size: 14px; line-height: 1.7; }
 .row {
-  display: flex; align-items: center; gap: 8px; background: #f8f6fd; border-radius: 10px; padding: 6px 8px;
+  display: flex; align-items: center; gap: 8px; background: var(--soft); border-radius: 10px; padding: 6px 8px;
 }
 .row.fresh { animation: pop .25s ease-out; }
 @keyframes pop { from { transform: scale(.94); opacity: 0; } }
 .row .no { width: 16px; color: var(--muted); font-size: 13px; text-align: right; }
 .row .code { display: flex; gap: 3px; }
 .row .code b {
-  width: 23px; height: 30px; display: grid; place-items: center; background: #fff; border: 1px solid var(--line);
+  width: 23px; height: 30px; display: grid; place-items: center; background: var(--panel); border: 1px solid var(--line);
   border-radius: 6px; font-size: 18px; font-variant-numeric: tabular-nums;
 }
 .row .ab { display: flex; gap: 4px; margin-left: 2px; }
@@ -74,8 +75,8 @@ main {
 .row .ab .a { background: var(--a); } .row .ab .b { background: var(--b); }
 .row .ab i.z { opacity: .35; }
 .row .ex { margin-left: auto; font-size: 12px; color: var(--muted); text-align: right; line-height: 1.25; }
-.row.win { background: #e6f6e9; }
-.row.wrong { background: #ffe9e9; outline: 2px solid var(--bad); }
+.row.win { background: #e1eedf; }
+.row.wrong { background: #f6e6e3; outline: 2px solid var(--bad); }
 .row.wrong .ex { color: var(--bad); font-weight: 700; }
 
 .center { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; min-height: 0; }
@@ -86,8 +87,8 @@ main {
   width: 68px; height: 84px; border-radius: 14px; background: var(--panel); border: 3px solid var(--line);
   display: grid; place-items: center; font-size: 46px; font-weight: 700; font-variant-numeric: tabular-nums;
 }
-.slot.cur { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(108,78,227,.15); }
-.slot.big { background: #fff8e1; border-color: #ffd43b; }
+.slot.cur { border-color: var(--accent); box-shadow: 0 0 0 4px var(--ring); }
+.slot.big { background: #f7f1e1; border-color: #d9bd78; }
 .slots.shake { animation: shake .3s; }
 @keyframes shake { 20% { transform: translateX(-8px); } 45% { transform: translateX(8px); } 70% { transform: translateX(-4px); } 100% { transform: none; } }
 .keypad { display: grid; grid-template-columns: repeat(5, 64px); gap: 8px; }
@@ -95,7 +96,7 @@ main {
   height: 54px; border: 0; border-radius: 12px; background: var(--panel); font-size: 24px; font-weight: 700; cursor: pointer;
   box-shadow: 0 2px 0 var(--line), 0 0 0 1px var(--line);
 }
-.keypad button:hover:not(:disabled) { background: #f6f3ff; }
+.keypad button:hover:not(:disabled) { background: var(--soft); }
 .keypad button:active:not(:disabled) { transform: translateY(1px); }
 .keypad button:disabled { opacity: .35; cursor: default; }
 .keypad button.m1 { color: #fff; background: var(--no); }
@@ -140,14 +141,14 @@ main {
 .stat b { font-size: 30px; font-variant-numeric: tabular-nums; }
 .stat b.mid { font-size: 22px; }
 .note { font-size: 13px; color: var(--muted); line-height: 1.7; }
-.rule { font-size: 13px; line-height: 1.8; background: #f8f6fd; border-radius: 10px; padding: 8px 12px; }
+.rule { font-size: 13px; line-height: 1.8; background: var(--soft); border-radius: 10px; padding: 8px 12px; }
 .rule i { font-style: normal; font-weight: 700; color: #fff; border-radius: 5px; padding: 0 5px; }
 .rule i.a { background: var(--a); } .rule i.b { background: var(--b); }
 .secret { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--muted); white-space: nowrap; }
 .secret b { font-size: 22px; letter-spacing: 3px; color: var(--ink); font-variant-numeric: tabular-nums; }
 .secret button { margin-left: auto; border: 0; background: var(--btn); border-radius: 8px; padding: 3px 8px; cursor: pointer; }
 .tally { display: flex; gap: 8px; }
-.tally div { flex: 1; text-align: center; background: #f8f6fd; border-radius: 10px; padding: 6px 0; font-size: 13px; color: var(--muted); }
+.tally div { flex: 1; text-align: center; background: var(--soft); border-radius: 10px; padding: 6px 0; font-size: 13px; color: var(--muted); }
 .tally b { display: block; font-size: 22px; color: var(--ink); }
 .turn { font-size: 13px; padding: 2px 8px; border-radius: 999px; background: var(--btn); color: var(--muted); }
 .turn.on { background: var(--accent); color: #fff; }
@@ -158,7 +159,7 @@ kbd { font-family: inherit; background: var(--btn); border: 1px solid var(--line
   position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; z-index: 20;
   opacity: 0; transition: opacity .3s;
 }
-.flash span { background: rgba(39,34,58,.8); color: #fff; font-size: 54px; font-weight: 900; padding: 16px 48px; border-radius: 24px; }
+.flash span { background: rgba(47,58,51,.82); color: #fff; font-size: 54px; font-weight: 900; padding: 16px 48px; border-radius: 24px; }
 .flash.on { opacity: 1; }
 
 /* 簡約模式：只剩輸入格、紀錄、數字按鈕 */
@@ -179,7 +180,8 @@ body.simple main { grid-template-columns: 330px auto; justify-content: center; h
   .hist { max-height: 300px; }
   .slot { width: 56px; height: 70px; font-size: 38px; }
   .keypad { grid-template-columns: repeat(5, 56px); }
-  body.simple main { grid-template-columns: minmax(0, 1fr); }
+  body.simple main { grid-template-columns: minmax(0, 1fr); height: auto; padding-top: 4px; }
+  #centerCol > *, #entryView > *, #reportView > * { flex-shrink: 0; }
 }
 @media (max-width: 360px) {
   .slot { width: 50px; height: 64px; font-size: 34px; }

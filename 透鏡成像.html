@@ -81,7 +81,8 @@ table.sum tr.hot td{background:#fff4ec}
 .rules svg{display:block;width:100%;max-height:25vh}
 .rhead{display:flex;align-items:center;gap:8px;margin:2px 0 4px}
 .rhead .chip{font-size:.85em;padding:.15em .8em}
-.rhead .rule{margin-left:auto;font-weight:700;color:var(--accent);font-size:1.05em}
+.rhead{position:relative}
+.rhead .rule{position:absolute;left:50%;transform:translateX(-50%);white-space:nowrap;font-weight:700;color:var(--accent);font-size:1.05em}
 table.sum.compact{font-size:1.15em}
 table.sum.compact th,table.sum.compact td{padding:.28em .6em}
 @keyframes pop{0%{transform:scale(.6);opacity:0}100%{transform:scale(1);opacity:1}}
@@ -700,7 +701,7 @@ const C=(()=>{
     const B1=92, B2=172, B3=250;
     const key=hl==='cc'?B3:hl==='inF'?B2:['out2F','2F','F2F'].includes(hl)?B1:null;
     if(key)el('rect',{x:8,y:key-62,width:1584,height:key===B1?106:84,rx:14,fill:'#d9480f','fill-opacity':.1,stroke:'#d9480f','stroke-width':4},RS);
-    for(const k of [-2,-1,1,2])T(xf(k),24,Math.abs(k)===2?'2f':'f',{fill:'#5b4bb7','font-size':26});
+    for(const k of [-2,-1,1,2])T(xf(k),19,Math.abs(k)===2?'2f':'f',{fill:'#5b4bb7','font-size':24});
     // 同向箭頭
     const arr=(x,y,col)=>{el('line',{x1:x-22,y1:y,x2:x+14,y2:y,stroke:col,'stroke-width':4},RS);el('path',{d:`M${x+24},${y} l-12,-8 v16 Z`,fill:col},RS)};
     const row=(b,title,concave,ox,ix,ih,mode,note)=>{
@@ -714,8 +715,7 @@ const C=(()=>{
       drawCandle(RS,ix,b,ih,real?-1:1,mode);arr(ix,real?b+ih+14:b-ih-14,'#15803d');
       T(1330,b-8,note,{'text-anchor':'start','font-size':28,fill:'#15803d'});
     };
-    row(B1,'凸透鏡．f 以外',false,xf(-2.6),xf(1.625),30,'real','2f 對 2f');
-    el('path',{d:`M${xf(-2)},${B1-6} Q${XC},${B1-62} ${xf(2)},${B1-6}`,fill:'none',stroke:'#5b4bb7','stroke-width':2.5,'stroke-dasharray':'8 7'},RS);
+    row(B1,'凸透鏡．f 以外',false,xf(-2),xf(2),44,'real','2f 對 2f');
     row(B2,'凸透鏡．f 以內',false,xf(-.6),xf(-1.5),52,'virtual','像在物體後');
     row(B3,'凹透鏡',true,xf(-2),xf(-2/3),24,'virtual','像在物體前');
   }

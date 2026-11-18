@@ -77,6 +77,10 @@ table.sum td.ans.real{color:var(--good);font-weight:700}
 table.sum td.ans.virt{color:var(--accent);font-weight:700}
 table.sum tr.hot td{background:#fff4ec}
 .play{font:inherit;border:0;background:none;color:var(--warm);cursor:pointer;font-size:.9em;padding:0 0 0 .3em}
+.rules{background:var(--surface);border:2px solid var(--line);border-radius:16px;padding:6px 12px}
+.rules svg{display:block;width:100%;max-height:30vh}
+table.sum.compact{font-size:1.15em}
+table.sum.compact th,table.sum.compact td{padding:.28em .6em}
 @keyframes pop{0%{transform:scale(.6);opacity:0}100%{transform:scale(1);opacity:1}}
 </style>
 </head>
@@ -124,12 +128,14 @@ table.sum tr.hot td{background:#fff4ec}
       <button class="btn primary" id="qPick">🎲 抽一題</button>
       <button class="btn" id="tAll">全部顯示</button>
       <button class="btn ghost" id="tClr">清空</button>
+      <button class="btn" id="tRule">📏 判斷法</button>
       <span class="sp"></span>
       <span style="color:var(--muted)">點 ？ 可單格翻開；▶ 到沙盤看作圖</span>
     </div>
     <div class="tablewrap">
       <div class="quiz" id="quiz"><span class="q" id="qText"></span><span class="g">先猜：實／虛．正／倒．大／小</span><span class="sp" style="flex:1"></span><button class="btn primary" id="qShow">▶ 揭曉</button></div>
       <table class="sum" id="sumTable"></table>
+      <div class="rules" id="rules" hidden><svg id="ruleSvg" viewBox="0 0 1600 290"></svg></div>
     </div>
   </section>
 </main>
@@ -676,6 +682,50 @@ const C=(()=>{
     B.setType(r.concave?'concave':'convex');B.setU(r.u);B.go(0,true);B.showBack=true;showPanel('pB');
     [1,2,3].forEach((n,i)=>autoT.push(setTimeout(()=>B.go(n,true),900+i*2500)));
   }
+  /* 判斷法：凸透鏡看物體在 f、2f 的哪一側 */
+  const RS=$('#ruleSvg'), L=270, X2=720, X1=1070, XL=1420;
+  const HL={out2F:[L-8,X2-34],'2F':[X2-38,X2+38],F2F:[X2+34,X1-12],F:[X1-24,X1+24],inF:[X1+12,XL-4]};
+  function drawRules(hl){
+    RS.replaceChildren();
+    const T=(x,y,str,a)=>txt(RS,x,y,str,Object.assign({'font-size':30,'font-weight':700,'text-anchor':'middle',fill:'#191c2e'},a||{}));
+    const box=(x1,x2,y,fill,stroke,label,col)=>{el('rect',{x:x1,y,width:x2-x1,height:62,rx:12,fill,stroke,'stroke-width':3},RS);T((x1+x2)/2,y+42,label,{fill:col,'font-size':32})};
+    // 抽題時標出區段（畫在色塊後面，不蓋字）
+    if(HL[hl]){
+      const [a,b]=HL[hl];
+      el('rect',{x:a-6,y:68,width:b-a+12,height:176,rx:16,fill:'#d9480f','fill-opacity':.16,stroke:'#d9480f','stroke-width':5},RS);
+      const cx=(a+b)/2;el('path',{d:`M${cx},56 l-12,18 h24 Z`,fill:'#d9480f'},RS);
+    }
+    // 主軸與透鏡
+    el('line',{x1:L,y1:52,x2:XL+50,y2:52,stroke:'#8d92aa','stroke-width':3},RS);
+    el('ellipse',{cx:XL,cy:52,rx:9,ry:36,fill:'#cfe8f6',stroke:'#6aaed6','stroke-width':3},RS);
+    T(XL+100,62,'凸透鏡',{fill:'#3c7fa8','font-size':28});
+    for(const [x,t] of [[X2,'2f'],[X1,'f']]){el('circle',{cx:x,cy:52,r:8,fill:'#5b4bb7'},RS);T(x,30,t,{fill:'#5b4bb7'})}
+    for(const [x,t] of [[(L+X2)/2,'2f 外'],[(X2+X1)/2,'f～2f'],[(X1+XL)/2,'f 內']])T(x,34,t,{fill:'#8d92aa','font-size':26,'font-weight':500});
+    // 列名
+    T(24,128,'實虛．正倒',{'text-anchor':'start','font-size':28});
+    T(24,208,'大小',{'text-anchor':'start','font-size':28});
+    // 第一列：f 為界
+    box(L,X1-22,86,'#e3f4ea','#15803d','實像．倒立','#15803d');
+    box(X1+22,XL-14,86,'#ebe8fb','#5b4bb7','虛像．正立','#5b4bb7');
+    // 第二列：2f 為界
+    box(L,X2-44,166,'#fff1e8','#d9480f','縮小','#d9480f');
+    box(X2+44,X1-22,166,'#fff1e8','#d9480f','放大','#d9480f');
+    box(X1+22,XL-14,166,'#fff1e8','#d9480f','放大','#d9480f');
+    el('rect',{x:X2-40,y:166,width:80,height:62,rx:12,fill:'#d9480f'},RS);T(X2,208,'等大',{fill:'#fff','font-size':28});
+    // f 上：不成像
+    el('line',{x1:X1,y1:74,x2:X1,y2:236,stroke:'#c92a2a','stroke-width':3,'stroke-dasharray':'7 6'},RS);
+    T(X1,130,'✕',{fill:'#c92a2a','font-size':34});T(X1,210,'✕',{fill:'#c92a2a','font-size':34});
+    T(X1,272,'f 上：不成像',{fill:'#c92a2a','font-size':26});
+    // 例外：凹透鏡
+    T(24,272,'凹透鏡：放在哪裡都是 虛像．正立．縮小',{'text-anchor':'start','font-size':26,fill:'#5b4bb7'});
+    // 抽題時標出區段
+    if(hl==='cc')el('rect',{x:12,y:240,width:560,height:46,rx:10,fill:'#d9480f','fill-opacity':.08,stroke:'#d9480f','stroke-width':4},RS);
+  }
+  drawRules(null);
+  $('#tRule').addEventListener('click',()=>{
+    const on=$('#rules').hidden;$('#rules').hidden=!on;
+    $('#tRule').classList.toggle('on',on);tb.classList.toggle('compact',on);
+  });
   let last=null, cur=null;
   $('#qPick').addEventListener('click',()=>{
     const pool=ROWS.filter(r=>r.u&&r.key!==last);
@@ -684,10 +734,11 @@ const C=(()=>{
     tb.querySelectorAll('tr').forEach(tr=>tr.classList.toggle('hot',tr.dataset.key===cur.key));
     $('#qText').textContent=`${cur.concave?'凹透鏡':'凸透鏡'}．物體在 ${cur.pos}`;
     $('#quiz').classList.add('on');
+    drawRules(cur.key);
   });
   $('#qShow').addEventListener('click',()=>{if(cur)demo(cur)});
   $('#tAll').addEventListener('click',()=>ROWS.forEach(r=>fill(r.key)));
-  $('#tClr').addEventListener('click',()=>{ROWS.forEach(r=>clearRow(r.key));$('#quiz').classList.remove('on');tb.querySelectorAll('tr').forEach(tr=>tr.classList.remove('hot'));cur=null});
+  $('#tClr').addEventListener('click',()=>{ROWS.forEach(r=>clearRow(r.key));$('#quiz').classList.remove('on');tb.querySelectorAll('tr').forEach(tr=>tr.classList.remove('hot'));cur=null;drawRules(null)});
   return {fill};
 })();
 /* 沙盤畫到「成像」時填表：B 初始化時 C 還沒建立，所以在此補一次 */

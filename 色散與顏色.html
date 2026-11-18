@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>理化 4-5 色散與顏色</title>
+<style>
+:root{
+  --bg:#f6f8fb; --ink:#1f2937; --muted:#6b7280; --line:#d8dee8;
+  --accent:#2563eb; --good:#2b8a3e;
+  --obj:#0f766e; --sub:#c2410c; --stage:#0b1020;
+}
+*{box-sizing:border-box}
+html{font-size:clamp(15px,1.02vw,22px)}
+body{margin:0;height:100vh;display:flex;flex-direction:column;background:var(--bg);color:var(--ink);
+  font-family:"Microsoft JhengHei","PingFang TC","Noto Sans TC",system-ui,sans-serif;line-height:1.5;overflow:hidden}
+.top{background:#fff;border-bottom:1px solid var(--line);padding:.35rem .9rem;display:flex;align-items:center;gap:1rem;flex:none}
+.top h1{margin:0;font-size:1.35rem;white-space:nowrap}
+.top .sp{flex:1}
+.mode{display:flex;align-items:center;gap:.5rem;font-size:1rem;color:var(--muted)}
+.seg{display:flex}
+.seg button{font:inherit;font-size:1.12rem;padding:.35rem 1rem;border:2px solid var(--line);background:#fff;color:var(--muted);cursor:pointer;white-space:nowrap}
+.seg button:first-child{border-radius:.55rem 0 0 .55rem}
+.seg button:last-child{border-radius:0 .55rem .55rem 0;border-left:none}
+.seg button.on[data-m=obj]{background:var(--obj);border-color:var(--obj);color:#fff;font-weight:700}
+.seg button.on[data-m=sub]{background:var(--sub);border-color:var(--sub);color:#fff;font-weight:700}
+.stepbar{flex:none;display:flex;flex-wrap:wrap;gap:.35rem;align-items:center;padding:.4rem .9rem;border-bottom:1px solid var(--line);background:#fafcff}
+.stepbar .chip{font:inherit;font-size:1rem;border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:.2rem .75rem;cursor:pointer;color:var(--muted);white-space:nowrap}
+.stepbar .chip b{margin-right:.3rem}
+.stepbar .chip.past{border-color:var(--good);color:var(--good)}
+.stepbar .chip.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
+.stepbar .sp{flex:1}
+.stepbar .hint{font-size:.85rem;color:var(--muted);white-space:nowrap}
+.btn{font:inherit;font-size:1.02rem;border:1.5px solid var(--accent);background:#fff;color:var(--accent);border-radius:.5rem;padding:.3rem .8rem;cursor:pointer;white-space:nowrap}
+.btn:hover{background:#eef4ff}
+.btn.primary{background:var(--accent);color:#fff}
+.btn.primary:hover{background:#1d4ed8}
+.btn:disabled{opacity:.4;cursor:default}
+.btn.on{background:var(--accent);color:#fff;font-weight:700}
+.main{flex:1;min-height:0;display:flex;flex-direction:column;gap:.45rem;padding:.5rem .8rem .6rem}
+.stagebox{flex:1;min-height:0;position:relative;background:var(--stage);border-radius:.75rem;overflow:hidden}
+svg.stage{width:100%;height:100%;display:block;user-select:none}
+.ctrl{flex:none;display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;min-height:2.5rem;font-size:1.05rem}
+.ctrl input[type=range]{flex:1;min-width:12rem;max-width:32rem;height:2rem;accent-color:var(--accent)}
+.ctrl .val{font-weight:700;color:var(--accent);min-width:6.5rem}
+.ctrl .lbl{color:var(--muted)}
+.cap{flex:none;background:#fff;border:2px solid var(--accent);border-radius:.6rem;padding:.4rem .9rem;font-size:1.22rem;min-height:3.7rem;display:flex;align-items:center}
+.cap.obj{border-color:var(--obj)}.cap.sub{border-color:var(--sub)}
+.cap b{color:var(--accent)}
+.cap.obj b{color:var(--obj)}.cap.sub b{color:var(--sub)}
+/* 結論 */
+.concl{position:absolute;inset:0;display:none;align-items:center;justify-content:center;gap:2.5%;padding:3% 4%}
+.concl.on{display:flex}
+.concl .cd{flex:1;max-width:36rem;border-radius:1rem;padding:1.2rem 1.5rem;background:#111a2e;border:3px solid #334155;color:#e5e7eb;transition:.3s;opacity:.55}
+.concl .cd h2{margin:0 0 .7rem;font-size:1.7rem}
+.concl .cd ol{margin:0;padding-left:1.4rem;font-size:1.35rem;line-height:1.75}
+.concl .cd .big{margin-top:.9rem;font-size:1.45rem;font-weight:700}
+.concl .cd.obj h2,.concl .cd.obj .big{color:#5eead4}
+.concl .cd.sub h2,.concl .cd.sub .big{color:#fdba74}
+.concl .cd.hl{opacity:1}
+.concl .cd.obj.hl{border-color:#14b8a6;box-shadow:0 0 0 4px rgba(20,184,166,.2)}
+.concl .cd.sub.hl{border-color:#f97316;box-shadow:0 0 0 4px rgba(249,115,22,.2)}
+.concl .mid{font-size:2.6rem;color:#94a3b8;flex:none}
+@media (max-width:980px){
+  body{height:auto;overflow:auto}
+  .top{flex-wrap:wrap}.stagebox{height:62vw;min-height:16rem;flex:none}
+  .concl{flex-direction:column;overflow:auto}.concl .cd ol{font-size:1rem}.concl .mid{display:none}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>4-5 色散：白光裡藏著什麼？</h1>
+  <span class="sp"></span>
+  <div class="mode"><span>切換看法</span>
+    <div class="seg" id="seg"><button data-m="obj">客觀（物理）</button><button data-m="sub" class="on">主觀（人眼視覺）</button></div>
+  </div>
+</header>
+<nav class="stepbar" id="bar"></nav>
+
+<div class="main">
+  <div class="stagebox">
+    <svg class="stage" id="svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid meet">
+      <defs>
+        <filter id="glow" filterUnits="userSpaceOnUse" x="-50" y="-50" width="1700" height="1000"><feGaussianBlur stdDeviation="3.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <filter id="soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="9"/></filter>
+        <pattern id="hatch" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="10" height="10" fill="#475569"/><line x1="0" y1="0" x2="0" y2="10" stroke="#e2e8f0" stroke-width="5"/></pattern>
+      </defs>
+      <g id="gScene"></g>
+      <g id="gRays"></g>
+      <g id="gInset"></g>
+      <g id="gEye"></g>
+      <g id="gBadge"></g>
+    </svg>
+    <div class="concl" id="concl">
+      <div class="cd obj"><h2>客觀（物理）</h2>
+        <ol><li>太陽光是許多不同<b>頻率</b>的電磁波疊在一起</li>
+          <li>頻率越高，在玻璃中越慢、偏折越多</li>
+          <li>經過三稜鏡，依頻率分開＝<b>色散</b></li></ol>
+        <div class="big">頻率是光本身的性質</div></div>
+      <div class="mid">→</div>
+      <div class="cd sub"><h2>主觀（人眼視覺）</h2>
+        <ol><li>光進入眼睛，三種錐細胞產生強弱不同的訊號</li>
+          <li>大腦比較三個訊號的比例</li>
+          <li>產生紅、橙、黃、綠…的<b>感覺</b></li></ol>
+        <div class="big">顏色是大腦產生的視覺感受</div></div>
+    </div>
+  </div>
+  <div class="ctrl" id="ctrl"></div>
+  <div class="cap" id="cap"></div>
+</div>
+
+<script>
+const $=s=>document.querySelector(s);
+const C_NM=299792.458;                 // 波長(nm)×頻率(THz)
+const F0=430,F1=750;                   // 可見光頻率範圍（THz）
+const RAYS=[445,496,522,565,630,685,740];          // 示範光線（THz）
+const NAMES=['紅','橙','黃','綠','藍','靛','紫'];   // 對應 RAYS 的顏色名稱
+const nGlass=f=>1.48+0.24*(f-F0)/(F1-F0);          // 示意用折射率（色散放大，方向正確：頻率高→n大）
+const lamPx=f=>12040/f;                // 畫面上的波長（像素）
+const VPX=70;                          // 畫面上波前進速度（像素／秒，空氣中）
+
+// ---------- 向量 ----------
+const add=(a,b)=>[a[0]+b[0],a[1]+b[1]],sub=(a,b)=>[a[0]-b[0],a[1]-b[1]],mul=(a,k)=>[a[0]*k,a[1]*k];
+const dot=(a,b)=>a[0]*b[0]+a[1]*b[1],len=a=>Math.hypot(a[0],a[1]),unit=a=>mul(a,1/len(a));
+const cross=(a,b)=>a[0]*b[1]-a[1]*b[0];
+const rot=(a,deg)=>{const r=deg*Math.PI/180,c=Math.cos(r),s=Math.sin(r);return [a[0]*c-a[1]*s,a[0]*s+a[1]*c]};
+const lerp=(a,b,t)=>[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t];
+function hitLine(o,d,p,q){const e=sub(q,p);return add(o,mul(d,cross(sub(p,o),e)/cross(d,e)))}
+function refract(d,nrm,eta){const ci=-dot(nrm,d),k=1-eta*eta*(1-ci*ci);return unit(add(mul(d,eta),mul(nrm,eta*ci-Math.sqrt(k))))}
+function outN(p,q,G){const e=unit(sub(q,p));let n=[e[1],-e[0]];if(dot(n,sub(lerp(p,q,.5),G))<0)n=mul(n,-1);return n}
+
+// ---------- 顏色（人眼模式用） ----------
+function specRGB(f){
+  const w=C_NM/f;let r=0,g=0,b=0;
+  if(w<440){r=(440-w)/60;b=1}else if(w<490){g=(w-440)/50;b=1}else if(w<510){g=1;b=(510-w)/20}
+  else if(w<580){r=(w-510)/70;g=1}else if(w<645){r=1;g=(645-w)/65}else r=1;
+  const fac=w<420?.3+.7*(w-380)/40:w>700?.3+.7*(780-w)/80:1;
+  const c=x=>Math.round(255*Math.pow(Math.max(0,x*fac),.8));
+  return `rgb(${c(r)},${c(g)},${c(b)})`;
+}
+function specLight(f){const m=specRGB(f).match(/\d+/g).map(Number);return `rgb(${m.map(v=>Math.round(v+(255-v)*.35)).join(',')})`}
+function cname(f){const w=C_NM/f;return w>=620?'紅色':w>=590?'橙色':w>=570?'黃色':w>=495?'綠色':w>=450?'藍色':w>=425?'靛色':'紫色'}
+
+// ---------- 錐細胞（感光色素吸收曲線，Govardovskii 2000 模板） ----------
+function gov(lm,l){const x=lm/l,a=0.8795+0.0459*Math.exp(-Math.pow(lm-300,2)/11940);
+  const al=1/(Math.exp(69.7*(a-x))+Math.exp(28*(0.922-x))+Math.exp(-14.9*(1.104-x))+0.674);
+  const lb=189+0.315*lm,bb=-40.5+0.195*lm;return al+0.26*Math.exp(-Math.pow((l-lb)/bb,2))}
+const CONES=[{name:'低頻型',lm:559,dash:''},{name:'中頻型',lm:530,dash:'14 8'},{name:'高頻型',lm:420,dash:'3 7'}];
+CONES.forEach(c=>{let m=0;for(let l=380;l<=720;l+=.5)m=Math.max(m,gov(c.lm,l));c.max=m});
+const sens=f=>CONES.map(c=>gov(c.lm,C_NM/f)/c.max);
+// 黃光的騙局：517 THz 單一頻率 vs 461 THz＋556 THz 混合（解出強度比，使低頻型、中頻型訊號相同）
+const TY=517,TR=461,TG=556;
+const MIX=(()=>{const y=sens(TY),r=sens(TR),g=sens(TG),d=r[0]*g[1]-g[0]*r[1];
+  const a=(y[0]*g[1]-g[0]*y[1])/d,b=(r[0]*y[1]-y[0]*r[1])/d;return [0,1,2].map(i=>a*r[i]+b*g[i])})();
+
+// ---------- 幾何：三稜鏡、屏幕、透鏡、第二個三稜鏡 ----------
+const PC=[560,390],PS=300,PH=PS*Math.sqrt(3)/2;
+const A=[PC[0],PC[1]-2*PH/3],B=[PC[0]-PS/2,PC[1]+PH/3],Cc=[PC[0]+PS/2,PC[1]+PH/3];
+const nAB=outN(A,B,PC),nAC=outN(A,Cc,PC);
+const E=lerp(A,B,.5);
+const DIN=rot(mul(nAB,-1),-50);          // 入射角 50°
+const SUN=sub(E,mul(DIN,420));
+function trace(f){const n=nGlass(f),d1=refract(DIN,nAB,1/n),X=hitLine(E,d1,A,Cc),d2=refract(d1,mul(nAC,-1),n);return {n,d1,X,d2}}
+const TM=trace(590),DM=TM.d2;
+const SC=add(TM.X,mul(DM,600)),SD=[-DM[1],DM[0]];
+const hitScreen=f=>{const t=trace(f);return hitLine(t.X,t.d2,SC,add(SC,SD))};
+const XL=920,MIR=p=>[2*XL-p[0],p[1]];
+const DOUT=[DIN[0],-DIN[1]];
+const ME=MIR(E),OUT=add(ME,mul(DOUT,(1590-ME[0])/DOUT[0]));
+// 每條光線的兩種路徑：A＝到屏幕；B＝經透鏡、第二個三稜鏡
+function mkPath(pts,ns){const segs=[];let c=0,o=0;for(let i=0;i<ns.length;i++){const a=pts[i],b=pts[i+1],L=len(sub(b,a));segs.push({a,b,L,n:ns[i],c,o,u:unit(sub(b,a))});c+=L;o+=L*ns[i]}return {segs,total:c}}
+const RAYDATA=RAYS.map(f=>{
+  const t=trace(f),H=hitScreen(f),Q=add(t.X,mul(t.d2,(XL-t.X[0])/t.d2[0]));
+  return {f,t,H,Q,
+    pA:mkPath([SUN,E,t.X,H],[1,t.n,1]),
+    pB:mkPath([SUN,E,t.X,Q,MIR(t.X),ME,OUT],[1,t.n,1,1,t.n,1])};
+});
+const PHI=RAYS.map((f,i)=>i*2.399);       // 各頻率固定的初相位
+
+// ---------- 狀態 ----------
+const STEPS=['太陽光','拆開來看','進入三稜鏡','散開','合回白光','錐細胞','結論'];
+const st={step:0,mode:'sub',eye:'one',f:TY,from:0,to:0,t0:0};
+function stopLen(s,p){const g=p.segs;return s<=1?g[0].L:s===2?g[1].c+g[1].L:p.total}
+
+// ---------- SVG 小工具 ----------
+const T=(x,y,s,o={})=>`<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" font-size="${o.size||26}" fill="${o.fill||'#e5e7eb'}" text-anchor="${o.anchor||'middle'}" font-weight="${o.w||400}"${o.extra||''}>${s}</text>`;
+const LN=(a,b,c,w,o='')=>`<line x1="${a[0].toFixed(1)}" y1="${a[1].toFixed(1)}" x2="${b[0].toFixed(1)}" y2="${b[1].toFixed(1)}" stroke="${c}" stroke-width="${w}" ${o}/>`;
+const PT=pts=>pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+','+p[1].toFixed(1)).join('');
+const triPath=(a,b,c)=>`M${a}L${b}L${c}Z`;
+
+// ---------- 場景（靜態部分） ----------
+function drawScene(){
+  const s=st.step,obj=st.mode==='obj';let h='';
+  if(s<=4){
+    // 太陽
+    h+=`<circle cx="${SUN[0]}" cy="${SUN[1]}" r="34" fill="#fde68a" filter="url(#glow)"/>`;
+    for(let k=0;k<12;k++){const a=k*Math.PI/6,p=[SUN[0]+Math.cos(a)*44,SUN[1]+Math.sin(a)*44],q=[SUN[0]+Math.cos(a)*58,SUN[1]+Math.sin(a)*58];h+=LN(p,q,'#fde68a',4,'stroke-linecap="round"')}
+    h+=T(SUN[0]+10,SUN[1]+100,'太陽光',{size:28,w:700});
+    // 三稜鏡
+    h+=`<path d="${triPath(A,B,Cc)}" fill="rgba(147,197,253,.13)" stroke="#93c5fd" stroke-width="3"/>`;
+    h+=T(PC[0],A[1]-20,'三稜鏡',{size:28,w:700,fill:'#bfdbfe'});
+    if(s===3){
+      // 屏幕＋光譜帶
+      const s0=add(SC,mul(SD,-215)),s1=add(SC,mul(SD,215)),back=mul(DM,14);
+      h+=`<path d="${PT([s0,s1,add(s1,back),add(s0,back)])}Z" fill="#1e293b" stroke="#64748b" stroke-width="2"/>`;
+      h+='<g id="spec" style="opacity:0;transition:opacity .5s">';
+      for(let f=F0;f<F1;f+=4){const p=hitScreen(f),q=hitScreen(f+4.5);h+=LN(p,q,obj?'#9ca3af':specRGB(f+2),16)}
+      // 標籤排成等距一列，用細線連到光線落點（順序與屏幕上相同）
+      const tH=RAYDATA.map(r=>dot(sub(r.H,SC),SD)),tm=(tH[0]+tH[tH.length-1])/2,gap=obj?40:42;
+      const lab=k=>add(add(SC,mul(DM,95)),mul(SD,tm+(k-(RAYS.length-1)/2)*gap));
+      RAYDATA.forEach((r,i)=>{const p=lab(i);h+=LN(add(r.H,mul(DM,12)),add(p,mul(DM,-8)),'#64748b',1.5);
+        h+=obj?T(p[0],p[1]+8,r.f+' THz',{size:22,anchor:'start',fill:'#cbd5e1'}):T(p[0],p[1]+10,NAMES[i],{size:28,w:700,anchor:'start',fill:specLight(r.f)})});
+      if(obj){const p=lab(-1.1),q=lab(RAYS.length+.1);
+        h+=T(p[0],p[1]+8,'頻率低',{size:22,anchor:'start',fill:'#94a3b8'})+T(q[0],q[1]+8,'頻率高',{size:22,anchor:'start',fill:'#94a3b8'});}
+      h+='</g>';
+      const lb=add(SC,mul(SD,240));h+=T(lb[0]-30,lb[1]+20,'屏幕',{size:24,fill:'#94a3b8'});
+    }
+    if(s===4){
+      const ys=RAYDATA.map(r=>r.Q[1]),y0=Math.min(...ys)-40,y1=Math.max(...ys)+40;
+      h+=`<path d="M${XL},${y0} Q${XL+34},${(y0+y1)/2} ${XL},${y1} Q${XL-34},${(y0+y1)/2} ${XL},${y0}Z" fill="rgba(147,197,253,.15)" stroke="#93c5fd" stroke-width="3"/>`;
+      h+=T(XL,y1+38,'透鏡',{size:26,fill:'#bfdbfe',w:700});
+      h+=`<path d="${triPath(MIR(A),MIR(B),MIR(Cc))}" fill="rgba(147,197,253,.13)" stroke="#93c5fd" stroke-width="3"/>`;
+      h+=T(2*XL-PC[0],A[1]-20,'第二個三稜鏡',{size:28,w:700,fill:'#bfdbfe'});
+      h+='<g id="spec" style="opacity:0;transition:opacity .5s">'+T(OUT[0]+5,OUT[1]+64,obj?'又疊回原來的波':'又變回白光',{size:26,w:700,anchor:'end',fill:obj?'#5eead4':'#fff'})+'</g>';
+    }
+  }
+  $('#gScene').innerHTML=h;
+  drawInset();drawEye();
+  $('#gBadge').innerHTML=s===6?'':`<rect x="16" y="14" width="${obj?318:330}" height="46" rx="10" fill="${obj?'#134e4a':'#7c2d12'}"/>`+
+    T(32,46,obj?'客觀：電磁波的頻率':'主觀：眼睛看到的顏色',{size:25,w:700,anchor:'start',fill:obj?'#99f6e4':'#fed7aa'});
+  $('#concl').classList.toggle('on',s===6);
+  document.querySelectorAll('.concl .cd').forEach(c=>c.classList.toggle('hl',c.classList.contains(st.mode)));
+}
+
+// ---------- 步驟 1：放大框 ----------
+const IN={x:880,y:30,w:690,h:560};
+function drawInset(){
+  if(st.step!==1){$('#gInset').innerHTML='';return}
+  const obj=st.mode==='obj';
+  let h=`<path d="M300,437 V640 H${IN.x+120} V${IN.y+IN.h}" fill="none" stroke="#64748b" stroke-width="2" stroke-dasharray="6 6"/>`;
+  h+=`<circle cx="300" cy="420" r="16" fill="none" stroke="#94a3b8" stroke-width="2"/>`;
+  h+=`<rect x="${IN.x}" y="${IN.y}" width="${IN.w}" height="${IN.h}" rx="14" fill="#0f172a" stroke="#475569" stroke-width="2"/>`;
+  h+=T(IN.x+IN.w/2,IN.y+42,obj?'白光 ＝ 這些頻率的電磁波疊在一起':'白光 ＝ 這些顏色的光混在一起',{size:28,w:700,fill:obj?'#5eead4':'#fed7aa'});
+  h+=`<g id="insetWaves"></g>`;
+  $('#gInset').innerHTML=h;
+}
+function insetFrame(t){
+  const g=document.getElementById('insetWaves');if(!g)return;
+  const obj=st.mode==='obj',x0=IN.x+150,x1=IN.x+IN.w-30;let h='';
+  const yS=IN.y+92;
+  h+=T(IN.x+80,yS+9,'白光',{size:24,w:700});
+  if(obj){
+    const pts=[];for(let x=x0;x<=x1;x+=2){let v=0;RAYS.forEach((f,i)=>v+=Math.sin(2*Math.PI*(x-VPX*t)/lamPx(f)+PHI[i]));pts.push([x,yS+v*4.2])}
+    h+=`<path d="${PT(pts)}" fill="none" stroke="#e5e7eb" stroke-width="2.2"/>`;
+  }else h+=`<rect x="${x0}" y="${yS-9}" width="${x1-x0}" height="18" rx="9" fill="#fff" filter="url(#glow)"/>`;
+  h+=T(IN.x+IN.w/2,yS+56,'＝',{size:30,w:700,fill:'#94a3b8'});
+  RAYS.forEach((f,i)=>{
+    const y=IN.y+190+i*52;
+    h+=T(IN.x+80,y+9,obj?f+' THz':NAMES[i]+'光',{size:obj?22:25,w:700,fill:obj?'#cbd5e1':specLight(f)});
+    if(obj){const pts=[];for(let x=x0;x<=x1;x+=2)pts.push([x,y+12*Math.sin(2*Math.PI*(x-VPX*t)/lamPx(f)+PHI[i])]);
+      h+=`<path d="${PT(pts)}" fill="none" stroke="#cbd5e1" stroke-width="2"/>`;}
+    else h+=`<rect x="${x0}" y="${y-8}" width="${x1-x0}" height="16" rx="8" fill="${specRGB(f)}"/>`;
+  });
+  g.innerHTML=h;
+}
+
+// ---------- 光線（每格重畫） ----------
+function wavePts(seg,from,to,f,phi,t,amp){
+  const pts=[],q=[-seg.u[1],seg.u[0]];
+  for(let s=from;s<=to+0.01;s+=2.5){const o=seg.o+seg.n*s,v=amp*Math.sin(2*Math.PI*(o-VPX*t)/lamPx(f)+phi);pts.push(add(add(seg.a,mul(seg.u,s)),mul(q,v)))}
+  return pts;
+}
+function sumPts(segIdx,from,to,t,amp,pathKey){
+  const base=RAYDATA[0][pathKey].segs[segIdx],q=[-base.u[1],base.u[0]],pts=[];
+  for(let s=from;s<=to+0.01;s+=2.5){let v=0;
+    RAYDATA.forEach((r,i)=>{const sg=r[pathKey].segs[segIdx];v+=Math.sin(2*Math.PI*(sg.o+s-VPX*t)/lamPx(r.f)+PHI[i])});
+    pts.push(add(add(base.a,mul(base.u,s)),mul(q,v*amp)))}
+  return pts;
+}
+function drawRays(now){
+  const s=st.step;if(s>4){$('#gRays').innerHTML='';return}
+  const t=now/1000,obj=st.mode==='obj',key=s===4?'pB':'pA';
+  const shown=Math.min(st.to,st.from+(now-st.t0)*0.75);
+  let h='';
+  const last=RAYDATA[0][key].segs.length-1;
+  // 第一段（白光／疊加波）
+  const g0=RAYDATA[0][key].segs[0],v0=Math.min(g0.L,shown);
+  if(obj){h+=LN(g0.a,add(g0.a,mul(g0.u,v0)),'#334155',2);h+=`<path d="${PT(sumPts(0,0,v0,t,4.2,key))}" fill="none" stroke="#e5e7eb" stroke-width="2.2"/>`}
+  else h+=LN(g0.a,add(g0.a,mul(g0.u,v0)),'#fff',7,'filter="url(#glow)" stroke-linecap="round"');
+  // 分開的各頻率
+  RAYDATA.forEach((r,i)=>{
+    const segs=r[key].segs;let base=[],wav=[];
+    for(let k=1;k<segs.length;k++){
+      if(key==='pB'&&k===last)break;
+      const g=segs[k],v=Math.min(g.L,shown-g.c);if(v<=0)break;
+      base.push(g.a,add(g.a,mul(g.u,v)));
+      if(obj)wav=wav.concat(wavePts(g,0,v,r.f,PHI[i],t,7));
+    }
+    if(!base.length)return;
+    if(obj){h+=`<path d="${PT(base)}" fill="none" stroke="#334155" stroke-width="1.5"/><path d="${PT(wav)}" fill="none" stroke="#e5e7eb" stroke-width="1.8"/>`}
+    else h+=`<path d="${PT(base)}" fill="none" stroke="${specRGB(r.f)}" stroke-width="3.5" filter="url(#glow)"/>`;
+  });
+  // 合回後的最後一段
+  if(key==='pB'){const g=RAYDATA[0].pB.segs[last],v=Math.min(g.L,shown-g.c);
+    if(v>0){if(obj){h+=LN(g.a,add(g.a,mul(g.u,v)),'#334155',2);h+=`<path d="${PT(sumPts(last,0,v,t,4.2,'pB'))}" fill="none" stroke="#5eead4" stroke-width="2.2"/>`}
+      else h+=LN(g.a,add(g.a,mul(g.u,v)),'#fff',7,'filter="url(#glow)" stroke-linecap="round"');}}
+  $('#gRays').innerHTML=h;
+  const sp=document.getElementById('spec');if(sp)sp.style.opacity=shown>=st.to-1?1:0;
+}
+
+// ---------- 步驟 5：錐細胞 ----------
+const PK={x0:80,x1:620,y:120,h:44};                 // 屏幕上的光（點選）
+const fx=f=>PK.x0+(f-F0)/(F1-F0)*(PK.x1-PK.x0);
+const GR={x0:740,x1:1520,y0:110,y1:400};           // 反應曲線
+const gx=f=>GR.x0+(f-F0)/(F1-F0)*(GR.x1-GR.x0),gy=v=>GR.y1-v*(GR.y1-GR.y0);
+const EYE={cx:350,cy:440,r:105};
+function signals(){
+  if(st.eye==='white')return {A:[1,1,1]};
+  if(st.eye==='trick')return {A:sens(TY),B:MIX};
+  return {A:sens(st.f)};
+}
+// 顯示用：以三個訊號中最強者＝100（大腦看的是比例）
+const ratio=v=>{const m=Math.max(...v);return v.map(x=>m>0?Math.round(100*x/m):0)};
+function drawEye(){
+  if(st.step!==5){$('#gEye').innerHTML='';return}
+  const obj=st.mode==='obj',mode=st.eye,sg=signals();let h='';
+  // 屏幕上的光
+  h+=T(PK.x0,PK.y-18,'屏幕上的光（點一下選一種頻率）',{size:24,anchor:'start',fill:'#cbd5e1'});
+  for(let f=F0;f<F1;f+=2)h+=`<rect x="${fx(f).toFixed(1)}" y="${PK.y}" width="${(fx(f+2.6)-fx(f)).toFixed(1)}" height="${PK.h}" fill="${obj?'#6b7280':specRGB(f+1)}"/>`;
+  h+=`<rect id="pick" x="${PK.x0}" y="${PK.y}" width="${PK.x1-PK.x0}" height="${PK.h}" fill="transparent" stroke="${mode==='white'?'#fff':'#475569'}" stroke-width="${mode==='white'?4:1.5}" style="cursor:pointer"/>`;
+  [450,500,550,600,650,700,750].forEach(f=>{h+=LN([fx(f),PK.y+PK.h],[fx(f),PK.y+PK.h+8],'#94a3b8',2);h+=T(fx(f),PK.y+PK.h+32,f,{size:19,fill:'#94a3b8'})});
+  // 進入眼睛的光線
+  const lensP=[EYE.cx,EYE.cy-EYE.r+18],ret=[EYE.cx,EYE.cy+EYE.r-6];
+  const beams=mode==='white'?[460,540,620,700].map(f=>({f,x:fx(f),d:'',w:1})):mode==='trick'?[{f:TY,x:fx(TY),d:''},{f:TR,x:fx(TR),d:'10 7'},{f:TG,x:fx(TG),d:'10 7'}]:[{f:st.f,x:fx(st.f),d:''}];
+  beams.forEach(b=>{const c=obj?'#e5e7eb':(mode==='white'?'#fff':specRGB(b.f)),top=[b.x,PK.y+PK.h+40];
+    if(b.f&&!b.w)h+=`<path d="M${b.x},${PK.y+PK.h+2} l-9,-14 h18Z" transform="rotate(180 ${b.x} ${PK.y+PK.h-5})" fill="#fff"/>`;
+    h+=`<path d="${PT([top,lensP,ret])}" fill="none" stroke="${c}" stroke-width="4" stroke-dasharray="${b.d}" filter="url(#glow)"/>`});
+  // 眼睛
+  h+=`<circle cx="${EYE.cx}" cy="${EYE.cy}" r="${EYE.r}" fill="#1e293b" stroke="#cbd5e1" stroke-width="3"/>`;
+  h+=`<ellipse cx="${lensP[0]}" cy="${lensP[1]+6}" rx="42" ry="15" fill="rgba(147,197,253,.35)" stroke="#93c5fd" stroke-width="2"/>`;
+  h+=`<path d="M${EYE.cx-EYE.r*.82},${EYE.cy+EYE.r*.57} A${EYE.r} ${EYE.r} 0 0 0 ${EYE.cx+EYE.r*.82},${EYE.cy+EYE.r*.57}" fill="none" stroke="#f472b6" stroke-width="7"/>`;
+  h+=T(EYE.cx+EYE.r+18,EYE.cy-EYE.r+40,'眼睛',{size:26,w:700,anchor:'start'});
+  h+=T(EYE.cx+EYE.r+18,EYE.cy+EYE.r-10,'視網膜',{size:24,anchor:'start',fill:'#f9a8d4'});
+  // 放大：錐細胞
+  const CP={x0:80,x1:620,y0:600,y1:870};
+  h+=`<path d="M${ret[0]-8},${ret[1]} L${CP.x0},${CP.y0} M${ret[0]+8},${ret[1]} L${CP.x1},${CP.y0}" stroke="#64748b" stroke-width="2" stroke-dasharray="5 6"/>`;
+  h+=`<rect x="${CP.x0}" y="${CP.y0}" width="${CP.x1-CP.x0}" height="${CP.y1-CP.y0}" rx="14" fill="#0f172a" stroke="#475569" stroke-width="2"/>`;
+  h+=T((CP.x0+CP.x1)/2,CP.y0+36,'視網膜上的三種錐細胞（放大）',{size:24,fill:'#cbd5e1'});
+  const ra=ratio(sg.A);
+  CONES.forEach((c,i)=>{const x=CP.x0+95+i*175,y=CP.y0+70,v=ra[i]/100;
+    h+=`<ellipse cx="${x}" cy="${y+80}" rx="${30+26*v}" ry="${60+26*v}" fill="#fff" opacity="${(v*.75).toFixed(2)}" filter="url(#soft)"/>`;
+    h+=`<path d="M${x-18},${y+12} L${x+18},${y+12} L${x+24},${y+88} Q${x+24},${y+140} ${x},${y+148} Q${x-24},${y+140} ${x-24},${y+88}Z" fill="#475569" stroke="#cbd5e1" stroke-width="2"/>`;
+    h+=`<path d="M${x-18},${y+12} L${x},${y-22} L${x+18},${y+12}Z" fill="#64748b" stroke="#cbd5e1" stroke-width="2"/>`;
+    h+=T(x,y+182,c.name,{size:24,w:700});
+  });
+  // 反應曲線
+  h+=T((GR.x0+GR.x1)/2,GR.y0-56,'三種錐細胞對各種頻率的反應',{size:26,w:700});
+  h+=LN([GR.x0,GR.y1],[GR.x1,GR.y1],'#94a3b8',2)+LN([GR.x0,GR.y0-14],[GR.x0,GR.y1],'#94a3b8',2);
+  [450,500,550,600,650,700,750].forEach(f=>{h+=LN([gx(f),GR.y1],[gx(f),GR.y1+7],'#94a3b8',2);h+=T(gx(f),GR.y1+30,f,{size:19,fill:'#94a3b8'})});
+  h+=T(GR.x1,GR.y1+58,'頻率（THz）',{size:20,anchor:'end',fill:'#94a3b8'});
+  h+=T(GR.x0-12,GR.y0-22,'反應強',{size:20,anchor:'start',fill:'#94a3b8'});
+  CONES.forEach((c,i)=>{const pts=[];for(let f=F0;f<=F1;f+=2)pts.push([gx(f),gy(gov(c.lm,C_NM/f)/c.max)]);
+    h+=`<path d="${PT(pts)}" fill="none" stroke="#f1f5f9" stroke-width="3.5" stroke-dasharray="${c.dash}"/>`});
+  h+=T(gx(500)-12,gy(sens(500)[0])-6,'低頻型',{size:22,w:700,anchor:'end'});
+  h+=T(gx(612),gy(sens(612)[1])-12,'中頻型',{size:22,w:700,anchor:'start'});
+  h+=T(gx(714),gy(1)-14,'高頻型',{size:22,w:700});
+  const vl=(f,dash)=>{let s=LN([gx(f),GR.y0-10],[gx(f),GR.y1],obj?'#5eead4':specRGB(f),3,`stroke-dasharray="${dash}"`);
+    sens(f).forEach(v=>s+=`<circle cx="${gx(f)}" cy="${gy(v)}" r="7" fill="${obj?'#5eead4':specRGB(f)}" stroke="#0b1020" stroke-width="2"/>`);return s};
+  if(mode==='one')h+=vl(st.f,'');
+  if(mode==='trick'){h+=vl(TY,'');h+=vl(TR,'8 6');h+=vl(TG,'8 6')}
+  if(mode==='white')h+=`<rect x="${GR.x0}" y="${GR.y0-10}" width="${GR.x1-GR.x0}" height="${GR.y1-GR.y0+10}" fill="rgba(255,255,255,.07)"/>`;
+  // 訊號長條
+  const BR={x0:720,x1:1110,base:830,top:560};
+  h+=`<path d="M${CP.x1+8},${CP.y0+150} L${BR.x0-6},${CP.y0+150}" stroke="#94a3b8" stroke-width="3"/><path d="M${BR.x0-6},${CP.y0+150} l-14,-9 v18Z" fill="#94a3b8"/>`;
+  h+=T((BR.x0+BR.x1)/2,BR.top-46,'訊號強弱（最強＝100）',{size:24,w:700});
+  const rb=sg.B?ratio(sg.B):null;
+  CONES.forEach((c,i)=>{const cx=BR.x0+70+i*125,H=BR.base-BR.top;
+    const bar=(x,w,v,fill)=>`<rect x="${x}" y="${BR.base-H*v/100}" width="${w}" height="${H*v/100}" fill="${fill}" rx="4"/>`+T(x+w/2,BR.base-H*v/100-10,v,{size:22,w:700});
+    if(rb){h+=bar(cx-44,40,ra[i],'#e2e8f0')+bar(cx+4,40,rb[i],'url(#hatch)')}
+    else h+=bar(cx-28,56,ra[i],'#e2e8f0');
+    h+=T(cx,BR.base+32,c.name,{size:22,w:700});
+  });
+  h+=LN([BR.x0,BR.base],[BR.x1,BR.base],'#94a3b8',2);
+  if(rb){h+=`<rect x="${BR.x0+20}" y="${BR.base+50}" width="22" height="18" fill="#e2e8f0"/>`+T(BR.x0+50,BR.base+66,'一種頻率',{size:19,anchor:'start'})+
+    `<rect x="${BR.x0+190}" y="${BR.base+50}" width="22" height="18" fill="url(#hatch)"/>`+T(BR.x0+220,BR.base+66,'兩種頻率混合',{size:19,anchor:'start'})}
+  // 大腦
+  const BN={x0:1170,x1:1550,y0:500,y1:870},bx=(BN.x0+BN.x1)/2;
+  h+=`<path d="M${BR.x1+8},${BR.base-130} L${BN.x0-6},${BR.base-130}" stroke="#94a3b8" stroke-width="3"/><path d="M${BN.x0-6},${BR.base-130} l-14,-9 v18Z" fill="#94a3b8"/>`;
+  h+=`<rect x="${BN.x0}" y="${BN.y0}" width="${BN.x1-BN.x0}" height="${BN.y1-BN.y0}" rx="40" fill="#1e1b2e" stroke="${obj?'#14b8a6':'#f97316'}" stroke-width="3"/>`;
+  h+=T(bx,BN.y0+44,'大腦',{size:30,w:700,fill:obj?'#5eead4':'#fdba74'});
+  if(obj){
+    h+=T(bx,BN.y0+92,'收到的只是三個數字：',{size:23});
+    const row=(y,lab,v)=>T(bx,y,`${lab}${v.join('　')}`,{size:26,w:700});
+    if(rb){h+=T(bx,BN.y0+132,'（低頻型　中頻型　高頻型）',{size:19,fill:'#94a3b8'})+row(BN.y0+175,'一種：',ra)+row(BN.y0+222,'兩種：',rb)+T(bx,BN.y0+275,'幾乎一模一樣！',{size:26,w:700,fill:'#5eead4'})}
+    else CONES.forEach((c,i)=>{h+=T(bx-20,BN.y0+150+i*48,c.name,{size:25,anchor:'end'})+T(bx+10,BN.y0+150+i*48,ra[i],{size:28,w:700,anchor:'start'})});
+    if(!rb)h+=T(bx,BN.y1-62,'電磁波本身',{size:23,fill:'#94a3b8'})+T(bx,BN.y1-28,'沒有顏色',{size:23,fill:'#94a3b8'});
+  }else{
+    if(rb){[[bx-90,'一種頻率'],[bx+90,'兩種混合']].forEach(([x,l])=>{h+=`<circle cx="${x}" cy="${BN.y0+160}" r="62" fill="${specRGB(TY)}" filter="url(#glow)"/>`+T(x,BN.y0+258,l,{size:21})});
+      h+=T(bx,BN.y1-50,'都看成「黃色」！',{size:30,w:700,fill:'#fde68a'})}
+    else{const col=mode==='white'?'#fff':specRGB(st.f),nm=mode==='white'?'白色':cname(st.f);
+      h+=`<circle cx="${bx}" cy="${BN.y0+175}" r="85" fill="${col}" filter="url(#glow)"/>`;
+      h+=T(bx,BN.y1-50,`感覺到「${nm}」`,{size:32,w:700,fill:'#fde68a'})}
+  }
+  $('#gEye').innerHTML=h;
+  $('#pick').addEventListener('click',e=>{const p=svgPt(e);st.eye='one';st.f=Math.round(Math.min(F1,Math.max(F0,F0+(p[0]-PK.x0)/(PK.x1-PK.x0)*(F1-F0))));render()});
+}
+function svgPt(e){const sv=$('#svg'),pt=sv.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;const q=pt.matrixTransform(sv.getScreenCTM().inverse());return [q.x,q.y]}
+
+// ---------- 控制列與說明 ----------
+function drawCtrl(){
+  const c=$('#ctrl');
+  if(st.step!==5){c.innerHTML='<span class="lbl">鍵盤：← → 換步驟　↑ ↓ 切換「客觀／主觀」</span>';return}
+  c.innerHTML=`<button class="btn ${st.eye==='one'?'on':''}" data-e="one">選一種頻率</button>
+    <input type="range" id="fr" min="${F0}" max="${F1}" step="1" value="${st.f}"><span class="val">${st.f} THz</span>
+    <button class="btn ${st.eye==='white'?'on':''}" data-e="white">白光（全部頻率）</button>
+    <button class="btn ${st.eye==='trick'?'on':''}" data-e="trick">黃光的騙局</button>`;
+  c.querySelectorAll('[data-e]').forEach(b=>b.addEventListener('click',()=>{st.eye=b.dataset.e;render()}));
+  const fr=$('#fr');fr.addEventListener('input',()=>{st.f=+fr.value;st.eye='one';c.querySelector('.val').textContent=st.f+' THz';drawEye();drawCapOnly();c.querySelectorAll('[data-e]').forEach(b=>b.classList.toggle('on',b.dataset.e==='one'))});
+}
+function capText(){
+  const s=st.step,obj=st.mode==='obj';
+  if(s===5){
+    if(st.eye==='white')return obj?'所有頻率一起進入眼睛，三種錐細胞都受到刺激，而且<b>強弱差不多</b>。':'三種訊號差不多強時，大腦產生的感覺就是「<b>白色</b>」。';
+    if(st.eye==='trick')return obj?`物理上完全不同：一邊只有 ${TY} THz 一種頻率，另一邊是 ${TR} THz 加 ${TG} THz，<b>根本沒有 ${TY} THz</b>。但三種錐細胞的訊號幾乎一樣。`
+      :'訊號一樣，大腦就分不出來，兩個都看成「<b>黃色</b>」。顏色是大腦對訊號的解讀，不是光本身帶著的。';
+    const r=ratio(sens(st.f));
+    return obj?`${st.f} THz 的電磁波進入眼睛：低頻型 ${r[0]}、中頻型 ${r[1]}、高頻型 ${r[2]}。這裡只有<b>頻率和訊號強弱</b>，還沒有「顏色」。`
+      :`大腦比較三種錐細胞訊號的比例，產生「<b>${cname(st.f)}</b>」的感覺。顏色是在大腦裡產生的。`;
+  }
+  const C=[
+    ['換成物理的角度：這束光是<b>電磁波</b>。不談顏色，只看它的波形：一條不規則的波。','太陽光射向三稜鏡。用眼睛看，它就是一束「<b>白色</b>」的光。'],
+    ['白光其實是很多<b>不同頻率</b>的電磁波疊在一起，從約 430 THz 到 750 THz，中間連續不斷（1 THz＝每秒振動一兆次）。','用眼睛的說法：白光是七彩的光混在一起。可是「紅、橙、黃…」是誰決定的？切到「客觀」看看。'],
+    ['進入玻璃後，頻率不變，速率變慢、波長變短。<b>頻率越高，在玻璃中越慢，偏折越多。</b>','光進入三稜鏡後轉彎，而且開始<b>分開</b>。'],
+    ['不同頻率的電磁波依頻率排開，落在屏幕不同位置，這就是<b>色散</b>。這是物理上真的發生的事，跟有沒有人在看無關。','屏幕上出現紅、橙、黃、綠、藍、靛、紫。顏色其實是<b>連續變化</b>的，「七種」只是我們取的名字。'],
+    ['倒過來再走一次：所有頻率回到同一條路，又疊成原來的不規則波。三稜鏡沒有「製造」新的光，這些頻率<b>本來就在白光裡</b>。','牛頓用透鏡把散開的光聚到第二個三稜鏡，各色光重新疊在一起，看起來<b>又是白光</b>。'],
+    null,
+    ['結論：<b>色散</b>是電磁波依頻率分開的物理事實；<b>顏色</b>是錐細胞的訊號在大腦中產生的視覺感受。','結論：<b>色散</b>是電磁波依頻率分開的物理事實；<b>顏色</b>是錐細胞的訊號在大腦中產生的視覺感受。']];
+  return C[s][obj?0:1];
+}
+function drawCapOnly(){const c=$('#cap');c.innerHTML=capText();c.className='cap '+st.mode}
+
+// ---------- 步驟列 ----------
+const bar=(()=>{
+  const host=$('#bar');
+  const prev=document.createElement('button');prev.className='btn';prev.textContent='← 上一步';
+  const next=document.createElement('button');next.className='btn primary';next.textContent='下一步 →';
+  const sp=document.createElement('span');sp.className='sp';
+  const chips=STEPS.map((t,i)=>{const b=document.createElement('button');b.className='chip';b.innerHTML=`<b>${i}</b>${t}`;b.addEventListener('click',()=>go(i));return b});
+  prev.addEventListener('click',()=>go(st.step-1));next.addEventListener('click',()=>go(st.step+1));
+  host.append(prev,...chips,sp,next);
+  return {refresh(s){chips.forEach((c,i)=>{c.classList.toggle('on',i===s);c.classList.toggle('past',i<s)});prev.disabled=s===0;next.disabled=s===STEPS.length-1}};
+})();
+function go(s){
+  s=Math.max(0,Math.min(STEPS.length-1,s));if(s===st.step&&st.t0)return;
+  const key=s===4?'pB':'pA',p=RAYDATA[0][key],prev=st.step;
+  if(s<=4){
+    const to=stopLen(s,p);
+    let from=to;
+    if(s>prev&&prev<=4)from=Math.min(stopLen(prev,p),s===4?p.segs[2].c:to);
+    if(s===4&&prev<4)from=p.segs[2].c;
+    st.from=from;st.to=to;st.t0=performance.now();
+  }
+  st.step=s;render();
+}
+function setMode(m){st.mode=m;document.querySelectorAll('#seg button').forEach(b=>b.classList.toggle('on',b.dataset.m===m));render()}
+function render(){bar.refresh(st.step);drawScene();drawCtrl();drawCapOnly()}
+document.querySelectorAll('#seg button').forEach(b=>b.addEventListener('click',()=>setMode(b.dataset.m)));
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT'&&(e.key==='ArrowLeft'||e.key==='ArrowRight'))return;
+  if(e.key==='ArrowRight')go(st.step+1);else if(e.key==='ArrowLeft')go(st.step-1);
+  else if(e.key==='ArrowUp'||e.key==='ArrowDown'){e.preventDefault();setMode(st.mode==='obj'?'sub':'obj')}
+});
+function loop(now){drawRays(now);if(st.step===1)insetFrame(now/1000);requestAnimationFrame(loop)}
+st.t0=0;go(0);requestAnimationFrame(loop);
+</script>
+</body>
+</html>

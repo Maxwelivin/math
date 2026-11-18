@@ -90,6 +90,11 @@ table.sum tr.hot td{background:#fff4ec}
   <section class="panel on" id="pA">
     <div class="bar" id="barA"></div>
     <div class="stage"><svg id="svgA" viewBox="0 0 1600 600"></svg></div>
+    <div class="ctrl" id="ctrlA" style="display:none">
+      <span id="presetsA"></span>
+      <span class="lbl">遠</span><input type="range" id="uSliderA" min="-40" max="-3" step="0.1" value="-30"><span class="lbl">近</span>
+      <span class="read" id="uReadA"></span>
+    </div>
     <div class="cap"><span class="txt" id="capA"></span>
       <button class="btn primary" id="recBtn">📸 記錄</button><button class="btn ghost" id="recClr">清除</button></div>
     <div class="rec" id="rec"><span class="empty">按「記錄」把每次看到的像排在這裡</span></div>
@@ -171,6 +176,29 @@ function drawLEDs(g,cx,cy,k,m,core,spread,alpha,ids){
 function drawGhost(g,cx,cy,k,core){
   for(const L of LEDS)el('circle',{cx:cx+L.x*k,cy:cy-L.y*k,r:core*k,fill:'none',stroke:'#ffffff','stroke-opacity':.55,'stroke-width':2.5,'stroke-dasharray':'6 5'},g);
 }
+/* 蠟燭：h＝底到火焰尖的高度（px），dir 1 正立／-1 倒立；mode obj|real|virtual|ghost|glow */
+const C_BODY='M-17,0 V-58 Q0,-62 17,-58 V0 Z', C_FLAME='M0,-100 C9,-88 13,-78 9,-71 C6,-66 -6,-66 -9,-71 C-13,-78 -9,-88 0,-100 Z', C_CORE='M0,-88 C4,-81 5,-76 3,-73 C1,-71 -1,-71 -3,-73 C-5,-76 -4,-81 0,-88 Z';
+function drawCandle(g,x,yb,h,dir,mode){
+  const sc=h/100, c=el('g',{transform:`translate(${x},${yb}) scale(${sc},${dir*sc})`},g);
+  const ns='non-scaling-stroke';
+  if(mode==='ghost'){
+    for(const d of [C_BODY,C_FLAME])el('path',{d,fill:'none',stroke:'#1d1f2b','stroke-opacity':.7,'stroke-width':6,'vector-effect':ns},c);
+    for(const d of [C_BODY,C_FLAME])el('path',{d,fill:'none',stroke:'#ffffff','stroke-opacity':.65,'stroke-width':2.5,'stroke-dasharray':'7 6','vector-effect':ns},c);
+    return c;
+  }
+  const line=mode==='real'?'#15803d':mode==='virtual'?'#15803d':'#191c2e';
+  const dash=mode==='virtual'?'8 6':'none', fo=mode==='virtual'?.45:1, sw=mode==='glow'?0:mode==='obj'?2.5:3;
+  if(mode==='glow'){
+    const id='cg'+(++fxId), f=el('filter',{id,x:'-150%',y:'-60%',width:'400%',height:'220%'},c);
+    el('feGaussianBlur',{stdDeviation:6},f);
+    el('path',{d:C_FLAME,fill:'#ff9f1c',transform:'scale(1.6) translate(0,30)',opacity:.55,filter:`url(#${id})`},c);
+  }
+  el('path',{d:C_BODY,fill:mode==='glow'?'#f6ead0':'#f4e7c8','fill-opacity':fo,stroke:line,'stroke-width':sw,'stroke-dasharray':dash,'vector-effect':ns},c);
+  el('line',{x1:0,y1:-58,x2:0,y2:-68,stroke:'#3a3d52','stroke-width':2,'stroke-opacity':fo,'vector-effect':ns},c);
+  el('path',{d:C_FLAME,fill:'#ff8a1c','fill-opacity':fo,stroke:mode==='glow'?'none':(mode==='obj'?'#d9480f':line),'stroke-width':sw,'stroke-dasharray':dash,'vector-effect':ns},c);
+  el('path',{d:C_CORE,fill:'#ffe066','fill-opacity':fo},c);
+  return c;
+}
 function drawEye(g,x,y,s){ /* 朝左看的眼睛 */
   const e=el('g',{transform:`translate(${x},${y}) scale(${s})`},g);
   el('path',{d:'M-30,0 Q0,-24 30,0 Q0,24 -30,0 Z',fill:'#fff',stroke:'#191c2e','stroke-width':3},e);
@@ -195,14 +223,22 @@ const A=(()=>{
   const st={step:0,d:22,u:30,s:24,eye:false};
   const sx=cm=>LX+cm*PX;
   const vOf=u=>u===F?Infinity:u*F/(u-F);
-  const LABELS=['找焦距','量焦距','2f 外','慢慢靠近','放在 f','f 以內'];
+  const LABELS=['找焦距','量焦距','2f 外','2f 上','f～2f','放在 f','f 以內','滑動觀察'];
   const CAPS=[
     '太陽光穿過透鏡。拖動白紙，找出最小、最亮的光點。',
     '量出透鏡到光點的距離，這就是 f。尺上標出 f 和 2f。',
     '燈具放在 2f 外。拖動屏幕直到像最清楚，按「記錄」。',
-    '把燈具一點一點移近透鏡，每次都重新對焦並記錄。移到 2f 時，看看像有什麼不同。',
+    '燈具移到 2f 上。重新對焦，看看像和剛才有什麼不同。',
+    '燈具移到 f 和 2f 之間。重新對焦並記錄。',
     '燈具放在 f 上。屏幕找得到清楚的像嗎？換眼睛看看。',
-    '燈具移進 f 以內。屏幕找不到像，就用眼睛透過透鏡看。'];
+    '燈具移進 f 以內。屏幕找不到像，就用眼睛透過透鏡看。',
+    '拖動滑桿，讓燈具從遠處慢慢靠近；屏幕會自動對焦。'];
+  const SLIDE=7;
+  function autoFocus(){ // 滑動觀察：屏幕跟著對焦，f 內改用眼睛
+    if(st.step!==SLIDE)return;
+    if(st.u<F-1e-9)st.eye=true;
+    else{st.eye=false;if(st.u>F+1e-9)st.s=Math.min(vOf(st.u),61)}
+  }
   const base=el('g',{},svg), dyn=el('g',{},svg), insetG=el('g',{},svg), handles=el('g',{},svg);
   let insetIds=[];
   // ---- 靜態：軌道、尺、透鏡 ----
@@ -239,7 +275,9 @@ const A=(()=>{
   // ---- 動態 ----
   function draw(){
     dyn.replaceChildren();handles.replaceChildren();
+    autoFocus();
     const s=st.step;
+    if(s===SLIDE){$('#uSliderA').value=-st.u;$('#uReadA').textContent=`物距 ${r5(st.u)} cm`}
     if(s<=1){
       // 太陽光
       const px=sx(st.d);
@@ -328,7 +366,7 @@ const A=(()=>{
     if(st.eye&&s>=2)el('circle',{cx:BC.x,cy:BC.y,r:205,fill:'none',stroke:'#9fd0ec','stroke-width':10},g);
     else el('rect',{x:BOX.x,y:BOX.y,width:BOX.w,height:BOX.h,rx:16,fill:'none',stroke:'#c5c9da','stroke-width':3},g);
     // 屏幕／眼睛切換
-    if(s>=4){
+    if(s===5||s===6){
       const bx=BC.x-150,by=BOX.y+BOX.h+18;
       [['屏幕',false],['眼睛',true]].forEach(([t,e],i)=>{
         const on=st.eye===e, b=el('g',{style:'cursor:pointer'},g);
@@ -344,9 +382,12 @@ const A=(()=>{
     if(n===0){st.d=22}
     if(n===1){st.d=F}
     if(n===2){st.u=30;st.s=24;st.eye=false}
-    if(n===3){if(prev!==2)st.u=25;st.eye=false}
-    if(n===4){st.u=F;st.eye=false}
-    if(n===5){st.u=6;st.eye=false}
+    if(n===3){st.u=20;st.eye=false}
+    if(n===4){st.u=15;st.eye=false}
+    if(n===5){st.u=F;st.eye=false}
+    if(n===6){st.u=6;st.eye=false}
+    if(n===SLIDE){st.u=30}
+    $('#ctrlA').style.display=n===SLIDE?'flex':'none';
     bar.refresh(n);$('#capA').textContent=CAPS[n];
     $('#recBtn').style.visibility=$('#recClr').style.visibility=n>=2?'visible':'hidden';
     drawBase();draw();
@@ -368,6 +409,11 @@ const A=(()=>{
   });
   $('#recClr').addEventListener('click',()=>{rec.innerHTML='<span class="empty">按「記錄」把每次看到的像排在這裡</span>'});
   const bar=mkBar($('#barA'),LABELS,go);
+  function setUA(u){u=clamp(u,3,40);for(const t of [20,10])if(Math.abs(u-t)<.4)u=t;st.u=u;draw()}
+  $('#uSliderA').addEventListener('input',e=>setUA(-e.target.value));
+  [['2f 外',30],['2f 上',20],['f～2f',15],['f 上',10],['f 內',6]].forEach(([t,u])=>{
+    const b=document.createElement('button');b.className='btn';b.textContent=t;b.style.marginRight='6px';
+    b.addEventListener('click',()=>setUA(u));$('#presetsA').appendChild(b)});
   st.step=-1;go(0);
   return {go,get step(){return st.step}};
 })();
@@ -375,7 +421,7 @@ const A=(()=>{
 /* ===================== ② 沙盤推演 ===================== */
 const B=(()=>{
   const svg=$('#svgB');
-  const X0=560, Y0=330, F=150, H=72, W=1100, VH=660;
+  const X0=560, Y0=330, F=150, H=90, W=1100, VH=660;
   const PB={x:1135,y:78,w:440,h:360}, PC={x:1135+220,y:78+180};
   const st={type:'convex',u:2.6,step:0};
   const LABELS=['放物體','光線①','光線②','成像'];
@@ -479,16 +525,14 @@ const B=(()=>{
       }
       const ig=el('g',{},g3);
       const up=im.top<Y0?1:-1;
-      el('line',{x1:im.x,y1:Y0,x2:im.x,y2:im.top+up*14,stroke:CI,'stroke-width':6,'stroke-dasharray':im.real?'none':'12 8'},ig);
-      arrowHead(ig,im.x,im.top,up,CI,15);
+      drawCandle(ig,im.x,Y0,Math.abs(im.top-Y0),up,im.real?'real':'virtual');
       el('circle',{cx:im.x,cy:im.top,r:9,fill:'none',stroke:CI,'stroke-width':3},ig);
       if(im.real)txt(ig,im.x+14,im.top+34,'像',{'font-size':26,'font-weight':900,fill:CI});
       else txt(ig,im.x,st.type==='concave'?Y0+36:im.top-16,'像',{'font-size':26,'font-weight':900,fill:CI,'text-anchor':'middle',stroke:'#fff','stroke-width':5,'paint-order':'stroke'});
       if(anim==='im')fadeIn(ig,500,anim==='im'&&!im.real?600:200);
     }
     // 物體
-    el('line',{x1:xo,y1:Y0,x2:xo,y2:Y0-H+14,stroke:'#191c2e','stroke-width':6},obj);
-    arrowHead(obj,xo,Y0-H,1,'#191c2e',15);
+    drawCandle(obj,xo,Y0,H,1,'obj');
     txt(obj,xo,Y0-H-16,'物',{'font-size':26,'font-weight':900,fill:'#191c2e','text-anchor':'middle'});
     el('circle',{cx:xo,cy:Y0+82,r:15,fill:'#ebe8fb',stroke:'#5b4bb7','stroke-width':3},obj);
     txt(obj,xo,Y0+90,'↔',{'font-size':20,fill:'#5b4bb7','text-anchor':'middle'});
@@ -501,7 +545,7 @@ const B=(()=>{
   }
   function caption(){
     const s=st.step,cv=st.type==='convex',rg=region();
-    if(s===0)return '箭頭代表燈具。拖動箭頭或下方滑桿，改變物體位置。';
+    if(s===0)return '用蠟燭當物體，光線從火焰尖端出發。拖動蠟燭或下方滑桿，改變位置。';
     if(s===1)return cv?'光線①：平行主軸射入，穿過透鏡後通過另一側的焦點。':'光線①：平行主軸射入，穿過透鏡後散開；往回延長，會通過同一側的焦點。';
     if(s===2)return '光線②：射向鏡心，方向不變。';
     if(rg==='F')return '兩條光線平行，永遠不會相交，所以無法成像。';
@@ -522,20 +566,22 @@ const B=(()=>{
     if(eye)el('circle',{cx:PC.x,cy:PC.y,r:178},c);else el('rect',{x:PB.x,y:PB.y,width:PB.w,height:PB.h,rx:16},c);
     const view=el('g',{'clip-path':`url(#${id})`},g);
     el('rect',{x:PB.x-60,y:PB.y-60,width:PB.w+120,height:PB.h+120,fill:eye?'#23263a':'#1d1f2b'},view);
-    const am=s>=3&&im?Math.abs(im.m):1,k=clamp(170/(1.05*Math.max(1,am)),10,80),core=.28;
-    drawGhost(view,PC.x,PC.y,k,core);
-    if(s>=3&&im){
+    const has=s>=3&&im, real=has&&im.real, am=has?Math.abs(im.m):1;
+    const ay=real?PC.y-8:has?PC.y+130:PC.y+90;
+    const G=real?Math.max(14,Math.min(140,160/Math.max(1,am))):has?Math.max(14,Math.min(170,280/Math.max(1,am))):150;
+    el('line',{x1:PB.x,y1:ay,x2:PB.x+PB.w,y2:ay,stroke:'#ffffff','stroke-opacity':.18,'stroke-width':2,'stroke-dasharray':'6 8'},view);
+    if(has){
       const ig=el('g',{},view);
-      drawLEDs(ig,PC.x,PC.y,k,im.m,core*Math.abs(im.m),0,1);
+      drawCandle(ig,PC.x,ay,G*am,im.m<0?-1:1,'glow');
       if(anim==='im')fadeIn(ig,600,500);
-    }else if(s<3){
-      txt(view,PC.x,PC.y+22,'？',{'font-size':72,'font-weight':900,fill:'#5b6078','text-anchor':'middle'});
-    }else{
+    }else if(s>=3){
       el('rect',{x:PB.x,y:PB.y,width:PB.w,height:PB.h,fill:'#ffffff','fill-opacity':.08},view);
     }
+    drawCandle(view,PC.x,ay,G,1,'ghost');
+    if(s<3)txt(view,PC.x+110,PC.y+22,'？',{'font-size':72,'font-weight':900,fill:'#8d92aa','text-anchor':'middle'});
     if(eye)el('circle',{cx:PC.x,cy:PC.y,r:178,fill:'none',stroke:'#9fd0ec','stroke-width':10},g);
     else el('rect',{x:PB.x,y:PB.y,width:PB.w,height:PB.h,rx:16,fill:'none',stroke:'#c5c9da','stroke-width':3},g);
-    txt(g,PB.x+12,PB.y+PB.h+30,'虛線圈＝原物大小',{'font-size':19,fill:'#8d92aa'});
+    txt(g,PB.x+12,PB.y+PB.h+30,'虛線＝原物大小',{'font-size':19,fill:'#8d92aa'});
     if(s>=3){
       let tags;
       if(!im)tags=[['看不到像','#5b6078']];

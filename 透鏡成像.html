@@ -44,9 +44,13 @@ main{flex:1;min-height:0;display:flex;flex-direction:column;padding:0 24px 12px}
 .cap{font-size:1.15em;font-weight:500;min-height:1.7em;display:flex;align-items:center;gap:12px}
 .cap .txt{flex:1}
 /* 實驗記錄 */
-.rec{display:flex;gap:10px;height:7.2em;align-items:stretch;overflow:hidden}
+.rec{display:flex;gap:10px;height:7.6em;align-items:stretch;overflow:hidden}
 .rec .empty{color:var(--muted);align-self:center;font-size:.95em}
-.card{flex:0 0 auto;width:7.6em;background:var(--surface);border:2px solid var(--line);border-radius:12px;padding:4px;display:flex;flex-direction:column;align-items:center;font-size:.8em;line-height:1.3}
+.card{flex:0 0 auto;width:10.2em;background:var(--surface);border:2px solid var(--line);border-radius:12px;padding:4px 6px;display:flex;flex-direction:column;align-items:stretch;font-size:.82em;line-height:1.3}
+.card .ln{white-space:nowrap;font-weight:700}
+.card .ln small{color:var(--muted);font-weight:500;margin-left:.3em}
+.card .ln.o{color:var(--warm)}
+.card .ln.i{color:var(--accent)}
 .card svg{width:100%;flex:1;min-height:0;border-radius:8px}
 .card b{color:var(--accent)}
 /* 控制列 */
@@ -399,13 +403,16 @@ const A=(()=>{
     let html=v.outerHTML.replace(/clip-path="[^"]*"/,'');
     insetIds.forEach(id=>{const nid=id+'r'+(++fxId);html=html.split(`"${id}"`).join(`"${nid}"`).split(`#${id})`).join(`#${nid})`)});
     const clear=!st.eye&&blurOf()<.3;
-    const line2=st.eye?'眼睛看':clear?`像距 <b>${r5(st.s)}</b>`:'不清楚';
+    const uReg=u=>Math.abs(u-2*F)<.01?'2f 上':u>2*F?'2f 外':Math.abs(u-F)<.01?'f 上':u>F?'f～2f':'f 內';
+    const sReg=v=>Math.abs(v-2*F)<.3?'2f 上':v>2*F?'2f 外':'f～2f';
+    const line1=`物｜${uReg(st.u)}<small>${r5(st.u)} cm</small>`;
+    const line2=Math.abs(st.u-F)<.01?'像｜找不到':st.eye?'像｜眼睛看':clear?`像｜${sReg(st.s)}<small>${r5(st.s)} cm</small>`:'像｜—<small>不清楚</small>';
     const c=document.createElement('div');c.className='card';
     const vb=st.eye?`${BC.x-210} ${BC.y-210} 420 420`:`${BOX.x} ${BOX.y} ${BOX.w} ${BOX.h}`;
-    c.innerHTML=`<svg viewBox="${vb}" preserveAspectRatio="xMidYMid slice">${html}</svg><span>物距 <b>${r5(st.u)}</b></span><span>${line2}</span>`;
+    c.innerHTML=`<svg viewBox="${vb}" preserveAspectRatio="xMidYMid slice">${html}</svg><span class="ln o">${line1}</span><span class="ln i">${line2}</span>`;
     rec.querySelector('.empty')?.remove();
     rec.appendChild(c);
-    while(rec.children.length>10)rec.firstElementChild.remove();
+    while(rec.children.length>8)rec.firstElementChild.remove();
   });
   $('#recClr').addEventListener('click',()=>{rec.innerHTML='<span class="empty">按「記錄」把每次看到的像排在這裡</span>'});
   const bar=mkBar($('#barA'),LABELS,go);
@@ -477,7 +484,7 @@ const B=(()=>{
   function tag(g,x0,y0,k,t,col,side){ // 透鏡後方標光線編號；side -1 在線上方、+1 在線下方
     const x=X0+110,y=y0+k*(x-x0);
     const n=Math.hypot(1,k),ox=-side*k/n*-30,oy=side/n*30;
-    txt(g,x+ox,y+oy+10,t,{'font-size':32,'font-weight':900,fill:col,'text-anchor':'middle',stroke:'#fff','stroke-width':6,'paint-order':'stroke'});
+    return txt(g,x+ox,y+oy+10,t,{'font-size':32,'font-weight':900,fill:col,'text-anchor':'middle',stroke:'#fff','stroke-width':6,'paint-order':'stroke'});
   }
   function animPath(p,dur,delay){
     const L=p.getTotalLength();
@@ -486,7 +493,7 @@ const B=(()=>{
     p.style.transition=`stroke-dashoffset ${dur}ms ease-in-out ${delay||0}ms`;
     requestAnimationFrame(()=>{p.style.strokeDashoffset=0});
   }
-  function fadeIn(e,dur,delay){e.style.opacity=0;e.style.transition=`opacity ${dur}ms ease ${delay||0}ms`;e.getBoundingClientRect();requestAnimationFrame(()=>{e.style.opacity=1})}
+  function fadeIn(e,dur,delay){e.animate([{opacity:0},{opacity:1}],{duration:dur,delay:delay||0,easing:'ease',fill:'backwards'})}
   function draw(anim){
     rays.replaceChildren();obj.replaceChildren();
     const xo=X0-st.u*F, P={x:xo,y:Y0-H}, s=st.step, im=img(), XE=W+60;
@@ -497,9 +504,9 @@ const B=(()=>{
       else ye=(Y0-H)-(H/F)*(XE-X0);
       const g1=el('g',{},rays);
       const p=el('path',{d:`M${P.x},${P.y} L${X0},${Y0-H} L${XE},${ye}`,fill:'none',stroke:C1,'stroke-width':4.5,'stroke-linejoin':'round'},g1);
-      if(anim==='r1'){animPath(p,1400);const a=el('g',{},g1);midArrow(a,P.x,P.y,X0,Y0-H,C1,.5);midArrow(a,X0,Y0-H,X0+F*1.6,st.type==='convex'?Y0+H*.6:Y0-H*2.6,C1,.5);fadeIn(a,300,1100)}
-      else{midArrow(g1,P.x,P.y,X0,Y0-H,C1,.5);midArrow(g1,X0,Y0-H,X0+F*1.6,st.type==='convex'?Y0+H*.6:Y0-H*2.6,C1,.5)}
-      tag(g1,X0,Y0-H,st.type==='convex'?H/F:-H/F,'①',C1,-1);
+      const a=el('g',{},g1);midArrow(a,P.x,P.y,X0,Y0-H,C1,.5);midArrow(a,X0,Y0-H,X0+F*1.6,st.type==='convex'?Y0+H*.6:Y0-H*2.6,C1,.5);
+      const n1=tag(g1,X0,Y0-H,st.type==='convex'?H/F:-H/F,'①',C1,-1);
+      if(anim==='r1'){animPath(p,1400);fadeIn(a,350,1450);fadeIn(n1,350,1900)}
     }
     // 光線②
     if(s>=2){
@@ -507,8 +514,8 @@ const B=(()=>{
       const g2=el('g',{},rays);
       const p=el('path',{d:`M${P.x},${P.y} L${XE},${ye}`,fill:'none',stroke:C2,'stroke-width':4.5},g2);
       const ar=el('g',{},g2);midArrow(ar,P.x,P.y,X0,Y0,C2,.45);midArrow(ar,X0,Y0,X0+F*1.4,Y0+k*F*1.4,C2,.6);
-      if(anim==='r2'){animPath(p,1400);fadeIn(ar,300,1100)}
-      tag(g2,X0,Y0,k,'②',C2,1);
+      const n2=tag(g2,X0,Y0,k,'②',C2,1);
+      if(anim==='r2'){animPath(p,1400);fadeIn(ar,350,1450);fadeIn(n2,350,1900)}
     }
     // 成像
     if(s>=3&&im){
@@ -526,7 +533,6 @@ const B=(()=>{
       const ig=el('g',{},g3);
       const up=im.top<Y0?1:-1;
       drawCandle(ig,im.x,Y0,Math.abs(im.top-Y0),up,im.real?'real':'virtual');
-      el('circle',{cx:im.x,cy:im.top,r:9,fill:'none',stroke:CI,'stroke-width':3},ig);
       if(im.real)txt(ig,im.x+14,im.top+34,'像',{'font-size':26,'font-weight':900,fill:CI});
       else txt(ig,im.x,st.type==='concave'?Y0+36:im.top-16,'像',{'font-size':26,'font-weight':900,fill:CI,'text-anchor':'middle',stroke:'#fff','stroke-width':5,'paint-order':'stroke'});
       if(anim==='im')fadeIn(ig,500,anim==='im'&&!im.real?600:200);
@@ -668,7 +674,7 @@ const C=(()=>{
   function demo(r){
     stopAuto();
     B.setType(r.concave?'concave':'convex');B.setU(r.u);B.go(0,true);B.showBack=true;showPanel('pB');
-    [1,2,3].forEach((n,i)=>autoT.push(setTimeout(()=>B.go(n,true),900+i*1900)));
+    [1,2,3].forEach((n,i)=>autoT.push(setTimeout(()=>B.go(n,true),900+i*2500)));
   }
   let last=null, cur=null;
   $('#qPick').addEventListener('click',()=>{

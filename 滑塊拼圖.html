@@ -1,0 +1,838 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>滑塊拼圖</title>
+<style>
+:root {
+  --bg: #f3eee6; --ink: #2b2620; --muted: #7a6f63; --panel: #fffdf8; --line: #e2d8ca;
+  --btn: #f1e9dc; --btn-h: #e6dac6; --accent: #e0442f; --sel: #ffe14d;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: "Microsoft JhengHei", "PingFang TC", "Noto Sans TC", system-ui, sans-serif;
+  overflow: hidden; user-select: none; -webkit-user-select: none;
+}
+header {
+  height: 60px; display: flex; align-items: center; gap: 16px; padding: 0 24px;
+}
+header h1 { margin: 0; font-size: 22px; letter-spacing: 2px; }
+header p { margin: 0; color: var(--muted); font-size: 14px; }
+header .sp { flex: 1; }
+.toggle {
+  display: inline-flex; align-items: center; gap: 8px; cursor: pointer; border: 0;
+  background: var(--btn); color: var(--ink); border-radius: 999px; padding: 6px 14px 6px 6px;
+  font: inherit; font-size: 14px;
+}
+.toggle:hover { background: var(--btn-h); }
+.toggle .knob { width: 34px; height: 20px; border-radius: 999px; background: #cfc3b1; position: relative; transition: background .2s; }
+.toggle .knob::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: left .2s; }
+.toggle[aria-pressed="true"] .knob { background: var(--accent); }
+.toggle[aria-pressed="true"] .knob::after { left: 16px; }
+
+main {
+  height: calc(100% - 60px); display: grid; grid-template-columns: 230px 1fr 230px;
+  gap: 20px; padding: 0 24px 20px; align-items: center;
+}
+.panel {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px;
+  display: flex; flex-direction: column; gap: 12px; align-self: center;
+}
+.panel h2 { margin: 0; font-size: 13px; color: var(--muted); font-weight: 600; letter-spacing: 1px; }
+.pics { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.pics button {
+  border: 3px solid transparent; border-radius: 10px; padding: 0; background: none; cursor: pointer;
+  overflow: hidden; aspect-ratio: 1; position: relative;
+}
+.pics button img { width: 100%; height: 100%; display: block; }
+.pics button span {
+  position: absolute; left: 0; right: 0; bottom: 0; font-size: 12px; color: #fff; background: rgba(0,0,0,.45); padding: 1px 0;
+}
+.pics button[aria-pressed="true"] { border-color: var(--accent); }
+.seg { display: flex; gap: 6px; }
+.seg button { flex: 1; }
+button.b {
+  border: 0; border-radius: 10px; background: var(--btn); color: var(--ink); font: inherit; font-size: 15px;
+  padding: 9px 10px; cursor: pointer;
+}
+button.b:hover:not(:disabled) { background: var(--btn-h); }
+button.b:disabled { opacity: .45; cursor: default; }
+button.b[aria-pressed="true"] { background: var(--accent); color: #fff; }
+button.b.main { background: var(--accent); color: #fff; }
+button.b.main:hover { background: #c93824; }
+.stat { display: flex; justify-content: space-between; align-items: baseline; }
+.stat b { font-size: 30px; font-variant-numeric: tabular-nums; }
+.stat small { color: var(--muted); font-size: 14px; }
+.best { color: var(--muted); font-size: 13px; line-height: 1.6; }
+.btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.keys { font-size: 13px; color: var(--muted); line-height: 1.9; }
+kbd { font-family: inherit; background: var(--btn); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; font-size: 12px; }
+.msg { min-height: 40px; font-size: 14px; color: var(--accent); line-height: 1.5; }
+
+/* 拼圖框 */
+.center { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; height: 100%; }
+.frame {
+  --fc: #e0332a; --fd: #a8211b; --ft: #fff;
+  position: relative; background: var(--fc); border-radius: calc(var(--bs) * .07);
+  padding: calc(var(--bs) * .2) calc(var(--bs) * .07) calc(var(--bs) * .08);
+  box-shadow: inset 0 3px 0 rgba(255,255,255,.35), inset 0 -5px 0 rgba(0,0,0,.18), 0 14px 30px rgba(60,30,10,.28);
+}
+.frame .title {
+  position: absolute; left: calc(var(--bs) * .08); top: calc(var(--bs) * .035);
+  font-size: calc(var(--bs) * .09); font-weight: 900; color: var(--ft); line-height: 1; letter-spacing: 3px;
+  text-shadow: 0 3px 0 var(--fd);
+}
+.frame .sub { position: absolute; left: calc(var(--bs) * .085); top: calc(var(--bs) * .14); font-size: calc(var(--bs) * .028); color: var(--ft); opacity: .8; letter-spacing: 2px; }
+.frame .badge { position: absolute; right: calc(var(--bs) * .06); top: calc(var(--bs) * .02); width: calc(var(--bs) * .16); height: calc(var(--bs) * .16); }
+.tray {
+  position: relative; width: var(--bs); height: var(--bs); border-radius: 6px;
+  background: var(--fd); box-shadow: inset 0 4px 8px rgba(0,0,0,.35); touch-action: none;
+}
+.tile { position: absolute; left: 0; top: 0; transition: transform .11s ease-out; cursor: pointer; }
+.tile .face {
+  position: absolute; inset: 1px; border-radius: 6px; background-repeat: no-repeat;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.35), inset 2px 2px 0 rgba(255,255,255,.55), inset -2px -2px 0 rgba(0,0,0,.18);
+}
+.tile .num {
+  position: absolute; left: 5px; top: 4px; font-size: 13px; font-weight: 700; color: #fff;
+  background: rgba(0,0,0,.42); border-radius: 6px; padding: 0 5px; line-height: 18px; display: none;
+}
+body.nums .tile .num { display: block; }
+.tile.shake .face { animation: shake .28s; }
+@keyframes shake { 20% { transform: translateX(-5px); } 45% { transform: translateX(5px); } 70% { transform: translateX(-3px); } 100% { transform: none; } }
+.tile.hint .face { animation: glow .8s ease-in-out infinite alternate; }
+@keyframes glow { from { box-shadow: inset 0 0 0 3px #fff, 0 0 0 0 rgba(255,225,77,.9); } to { box-shadow: inset 0 0 0 3px #fff, 0 0 18px 6px rgba(255,225,77,.95); } }
+.tile.last { opacity: 0; transition: opacity .5s; pointer-events: none; }
+.tile.last.show { opacity: 1; }
+.cursor {
+  position: absolute; left: 0; top: 0; pointer-events: none; transition: transform .11s ease-out;
+  border: 4px solid var(--sel); border-radius: 8px; box-shadow: 0 0 0 2px rgba(0,0,0,.5), inset 0 0 0 2px rgba(0,0,0,.35);
+  z-index: 5;
+}
+.peek {
+  position: absolute; inset: 0; border-radius: 6px; background-size: cover; opacity: 0; transition: opacity .15s;
+  pointer-events: none; z-index: 6;
+}
+.peek.on { opacity: 1; }
+.win {
+  position: absolute; inset: 0; z-index: 7; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  justify-content: flex-end; padding-bottom: 5%; gap: 10px; opacity: 0; pointer-events: none; transition: opacity .4s;
+}
+.win.on { opacity: 1; pointer-events: auto; }
+.win .card {
+  background: rgba(255,253,248,.95); border-radius: 16px; padding: 18px 26px; text-align: center;
+  box-shadow: 0 10px 30px rgba(0,0,0,.3);
+}
+.win h3 { margin: 0 0 6px; font-size: 28px; color: var(--accent); }
+.win p { margin: 0 0 12px; font-size: 16px; }
+.win .row { display: flex; gap: 10px; justify-content: center; }
+.flash {
+  position: absolute; inset: 0; z-index: 7; display: flex; align-items: center; justify-content: center; pointer-events: none;
+  font-size: calc(var(--bs) * .13); font-weight: 900; color: #fff; text-shadow: 0 4px 0 rgba(0,0,0,.35), 0 0 30px rgba(0,0,0,.4);
+  opacity: 0; transition: opacity .35s;
+}
+.flash span { background: rgba(0,0,0,.45); border-radius: 20px; padding: 2% 7%; }
+.flash.on { opacity: 1; }
+
+/* 簡約模式 */
+.simplenav, .simplectrl { display: none; }
+body.simple main { grid-template-columns: 1fr; }
+body.simple main > .panel, body.simple header p { display: none; }
+body.simple .simplenav { display: flex; align-items: center; gap: 18px; font-size: 18px; font-weight: 600; }
+body.simple .simplectrl { display: flex; gap: 12px; }
+.simplenav button {
+  border: 0; background: var(--btn); color: var(--ink); width: 38px; height: 38px; border-radius: 50%;
+  font-size: 22px; line-height: 1; cursor: pointer;
+}
+.simplenav button:hover { background: var(--btn-h); }
+.simplectrl button { min-width: 110px; }
+
+@media (max-width: 900px) {
+  body { overflow: auto; }
+  header { padding: 0 14px; } header p { display: none; }
+  main { grid-template-columns: 1fr; height: auto; padding: 0 16px 20px; }
+  main .center { order: -1; }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>滑塊拼圖</h1>
+  <p>推動方塊，把圖拼回原樣</p>
+  <span class="sp"></span>
+  <button class="toggle" id="soundBtn" aria-pressed="true"><span class="knob"></span>音效</button>
+  <button class="toggle" id="modeBtn" aria-pressed="false"><span class="knob"></span>簡約模式</button>
+</header>
+<main>
+  <section class="panel">
+    <h2>圖案</h2>
+    <div class="pics" id="pics"></div>
+    <h2>大小</h2>
+    <div class="seg" id="sizes">
+      <button class="b" data-n="3">3×3</button><button class="b" data-n="4">4×4</button><button class="b" data-n="5">5×5</button>
+    </div>
+    <button class="b" id="numBtn" aria-pressed="false">顯示方塊編號</button>
+    <button class="b main" id="newBtn">換一局</button>
+  </section>
+
+  <section class="center">
+    <div class="simplenav"><button id="sPrev" aria-label="上一張">‹</button><span id="sLabel">第 1 張</span><button id="sNext" aria-label="下一張">›</button></div>
+    <div class="frame" id="frame">
+      <div class="title" id="fTitle"></div>
+      <div class="sub">滑 塊 拼 圖</div>
+      <img class="badge" id="fBadge" alt="">
+      <div class="tray" id="tray">
+        <div class="cursor" id="cursor"></div>
+        <div class="peek" id="peek"></div>
+        <div class="flash" id="flash"><span>完成！</span></div>
+        <div class="win" id="win">
+          <div class="card">
+            <h3>完成！</h3>
+            <p id="winText"></p>
+            <div class="row"><button class="b" id="winAgain">再玩一局</button><button class="b main" id="winNext">下一張 ›</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="simplectrl"><button class="b" id="sUndo">↶ 上一步</button><button class="b" id="sReset">⟲ 重來</button></div>
+  </section>
+
+  <section class="panel">
+    <div class="stat"><small>步數</small><b id="steps">0</b></div>
+    <div class="stat"><small>時間</small><b id="time">0:00</b></div>
+    <div class="best" id="best"></div>
+    <div class="btns">
+      <button class="b" id="hintBtn">💡 提示</button>
+      <button class="b" id="peekBtn">👀 偷看</button>
+      <button class="b" id="undoBtn">↶ 上一步</button>
+      <button class="b" id="resetBtn">⟲ 重來</button>
+    </div>
+    <div class="msg" id="msg"></div>
+    <div class="keys">
+      <kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> 選方塊<br>
+      <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 推動（上左下右）<br>
+      滑鼠點方塊或拖曳也能推<br>
+      <kbd>空白鍵</kbd> 按住偷看　<kbd>H</kbd> 提示<br>
+      <kbd>Z</kbd> 上一步　<kbd>N</kbd> 編號
+    </div>
+  </section>
+</main>
+
+<script>
+// ===== 圖案（原創 SVG，400×400）=====
+const K = '#2b2b2b';
+const sw = (w = 4, c = K) => `stroke="${c}" stroke-width="${w}" stroke-linejoin="round" stroke-linecap="round"`;
+const SW = sw();
+
+// 鴨子側臉（面向右），中心 (0,0)
+function duckHead(x, y, s, flip) {
+  return `<g transform="translate(${x} ${y}) scale(${flip ? -s : s} ${s})">
+    <path d="M-40 10 C-62 4 -64 -14 -50 -20 C-58 -6 -46 0 -40 -2Z" fill="#fff" ${SW}/>
+    <circle r="48" fill="#fff" ${SW}/>
+    <path d="M30 2 C52 -10 86 -4 90 9 C86 20 58 22 34 20Z" fill="#ff9b21" ${SW}/>
+    <path d="M34 20 C54 24 76 23 84 16 C80 34 54 40 36 30Z" fill="#f07a12" ${SW}/>
+    <ellipse cx="4" cy="-12" rx="12" ry="17" fill="#fff" ${SW}/>
+    <ellipse cx="9" cy="-8" rx="5.5" ry="8.5" fill="${K}"/><circle cx="11" cy="-11" r="2.2" fill="#fff"/>
+    <ellipse cx="30" cy="-13" rx="10" ry="15" fill="#fff" ${SW}/>
+    <ellipse cx="34" cy="-9" rx="4.5" ry="7.5" fill="${K}"/><circle cx="36" cy="-12" r="2" fill="#fff"/>
+    <ellipse cx="-12" cy="18" rx="10" ry="7" fill="#ffb0a8" opacity=".8"/>
+    <g transform="translate(0 -10)">
+    <path d="M-42 -26 C-40 -66 30 -72 42 -32Z" fill="#fff" ${SW}/>
+    <path d="M-46 -28 C-10 -42 26 -42 46 -32 L47 -21 C24 -31 -10 -31 -47 -16Z" fill="#e8423b" ${SW}/>
+    <circle cx="-6" cy="-60" r="7" fill="#e8423b" ${SW}/></g>
+  </g>`;
+}
+// 老鼠頭（面向右）
+function mouseHead(x, y, s) {
+  return `<g transform="translate(${x} ${y}) scale(${s})">
+    <circle cx="-34" cy="-38" r="27" fill="#9b6744" ${SW}/><circle cx="-34" cy="-38" r="15" fill="#f6b9b0"/>
+    <circle cx="26" cy="-46" r="27" fill="#9b6744" ${SW}/><circle cx="26" cy="-46" r="15" fill="#f6b9b0"/>
+    <circle r="40" fill="#b07a52" ${SW}/>
+    <ellipse cx="26" cy="14" rx="28" ry="19" fill="#f4dcc0" ${SW}/>
+    <circle cx="52" cy="8" r="8" fill="${K}"/>
+    <ellipse cx="4" cy="-10" rx="7" ry="10" fill="#fff" ${SW}/><circle cx="6" cy="-8" r="3.5" fill="${K}"/>
+    <ellipse cx="26" cy="-12" rx="6" ry="9" fill="#fff" ${SW}/><circle cx="28" cy="-10" r="3" fill="${K}"/>
+    <path d="M24 26 Q34 32 44 24" fill="none" ${SW}/>
+    <path d="M40 16 L66 10 M40 20 L66 22" stroke="${K}" stroke-width="2" fill="none"/>
+    <ellipse cx="-10" cy="20" rx="8" ry="6" fill="#f39a8c" opacity=".7"/>
+  </g>`;
+}
+
+function picSailor() {
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5cb8ef"/><stop offset="1" stop-color="#c9ecfb"/></linearGradient>
+    <pattern id="stripe" width="20" height="20" patternUnits="userSpaceOnUse"><rect width="20" height="20" fill="#fff"/><rect width="20" height="9" fill="#e8423b"/></pattern>
+  </defs>
+  <rect width="400" height="240" fill="url(#sky)"/>
+  <g transform="translate(22 -14)"><g stroke="#ffcf2e" stroke-width="6" stroke-linecap="round">
+    <path d="M335 18v-14M335 122v14M283 70h-14M387 70h14M298 33l-10-10M372 107l10 10M372 33l10-10M298 107l-10 10"/>
+  </g>
+  <circle cx="335" cy="70" r="34" fill="#ffd23f" stroke="#f3a712" stroke-width="4"/></g>
+  <g fill="#fff"><ellipse cx="70" cy="62" rx="40" ry="18"/><ellipse cx="95" cy="50" rx="26" ry="20"/><ellipse cx="50" cy="52" rx="20" ry="15"/>
+  <ellipse cx="205" cy="36" rx="34" ry="14"/><ellipse cx="225" cy="27" rx="20" ry="14"/></g>
+  <path d="M232 108 q10 -12 20 0 q10 -12 20 0 M150 122 q8 -9 16 0 q8 -9 16 0" fill="none" ${sw(3)}/>
+  <rect y="232" width="400" height="80" fill="#2a7fc1"/>
+  <g fill="none" stroke="#8fd0f5" stroke-width="4" stroke-linecap="round">
+    <path d="M10 252 q15 -8 30 0 q15 8 30 0"/><path d="M300 256 q15 -8 30 0 q15 8 30 0"/>
+    <path d="M150 280 q15 -8 30 0 q15 8 30 0"/><path d="M330 290 q15 -8 30 0"/><path d="M20 292 q15 -8 30 0"/>
+  </g>
+  <path d="M40 228 h90 l-14 22 h-62z" fill="#a0522d" ${SW}/>
+  <path d="M86 226 V140" ${SW}/>
+  <path d="M90 145 L90 220 L138 220Z" fill="#fff" ${SW}/>
+  <path d="M82 150 L82 220 L44 220Z" fill="#ffd23f" ${SW}/>
+  <path d="M86 140 l18 6 l-18 6z" fill="#e8423b"/>
+  <rect y="306" width="400" height="94" fill="#c48a52"/>
+  <g stroke="#8a5a30" stroke-width="3"><path d="M0 330h400M0 356h400M0 382h400"/><path d="M60 306v24M190 330v26M300 306v24M120 356v26M350 356v26M240 382v18"/></g>
+  <rect y="302" width="400" height="8" fill="#8a5a30"/>
+  <circle cx="345" cy="318" r="34" fill="#fff" ${SW}/><circle cx="345" cy="318" r="16" fill="#c48a52" ${SW}/>
+  <g fill="#e8423b"><path d="M345 284 a34 34 0 0 1 24 10 l-11 11 a16 16 0 0 0 -13 -5z"/><path d="M345 352 a34 34 0 0 1 -24 -10 l11 -11 a16 16 0 0 0 13 5z"/>
+  <path d="M311 318 a34 34 0 0 1 10 -24 l11 11 a16 16 0 0 0 -5 13z"/><path d="M379 318 a34 34 0 0 1 -10 24 l-11 -11 a16 16 0 0 0 5 -13z"/></g>
+  <circle cx="345" cy="318" r="34" fill="none" ${SW}/><circle cx="345" cy="318" r="16" fill="none" ${SW}/>
+  <path d="M168 372 q-6 18 -30 20 q24 4 40 -4z M222 372 q6 18 30 20 q-24 4 -40 -4z" fill="#ff9b21" ${SW}/>
+  <path d="M180 352 v24 M212 352 v24" ${sw(8, '#ff9b21')}/>
+  <path d="M140 300 C126 286 120 270 134 262 C126 280 146 292 150 296Z" fill="#fff" ${SW}/>
+  <path d="M146 226 Q196 206 248 226 L258 344 Q198 366 136 344Z" fill="url(#stripe)" ${SW}/>
+  <path d="M160 222 L198 268 L236 222 Q198 234 160 222Z" fill="#2c5fd0" ${SW}/>
+  <path d="M188 258 l10 14 l10 -14 l-4 30 l-6 -8 l-6 8z" fill="#e8423b" ${sw(3)}/>
+  <path d="M150 238 C120 256 118 300 140 316 C150 296 152 270 160 252Z" fill="#fff" ${SW}/>
+  <path d="M244 236 C266 214 282 190 292 162 C304 168 312 150 300 140 C312 130 300 118 290 126 C292 112 276 108 272 122 C262 112 252 124 260 134 C252 160 238 190 226 214Z" fill="#fff" ${SW}/>
+  <path d="M316 116 q12 12 10 30 M330 104 q18 18 14 44" fill="none" ${sw(3)}/>
+  ${duckHead(196, 172, 1.08, true)}
+  </svg>`;
+}
+
+function picDrive() {
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  <defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fd3f7"/><stop offset="1" stop-color="#e3f6ff"/></linearGradient></defs>
+  <rect width="400" height="260" fill="url(#sky)"/>
+  <circle cx="60" cy="58" r="30" fill="#ffd23f" stroke="#f3a712" stroke-width="4"/>
+  <g fill="#fff"><ellipse cx="300" cy="48" rx="44" ry="17"/><ellipse cx="322" cy="36" rx="24" ry="18"/><ellipse cx="160" cy="80" rx="30" ry="12"/><ellipse cx="174" cy="72" rx="16" ry="11"/></g>
+  <path d="M0 200 Q80 140 170 190 Q250 130 400 180 V400 H0Z" fill="#7cc24f"/>
+  <path d="M0 240 Q110 190 220 236 Q310 200 400 226 V400 H0Z" fill="#5aa33a"/>
+  <g><rect x="326" y="150" width="10" height="40" fill="#8a5a30"/><circle cx="331" cy="140" r="24" fill="#3f8a2c" ${SW}/>
+  <rect x="34" y="168" width="9" height="34" fill="#8a5a30"/><circle cx="38" cy="160" r="20" fill="#3f8a2c" ${SW}/>
+  <rect x="240" y="166" width="7" height="24" fill="#8a5a30"/><circle cx="243" cy="158" r="15" fill="#4f9c36" ${SW}/></g>
+  <path d="M0 330 Q200 290 400 316 V372 Q200 344 0 392Z" fill="#9a9a9a"/>
+  <path d="M30 352 h40 M130 336 h40 M240 326 h40 M340 330 h40" stroke="#fff" stroke-width="5" stroke-linecap="round"/>
+  <g stroke="#fff" stroke-width="5" stroke-linecap="round" opacity=".9"><path d="M12 236 h36 M4 262 h46 M18 288 h30"/></g>
+  ${duckHead(108, 178, 0.82)}
+  ${mouseHead(248, 168, 0.86)}
+  <path d="M266 232 L280 198" ${sw(6)}/>
+  <ellipse cx="284" cy="198" rx="8" ry="18" fill="none" ${sw(6)} transform="rotate(20 284 198)"/>
+  <path d="M300 230 L314 168 L326 170 L318 230Z" fill="#cdeefc" ${SW}/>
+  <path d="M64 236 Q70 214 100 214 L280 222 Q318 222 336 240 L352 246 Q366 252 362 280 L358 310 H60 Q48 300 52 270 Z" fill="#ffd23f" ${SW}/>
+  <path d="M70 252 H340" stroke="#f3a712" stroke-width="6"/>
+  <path d="M170 236 v68" ${sw(3)}/><rect x="186" y="262" width="22" height="6" rx="3" fill="${K}"/>
+  <circle cx="352" cy="266" r="10" fill="#fff6a8" ${SW}/>
+  <rect x="352" y="296" width="20" height="12" rx="4" fill="#bbb" ${SW}/><rect x="40" y="296" width="22" height="12" rx="4" fill="#bbb" ${SW}/>
+  <g><circle cx="118" cy="312" r="34" fill="${K}"/><circle cx="118" cy="312" r="15" fill="#d9d9d9" ${SW}/>
+  <circle cx="300" cy="312" r="34" fill="${K}"/><circle cx="300" cy="312" r="15" fill="#d9d9d9" ${SW}/></g>
+  <g fill="#ff5d8f" ${sw(2)}><circle cx="40" cy="372" r="7"/><circle cx="96" cy="384" r="6"/></g>
+  <g fill="#fff" ${sw(2)}><circle cx="190" cy="386" r="6"/><circle cx="380" cy="384" r="7"/></g>
+  <g fill="#ffd23f" ${sw(2)}><circle cx="270" cy="390" r="6"/><circle cx="150" cy="394" r="5"/></g>
+  </svg>`;
+}
+
+function picFace() {
+  let rays = '';
+  for (let i = 0; i < 18; i++) {
+    const a1 = i * 20 * Math.PI / 180, a2 = (i * 20 + 10) * Math.PI / 180, R = 420;
+    rays += `<path d="M200 220 L${200 + R * Math.cos(a1)} ${220 + R * Math.sin(a1)} L${200 + R * Math.cos(a2)} ${220 + R * Math.sin(a2)}Z"/>`;
+  }
+  const stars = [[40, 50, '#ff6b6b'], [360, 46, '#4dabf7'], [36, 350, '#51cf66'], [366, 352, '#cc5de8'], [374, 210, '#ffa94d'], [26, 210, '#ff6b9d']]
+    .map(([x, y, c]) => `<path transform="translate(${x} ${y})" d="M0 -16 L5 -5 L16 -4 L8 4 L10 16 L0 10 L-10 16 L-8 4 L-16 -4 L-5 -5Z" fill="${c}" ${sw(2.5)}/>`).join('');
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  <rect width="400" height="400" fill="#fff3c4"/>
+  <g fill="#ffe08a">${rays}</g>
+  ${stars}
+  <path d="M150 346 L200 372 L150 398Z M250 346 L200 372 L250 398Z" fill="#e8423b" ${SW}/>
+  <g fill="#fff"><circle cx="164" cy="362" r="4"/><circle cx="160" cy="384" r="4"/><circle cx="236" cy="362" r="4"/><circle cx="240" cy="384" r="4"/></g>
+  <circle cx="200" cy="372" r="12" fill="#e8423b" ${SW}/>
+  <ellipse cx="200" cy="226" rx="140" ry="126" fill="#fff" ${sw(5)}/>
+  <path d="M86 118 C96 40 304 40 314 118Z" fill="#fff" ${sw(5)}/>
+  <path d="M78 124 C150 96 250 96 322 124 L324 146 C250 120 150 120 76 146Z" fill="#e8423b" ${sw(5)}/>
+  <circle cx="200" cy="56" r="14" fill="#e8423b" ${SW}/>
+  <path d="M200 74 v22 M190 84 h20 M188 92 q12 10 24 0" fill="none" stroke="#2c5fd0" stroke-width="4" stroke-linecap="round"/>
+  <ellipse cx="160" cy="190" rx="30" ry="44" fill="#fff" ${sw(5)}/>
+  <ellipse cx="240" cy="190" rx="30" ry="44" fill="#fff" ${sw(5)}/>
+  <ellipse cx="168" cy="200" rx="13" ry="20" fill="${K}"/><ellipse cx="232" cy="200" rx="13" ry="20" fill="${K}"/>
+  <circle cx="173" cy="192" r="5" fill="#fff"/><circle cx="237" cy="192" r="5" fill="#fff"/>
+  <path d="M132 140 q24 -14 46 0 M222 140 q24 -14 46 0" fill="none" ${SW}/>
+  <ellipse cx="100" cy="262" rx="22" ry="14" fill="#ffb0a8" opacity=".8"/><ellipse cx="300" cy="262" rx="22" ry="14" fill="#ffb0a8" opacity=".8"/>
+  <path d="M132 268 Q200 350 268 268 Q200 296 132 268Z" fill="#c9420f" ${sw(5)}/>
+  <path d="M166 298 Q200 280 234 298 Q220 324 200 326 Q180 324 166 298Z" fill="#ff7b8a"/>
+  <path d="M106 252 Q200 196 294 252 Q262 284 200 280 Q138 284 106 252Z" fill="#ff9b21" ${sw(5)}/>
+  <path d="M176 238 q6 -4 10 0 M214 238 q6 -4 10 0" fill="none" ${sw(3)}/>
+  </svg>`;
+}
+
+function picGarden() {
+  const flower = (x, y, h, c, r) => `<path d="M${x} ${y} V${y - h}" stroke="#3f8a2c" stroke-width="5"/>
+    <path d="M${x} ${y - h / 2} q14 -10 20 -2 q-10 10 -20 2z" fill="#5aa33a" ${sw(2)}/>
+    <g transform="translate(${x} ${y - h})" fill="${c}" ${sw(2.5)}>
+      <circle cx="0" cy="-${r}" r="${r}"/><circle cx="${r}" cy="0" r="${r}"/><circle cx="0" cy="${r}" r="${r}"/><circle cx="-${r}" cy="0" r="${r}"/>
+      <circle r="${r * 0.8}" fill="#ffd23f"/></g>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  <defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9bdcf9"/><stop offset="1" stop-color="#eaf8ff"/></linearGradient></defs>
+  <rect width="400" height="300" fill="url(#sky)"/>
+  <g fill="none" stroke-width="12">
+    <circle cx="280" cy="300" r="230" stroke="#ff6b6b"/><circle cx="280" cy="300" r="218" stroke="#ffa94d"/>
+    <circle cx="280" cy="300" r="206" stroke="#ffd43b"/><circle cx="280" cy="300" r="194" stroke="#69db7c"/>
+    <circle cx="280" cy="300" r="182" stroke="#4dabf7"/><circle cx="280" cy="300" r="170" stroke="#9775fa"/>
+  </g>
+  <circle cx="44" cy="44" r="26" fill="#ffd23f" stroke="#f3a712" stroke-width="4"/>
+  <g fill="#fff"><ellipse cx="140" cy="44" rx="34" ry="13"/><ellipse cx="156" cy="35" rx="18" ry="12"/></g>
+  <g transform="translate(300 96) rotate(-12)"><path d="M0 0 C-30 -30 -40 0 -18 10 C-36 24 -10 36 0 12 C10 36 36 24 18 10 C40 0 30 -30 0 0Z" fill="#ff6b9d" ${sw(3)}/>
+  <path d="M0 -8 V20 M0 -8 l-6 -12 M0 -8 l6 -12" ${sw(3)}/></g>
+  <g transform="translate(206 150)"><ellipse rx="14" ry="10" fill="#ffd23f" ${sw(3)}/><path d="M-4 -9 v18 M4 -9 v18" ${sw(3)}/>
+  <ellipse cx="-2" cy="-14" rx="8" ry="6" fill="#e3f6ff" ${sw(2)}/></g>
+  <rect y="290" width="400" height="110" fill="#6cc04a"/>
+  <g fill="#fff" ${sw(3)}>${Array.from({ length: 11 }, (_, i) => `<path d="M${8 + i * 37} 300 V232 l11 -12 l11 12 V300Z"/>`).join('')}</g>
+  <rect y="246" width="400" height="10" fill="#fff" ${sw(3)}/><rect y="278" width="400" height="10" fill="#fff" ${sw(3)}/>
+  <path d="M0 300 h400" stroke="#4f9c36" stroke-width="6"/>
+  ${flower(250, 372, 70, '#ff6b6b', 13)}${flower(300, 384, 96, '#cc5de8', 14)}${flower(352, 370, 64, '#ff922b', 12)}
+  ${flower(380, 392, 116, '#4dabf7', 12)}${flower(222, 394, 40, '#ff6b9d', 11)}
+  <g fill="#4dabf7">${[[258, 236], [266, 254], [274, 236], [270, 272], [282, 254], [262, 290], [286, 280], [292, 300]].map(([x, y]) => `<path d="M${x} ${y} q5 8 0 11 q-5 -3 0 -11z"/>`).join('')}</g>
+  <path d="M84 396 q-6 -14 -26 -12 q16 -10 34 0z M132 396 q6 -14 26 -12 q-16 -10 -34 0z" fill="#ff9b21" ${SW}/>
+  <path d="M98 360 v28 M120 360 v28" stroke="#ff9b21" stroke-width="9" stroke-linecap="round"/>
+  <path d="M60 312 C44 296 44 280 58 272 C52 290 66 300 70 304Z" fill="#fff" ${SW}/>
+  <path d="M66 236 Q110 220 156 240 L160 360 Q110 380 60 360Z" fill="#fff" ${SW}/>
+  <path d="M74 286 H152 L156 362 Q110 380 64 362Z" fill="#4dabf7" ${SW}/>
+  <path d="M86 286 L82 244 M140 286 L146 246" ${sw(7, '#4dabf7')}/>
+  <circle cx="86" cy="290" r="4" fill="#ffd23f"/><circle cx="142" cy="290" r="4" fill="#ffd23f"/>
+  <path d="M142 300 l24 0 l6 -8 l14 0 l-2 32 l-38 0z" fill="none"/>
+  <path d="M150 268 L160 300 L210 300 L216 262Z" fill="#40c057" ${SW}/>
+  <path d="M212 270 L244 226 L252 232 L218 282Z" fill="#40c057" ${SW}/>
+  <ellipse cx="248" cy="228" rx="8" ry="12" fill="#2b8a3e" ${sw(3)} transform="rotate(36 248 228)"/>
+  <path d="M164 270 Q182 240 202 266" fill="none" ${sw(5)}/>
+  <path d="M150 256 C170 262 178 272 170 284 C160 280 148 270 144 262Z" fill="#fff" ${SW}/>
+  ${duckHead(112, 190, 0.95)}
+  </svg>`;
+}
+
+const PICS = [
+  { name: '水手鴨', fc: '#e0332a', fd: '#9e1f19', ft: '#fff', svg: picSailor() },
+  { name: '兜風去', fc: '#f28c1c', fd: '#a85a08', ft: '#fff', svg: picDrive() },
+  { name: '鴨鴨大頭照', fc: '#2d6fd6', fd: '#1b4691', ft: '#fff', svg: picFace() },
+  { name: '澆花囉', fc: '#f7c815', fd: '#a88405', ft: '#5a3a00', svg: picGarden() },
+];
+PICS.forEach(p => p.url = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(p.svg));
+const BADGE = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-60 -80 160 140">${duckHead(0, 0, 1)}</svg>`);
+
+// ===== 儲存 =====
+const STORE = 'slide-puzzle-v1';
+function loadStore() {
+  const d = { size: 4, pic: 0, simple: false, nums: false, sound: true, best: {} };
+  try { return Object.assign(d, JSON.parse(localStorage.getItem(STORE) || '{}')); } catch (e) { return d; }
+}
+const store = loadStore();
+function saveStore() { try { localStorage.setItem(STORE, JSON.stringify(store)); } catch (e) {} }
+
+// ===== 音效 =====
+let actx = null;
+function audio() {
+  if (!store.sound) return null;
+  try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return null; }
+  return actx;
+}
+function clack() {
+  const a = audio(); if (!a) return;
+  const len = Math.floor(a.sampleRate * 0.035), buf = a.createBuffer(1, len, a.sampleRate), d = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3);
+  const src = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain();
+  f.type = 'bandpass'; f.frequency.value = 1800; f.Q.value = 1.2; g.gain.value = 0.5;
+  src.buffer = buf; src.connect(f); f.connect(g); g.connect(a.destination); src.start();
+}
+function chime() {
+  const a = audio(); if (!a) return;
+  [523, 659, 784, 1047].forEach((fr, i) => {
+    const o = a.createOscillator(), g = a.createGain(), t = a.currentTime + i * 0.11;
+    o.type = 'triangle'; o.frequency.value = fr;
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.18, t + 0.02); g.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+    o.connect(g); g.connect(a.destination); o.start(t); o.stop(t + 0.55);
+  });
+}
+
+// ===== 盤面 =====
+// board[位置] = 方塊編號；方塊 k 的正確位置是 k；N*N-1 代表空格
+const $ = id => document.getElementById(id);
+const tray = $('tray');
+let N = store.size, BL = N * N - 1;
+let game = null, bs = 400, cell = 100, tileEls = [], lastEl = null;
+let nextTimer = null, timerId = null;
+const simple = () => document.body.classList.contains('simple');
+
+function isSolvable(b, n) {
+  let inv = 0;  // 把空格也算進排列的奇偶
+  const seen = new Array(b.length).fill(false);
+  for (let i = 0; i < b.length; i++) {
+    if (seen[i]) continue;
+    let j = i, len = 0;
+    while (!seen[j]) { seen[j] = true; j = b[j]; len++; }
+    inv += len - 1;
+  }
+  const bp = b.indexOf(n * n - 1), dist = (n - 1 - Math.floor(bp / n)) + (n - 1 - bp % n);
+  return inv % 2 === dist % 2;
+}
+function shuffled(n) {
+  const L = n * n;
+  for (;;) {
+    const b = Array.from({ length: L }, (_, i) => i);
+    for (let i = L - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; }
+    if (!isSolvable(b, n)) {  // 交換兩個非空格方塊修正奇偶
+      const a = b.findIndex(v => v !== L - 1), c = b.findIndex((v, k) => k > a && v !== L - 1);
+      [b[a], b[c]] = [b[c], b[a]];
+    }
+    let wrong = 0;
+    for (let i = 0; i < L; i++) if (b[i] !== i && b[i] !== L - 1) wrong++;
+    if (wrong >= Math.min(L - 2, n * 2)) return b;
+  }
+}
+const solved = b => b.every((v, i) => v === i);
+
+function newGame(keepBoard) {
+  clearTimeout(nextTimer);
+  N = store.size; BL = N * N - 1;
+  const start = keepBoard || shuffled(N);
+  game = { start: start.slice(), board: start.slice(), steps: 0, hist: [], won: false, t0: 0, elapsed: 0, hints: 0, sel: -1, plan: null };
+  game.sel = initialSel();
+  stopTimer();
+  buildTiles();
+  render();
+}
+function initialSel() {
+  const bp = game.board.indexOf(BL), r = Math.floor(bp / N), c = bp % N;
+  const cand = [[r, c - 1], [r - 1, c], [r, c + 1], [r + 1, c]].find(([y, x]) => y >= 0 && y < N && x >= 0 && x < N);
+  return game.board[cand[0] * N + cand[1]];
+}
+
+function layout() {
+  const narrow = innerWidth <= 900;
+  const availW = narrow ? innerWidth - 32 - 40 : simple() ? innerWidth - 120 : innerWidth - 48 - 230 * 2 - 40 - 60;
+  const availH = narrow ? innerHeight * 0.62 : simple() ? innerHeight - 60 - 20 - 150 : innerHeight - 60 - 40;
+  bs = Math.floor(Math.max(220, Math.min(availW / 1.14, availH / 1.28, 640)));
+  cell = bs / N;
+  $('frame').style.setProperty('--bs', bs + 'px');
+  tileEls.forEach(el => sizeTile(el));
+  if (lastEl) sizeTile(lastEl);
+  $('cursor').style.width = $('cursor').style.height = cell + 'px';
+  $('peek').style.backgroundImage = `url("${PICS[store.pic].url}")`;
+  render();
+}
+function sizeTile(el) {
+  const k = +el.dataset.k, face = el.firstChild;
+  el.style.width = el.style.height = cell + 'px';
+  face.style.backgroundSize = `${bs}px ${bs}px`;
+  face.style.backgroundPosition = `${-(k % N) * cell}px ${-Math.floor(k / N) * cell}px`;
+}
+function makeTile(k) {
+  const el = document.createElement('div');
+  el.className = 'tile'; el.dataset.k = k;
+  const face = document.createElement('div'); face.className = 'face';
+  face.style.backgroundImage = `url("${PICS[store.pic].url}")`;
+  const num = document.createElement('span'); num.className = 'num'; num.textContent = k + 1;
+  face.appendChild(num); el.appendChild(face);
+  return el;
+}
+function buildTiles() {
+  tileEls.forEach(el => el.remove()); if (lastEl) lastEl.remove();
+  tileEls = [];
+  for (let k = 0; k < BL; k++) { const el = makeTile(k); tray.appendChild(el); tileEls[k] = el; }
+  lastEl = makeTile(BL); lastEl.classList.add('last'); tray.appendChild(lastEl);
+  const p = PICS[store.pic], fr = $('frame');
+  fr.style.setProperty('--fc', p.fc); fr.style.setProperty('--fd', p.fd); fr.style.setProperty('--ft', p.ft);
+  $('fTitle').textContent = p.name;
+  $('win').classList.remove('on'); $('flash').classList.remove('on');
+  layout();
+}
+function posOf(k) { return game.board.indexOf(k); }
+function place(el, p) { el.style.transform = `translate(${(p % N) * cell}px, ${Math.floor(p / N) * cell}px)`; }
+
+function render() {
+  if (!game) return;
+  game.board.forEach((k, p) => { if (k !== BL) place(tileEls[k], p); });
+  place(lastEl, BL);
+  const cur = $('cursor');
+  if (game.sel >= 0 && !game.won) { cur.style.display = ''; place(cur, posOf(game.sel)); } else cur.style.display = 'none';
+  $('steps').textContent = game.steps;
+  $('time').textContent = fmt(curTime());
+  $('undoBtn').disabled = $('sUndo').disabled = !game.hist.length || game.won;
+  $('resetBtn').disabled = $('sReset').disabled = (!game.hist.length && !game.won);
+  $('hintBtn').disabled = game.won;
+  document.querySelectorAll('#sizes button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.n === N));
+  document.querySelectorAll('#pics button').forEach((b, i) => b.setAttribute('aria-pressed', i === store.pic));
+  $('sLabel').textContent = `第 ${store.pic + 1} 張`;
+  const best = store.best[store.pic + '-' + N];
+  $('best').innerHTML = best
+    ? `這張 ${N}×${N} 最佳紀錄<br>最少 ${best.steps} 步・最快 ${fmt(best.time)}`
+    : `這張 ${N}×${N} 還沒有紀錄`;
+}
+const fmt = ms => { const s = Math.floor(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+const curTime = () => game.t0 ? game.elapsed + (Date.now() - game.t0) : game.elapsed;
+function startTimer() {
+  if (game.t0 || game.won) return;
+  game.t0 = Date.now();
+  timerId = setInterval(() => { $('time').textContent = fmt(curTime()); }, 250);
+}
+function stopTimer() {
+  if (game && game.t0) { game.elapsed += Date.now() - game.t0; game.t0 = 0; }
+  clearInterval(timerId); timerId = null;
+}
+
+// ===== 推動 =====
+const DIRS = { up: [-1, 0], down: [1, 0], left: [0, -1], right: [0, 1] };
+// 把方塊 k 往 dir 推：空格要在同一排、那個方向上
+function push(k, dir) {
+  if (game.won || k < 0) return false;
+  const p = posOf(k), bp = posOf(BL), [dr, dc] = DIRS[dir];
+  const r = Math.floor(p / N), c = p % N, br = Math.floor(bp / N), bc = bp % N;
+  let dist = 0;
+  if (dr && c === bc && Math.sign(br - r) === dr) dist = Math.abs(br - r);
+  if (dc && r === br && Math.sign(bc - c) === dc) dist = Math.abs(bc - c);
+  if (!dist) { shake(k); return false; }
+  game.hist.push({ board: game.board.slice(), steps: game.steps, sel: game.sel });
+  // 從空格往回，一格一格往空格方向移
+  let cur = bp;
+  for (let i = 0; i < dist; i++) {
+    const nxt = cur - dr * N - dc;
+    game.board[cur] = game.board[nxt]; game.board[nxt] = BL; cur = nxt;
+    game.steps++;
+  }
+  game.sel = k;
+  clearHint();
+  clack();
+  startTimer();
+  render();
+  if (solved(game.board)) win();
+  return true;
+}
+// 點方塊：自動判斷方向
+function pushToward(k) {
+  const p = posOf(k), bp = posOf(BL);
+  const r = Math.floor(p / N), c = p % N, br = Math.floor(bp / N), bc = bp % N;
+  game.sel = k;
+  if (r === br) return push(k, bc > c ? 'right' : 'left');
+  if (c === bc) return push(k, br > r ? 'down' : 'up');
+  shake(k); render(); return false;
+}
+function shake(k) {
+  const el = tileEls[k]; if (!el) return;
+  el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake');
+}
+function undo() {
+  if (!game.hist.length || game.won) return;
+  const h = game.hist.pop();
+  game.board = h.board; game.steps = h.steps; game.sel = h.sel;
+  clearHint(); clack(); render();
+}
+function reset() {
+  newGame(game.start);
+}
+function moveSel(dr, dc) {
+  if (game.won) return;
+  let p = posOf(game.sel), r = Math.floor(p / N) + dr, c = p % N + dc;
+  if (r < 0 || r >= N || c < 0 || c >= N) return;
+  if (game.board[r * N + c] === BL) {  // 跳過空格
+    r += dr; c += dc;
+    if (r < 0 || r >= N || c < 0 || c >= N) return;
+  }
+  game.sel = game.board[r * N + c];
+  render();
+}
+
+// ===== 過關 =====
+function win() {
+  game.won = true;
+  stopTimer();
+  game.sel = -1;
+  render();
+  setTimeout(() => lastEl.classList.add('show'), 150);
+  chime();
+  if (simple()) {
+    $('flash').classList.add('on');
+    nextTimer = setTimeout(() => { store.pic = (store.pic + 1) % PICS.length; saveStore(); newGame(); }, 1500);
+    return;
+  }
+  const key = store.pic + '-' + N, t = game.elapsed, old = store.best[key];
+  let rec = '';
+  if (game.hints) rec = `<br><small>用了 ${game.hints} 次提示，這局不列入紀錄</small>`;
+  else {
+    const nb = { steps: Math.min(game.steps, old ? old.steps : Infinity), time: Math.min(t, old ? old.time : Infinity) };
+    const newer = [];
+    if (!old || game.steps < old.steps) newer.push('最少步數');
+    if (!old || t < old.time) newer.push('最快時間');
+    store.best[key] = nb; saveStore();
+    if (old && newer.length) rec = `<br>🎉 新紀錄：${newer.join('、')}`;
+  }
+  $('winText').innerHTML = `${game.steps} 步・${fmt(t)}${rec}`;
+  render();
+  setTimeout(() => $('win').classList.add('on'), 700);
+}
+
+// ===== 提示（分段求解：一排一排、一列一列放好，最後 3×3 求最少步） =====
+function solvePlan(board, n) {
+  const b = board.slice(), L = n * n, BLK = L - 1, locked = new Array(L).fill(false), out = [];
+  const nb = p => { const r = Math.floor(p / n), c = p % n, a = []; if (r > 0) a.push(p - n); if (r < n - 1) a.push(p + n); if (c > 0) a.push(p - 1); if (c < n - 1) a.push(p + 1); return a; };
+  const NB = Array.from({ length: L }, (_, p) => nb(p));
+  function stage(tiles) {
+    const m = tiles.length;
+    const s0 = [b.indexOf(BLK), ...tiles.map(t => b.indexOf(t))];
+    const done = s => tiles.every((t, i) => s[i + 1] === t);
+    if (done(s0)) { tiles.forEach(t => locked[t] = true); return; }
+    const enc = s => s.reduce((a, v) => a * L + v, 0);
+    const prev = new Map([[enc(s0), null]]);
+    let q = [s0], found = null;
+    while (q.length && !found) {
+      const nq = [];
+      for (const s of q) {
+        for (const np of NB[s[0]]) {
+          if (locked[np]) continue;
+          const t = s.slice(); t[0] = np;
+          for (let i = 1; i <= m; i++) if (s[i] === np) t[i] = s[0];
+          const key = enc(t);
+          if (prev.has(key)) continue;
+          prev.set(key, s);
+          if (done(t)) { found = t; break; }
+          nq.push(t);
+        }
+        if (found) break;
+      }
+      q = nq;
+    }
+    const path = [];
+    for (let s = found; prev.get(enc(s)); s = prev.get(enc(s))) path.push(s[0]);
+    path.reverse();
+    for (const cellTo of path) {  // 空格移到 cellTo，原本在 cellTo 的方塊移進空格
+      const bp = b.indexOf(BLK), t = b[cellTo];
+      b[bp] = t; b[cellTo] = BLK; out.push(t);
+    }
+    tiles.forEach(t => locked[t] = true);
+  }
+  let r0 = 0, c0 = 0;
+  while (n - r0 > 3) {
+    for (let c = c0; c < n - 2; c++) stage([r0 * n + c]);
+    stage([r0 * n + n - 2, r0 * n + n - 1]);
+    r0++;
+    for (let r = r0; r < n - 2; r++) stage([r * n + c0]);
+    stage([(n - 2) * n + c0, (n - 1) * n + c0]);
+    c0++;
+  }
+  const rest = [];
+  for (let r = r0; r < n; r++) for (let c = c0; c < n; c++) if (r * n + c !== BLK) rest.push(r * n + c);
+  stage(rest);
+  return out;
+}
+function clearHint() {
+  tileEls.forEach(el => el && el.classList.remove('hint'));
+  $('msg').textContent = '';
+}
+function hint() {
+  if (game.won || simple()) return;
+  const key = game.board.join(',');
+  if (!game.plan || game.plan.key !== key) game.plan = { key, moves: solvePlan(game.board, N) };
+  const k = game.plan.moves[0];
+  if (k === undefined) return;
+  game.hints++;
+  const p = posOf(k), bp = posOf(BL);
+  const dir = bp === p - N ? 'up' : bp === p + N ? 'down' : bp === p - 1 ? 'left' : 'right';
+  const name = { up: '↑ 上（W）', down: '↓ 下（S）', left: '← 左（A）', right: '→ 右（D）' }[dir];
+  game.sel = k; render();
+  clearHint();
+  tileEls[k].classList.add('hint');
+  $('msg').textContent = `提示：把亮起的方塊往${name}推`;
+  // 照提示推完後，下一個提示直接沿用這份計畫
+  const nextBoard = game.board.slice(); nextBoard[bp] = k; nextBoard[p] = BL;
+  game.plan = { key: nextBoard.join(','), moves: game.plan.moves.slice(1) };
+  game.plan.pending = true;
+}
+
+// ===== 偷看 =====
+function peek(on) { $('peek').classList.toggle('on', on && !!game && !game.won); }
+
+// ===== 操作綁定 =====
+let drag = null;
+tray.addEventListener('pointerdown', e => {
+  const el = e.target.closest('.tile');
+  if (!el || el.classList.contains('last') || game.won) return;
+  drag = { k: +el.dataset.k, x: e.clientX, y: e.clientY };
+  tray.setPointerCapture(e.pointerId);
+});
+tray.addEventListener('pointerup', e => {
+  if (!drag) return;
+  const dx = e.clientX - drag.x, dy = e.clientY - drag.y, k = drag.k;
+  drag = null;
+  const th = cell * 0.22;
+  if (Math.max(Math.abs(dx), Math.abs(dy)) < th) pushToward(k);
+  else { game.sel = k; push(k, Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up')); render(); }
+});
+tray.addEventListener('pointercancel', () => drag = null);
+
+document.addEventListener('keydown', e => {
+  if (e.ctrlKey || e.metaKey || e.altKey) { if (e.key.toLowerCase() === 'z' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); undo(); } return; }
+  const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+  const sel = { ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1] }[key];
+  if (sel) { e.preventDefault(); moveSel(...sel); return; }
+  const pd = { w: 'up', a: 'left', s: 'down', d: 'right' }[key];
+  if (pd) { e.preventDefault(); push(game.sel, pd); return; }
+  if (key === ' ') { e.preventDefault(); if (!e.repeat) peek(true); return; }
+  if (key === 'z') undo();
+  else if (key === 'h') hint();
+  else if (key === 'n') setNums(!store.nums);
+  else if (key === 'r') reset();
+});
+document.addEventListener('keyup', e => { if (e.key === ' ') peek(false); });
+
+const pb = $('peekBtn');
+pb.addEventListener('pointerdown', () => peek(true));
+['pointerup', 'pointerleave', 'pointercancel'].forEach(t => pb.addEventListener(t, () => peek(false)));
+
+$('pics').innerHTML = PICS.map((p, i) => `<button aria-label="${p.name}"><img src="${p.url}" alt=""><span>${p.name}</span></button>`).join('');
+document.querySelectorAll('#pics button').forEach((b, i) => b.onclick = () => { store.pic = i; saveStore(); newGame(); });
+document.querySelectorAll('#sizes button').forEach(b => b.onclick = () => { store.size = +b.dataset.n; saveStore(); newGame(); });
+$('newBtn').onclick = () => newGame();
+$('undoBtn').onclick = $('sUndo').onclick = undo;
+$('resetBtn').onclick = $('sReset').onclick = reset;
+$('hintBtn').onclick = hint;
+$('winAgain').onclick = () => newGame();
+$('winNext').onclick = () => { store.pic = (store.pic + 1) % PICS.length; saveStore(); newGame(); };
+$('sPrev').onclick = () => { store.pic = (store.pic + PICS.length - 1) % PICS.length; saveStore(); newGame(); };
+$('sNext').onclick = () => { store.pic = (store.pic + 1) % PICS.length; saveStore(); newGame(); };
+
+function setNums(on) {
+  store.nums = on; saveStore();
+  document.body.classList.toggle('nums', on);
+  $('numBtn').setAttribute('aria-pressed', on);
+}
+$('numBtn').onclick = () => setNums(!store.nums);
+function setSimple(on) {
+  document.body.classList.toggle('simple', on);
+  $('modeBtn').setAttribute('aria-pressed', on);
+  store.simple = on; saveStore();
+  clearHint();
+  layout();
+}
+$('modeBtn').onclick = () => setSimple(!simple());
+$('soundBtn').onclick = () => { store.sound = !store.sound; saveStore(); $('soundBtn').setAttribute('aria-pressed', store.sound); };
+$('soundBtn').setAttribute('aria-pressed', store.sound);
+$('fBadge').src = BADGE;
+addEventListener('resize', layout);
+document.addEventListener('visibilitychange', () => {
+  if (!game || game.won) return;
+  if (document.hidden) stopTimer();
+  else if (game.steps) { game.t0 = Date.now(); timerId = setInterval(() => { $('time').textContent = fmt(curTime()); }, 250); }
+});
+
+if (![3, 4, 5].includes(store.size)) store.size = 4;
+if (!(store.pic >= 0 && store.pic < PICS.length)) store.pic = 0;
+setNums(!!store.nums);
+document.body.classList.toggle('simple', !!store.simple);
+$('modeBtn').setAttribute('aria-pressed', !!store.simple);
+newGame();
+</script>
+</body>
+</html>

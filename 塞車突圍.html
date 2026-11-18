@@ -1,0 +1,720 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>塞車突圍</title>
+<style>
+:root {
+  --bg: #e9edf1; --panel: #ffffff; --ink: #1c232d; --muted: #5f6a79; --line: #d5dbe3;
+  --accent: #d62828; --ok: #1f9d55; --gold: #e0a400;
+  --tray: #3a414c; --tray-edge: #2a2f37; --slot: #cdd3da; --slot-in: #bfc6cf;
+  --btn: #f3f5f8; --btn-h: #e6eaf0;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12161b; --panel: #1b2129; --ink: #e7ecf2; --muted: #98a3b1; --line: #2b333e;
+    --tray: #0b0e12; --tray-edge: #05070a; --slot: #4d5664; --slot-in: #464e5b;
+    --btn: #242b35; --btn-h: #2e3642;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12161b; --panel: #1b2129; --ink: #e7ecf2; --muted: #98a3b1; --line: #2b333e;
+  --tray: #0b0e12; --tray-edge: #05070a; --slot: #4d5664; --slot-in: #464e5b;
+  --btn: #242b35; --btn-h: #2e3642;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: "Microsoft JhengHei", "PingFang TC", "Noto Sans TC", system-ui, sans-serif;
+  display: flex; flex-direction: column; overflow: hidden;
+}
+header {
+  display: flex; align-items: baseline; gap: 14px; padding: 14px 24px 6px;
+}
+header h1 { margin: 0; font-size: 26px; letter-spacing: 2px; }
+header h1 span { color: var(--accent); }
+header p { margin: 0; color: var(--muted); font-size: 14px; }
+main {
+  flex: 1; display: grid; grid-template-columns: 250px 1fr 250px; gap: 20px;
+  padding: 8px 24px 18px; min-height: 0;
+}
+.panel {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+  padding: 16px; display: flex; flex-direction: column; gap: 12px; min-height: 0;
+}
+.panel h2 { margin: 0; font-size: 15px; color: var(--muted); font-weight: 600; letter-spacing: 1px; }
+
+/* level picker */
+.tiers { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+.tiers button {
+  border: 1px solid var(--line); background: var(--btn); color: var(--ink);
+  border-radius: 8px; padding: 7px 0; font: inherit; font-size: 14px; cursor: pointer;
+}
+.tiers button.on { background: var(--ink); color: var(--panel); border-color: var(--ink); }
+.tier-note { font-size: 13px; color: var(--muted); margin: -4px 0 0; }
+.levels { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.levels button {
+  position: relative; aspect-ratio: 1; border: 1px solid var(--line); background: var(--btn);
+  color: var(--ink); border-radius: 8px; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;
+}
+.levels button:hover, .tiers button:hover:not(.on), .ctrl button:hover:not(:disabled) { background: var(--btn-h); }
+.levels button.cur { outline: 3px solid var(--accent); outline-offset: -1px; }
+.levels button.done { background: color-mix(in srgb, var(--ok) 16%, var(--btn)); border-color: color-mix(in srgb, var(--ok) 45%, var(--line)); }
+.levels button .mark { position: absolute; top: 1px; right: 4px; font-size: 11px; color: var(--ok); }
+.levels button .mark.star { color: var(--gold); }
+.progress { font-size: 13px; color: var(--muted); }
+.rules { margin-top: auto; font-size: 13px; line-height: 1.65; color: var(--muted); border-top: 1px solid var(--line); padding-top: 10px; }
+.rules b { color: var(--ink); }
+
+/* board */
+.stage { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; min-height: 0; }
+.tray {
+  position: relative; background: var(--tray); border-radius: 18px;
+  box-shadow: inset 0 -6px 0 var(--tray-edge), 0 10px 24px rgba(0,0,0,.22);
+}
+.cells { position: absolute; }
+.cell { position: absolute; background: var(--slot); border-radius: 6px; box-shadow: inset 0 2px 3px rgba(0,0,0,.18); }
+.exit {
+  position: absolute; background: var(--slot); border-radius: 0 6px 6px 0;
+}
+.exit-label {
+  position: absolute; color: var(--accent); font-weight: 700; font-size: 15px;
+  display: flex; align-items: center; gap: 4px; white-space: nowrap; pointer-events: none;
+}
+.piece {
+  position: absolute; left: 0; top: 0; border-radius: 12px; cursor: grab; touch-action: none;
+  transition: transform .18s ease, opacity .3s ease; user-select: none;
+  box-shadow: inset 0 -5px 0 rgba(0,0,0,.22), inset 0 3px 0 rgba(255,255,255,.35), 0 3px 5px rgba(0,0,0,.3);
+}
+.piece.drag { transition: none; cursor: grabbing; z-index: 5; box-shadow: inset 0 -5px 0 rgba(0,0,0,.22), inset 0 3px 0 rgba(255,255,255,.35), 0 8px 14px rgba(0,0,0,.35); }
+.piece .glass, .piece .cargo { position: absolute; border-radius: 5px; }
+.piece .glass { background: linear-gradient(135deg, #2b3a4a, #121a23); opacity: .82; }
+.piece .cargo { background: rgba(0,0,0,.14); box-shadow: inset 0 0 0 2px rgba(255,255,255,.18); }
+.piece.h .glass.front { right: 22%; top: 14%; bottom: 14%; width: 12%; }
+.piece.h .glass.rear  { left: 12%; top: 18%; bottom: 18%; width: 9%; }
+.piece.v .glass.front { bottom: 22%; left: 14%; right: 14%; height: 12%; }
+.piece.v .glass.rear  { top: 12%; left: 18%; right: 18%; height: 9%; }
+.piece.truck.h .glass.front { right: 8%; width: 8%; }
+.piece.truck.v .glass.front { bottom: 8%; height: 8%; }
+.piece.truck.h .cargo { left: 6%; top: 12%; bottom: 12%; width: 62%; }
+.piece.truck.v .cargo { top: 6%; left: 12%; right: 12%; height: 62%; }
+.piece.sel { outline: 4px solid #fff; outline-offset: 1px; z-index: 3; filter: drop-shadow(0 0 4px rgba(0,0,0,.6)); }
+.piece.shake-h { animation: shakeH .28s ease; }
+.piece.shake-v { animation: shakeV .28s ease; }
+@keyframes shakeH { 25% { translate: -5px 0; } 75% { translate: 5px 0; } }
+@keyframes shakeV { 25% { translate: 0 -5px; } 75% { translate: 0 5px; } }
+.piece.hint { animation: pulse 1s ease-in-out infinite; }
+@keyframes pulse { 50% { filter: brightness(1.35) drop-shadow(0 0 8px #fff8); } }
+.ghost {
+  position: absolute; left: 0; top: 0; border: 3px dashed #fff; border-radius: 12px; opacity: .85;
+  pointer-events: none; transition: opacity .2s;
+}
+.status { min-height: 24px; font-size: 16px; color: var(--muted); text-align: center; }
+.status b { color: var(--ink); }
+
+/* right panel */
+.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.stat { background: var(--btn); border-radius: 10px; padding: 10px 12px; }
+.stat .k { font-size: 12px; color: var(--muted); }
+.stat .v { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.stat.wide { grid-column: span 2; }
+.stat .v.small { font-size: 17px; padding-top: 4px; }
+.ctrl { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.ctrl button {
+  border: 1px solid var(--line); background: var(--btn); color: var(--ink); border-radius: 10px;
+  padding: 11px 6px; font: inherit; font-size: 15px; cursor: pointer;
+}
+.ctrl button.wide { grid-column: span 2; }
+.ctrl button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.ctrl button.primary:hover:not(:disabled) { filter: brightness(1.08); background: var(--accent); }
+.ctrl button:disabled { opacity: .45; cursor: default; }
+.keys { font-size: 12.5px; color: var(--muted); line-height: 1.8; margin-top: auto; border-top: 1px solid var(--line); padding-top: 10px; }
+kbd { font-family: inherit; background: var(--btn); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; font-size: 12px; }
+
+/* win dialog */
+.overlay { position: fixed; inset: 0; background: rgba(10,14,20,.45); display: none; align-items: center; justify-content: center; z-index: 20; }
+.overlay.show { display: flex; }
+.dialog { background: var(--panel); border-radius: 18px; padding: 28px 36px; text-align: center; min-width: 320px; box-shadow: 0 20px 50px rgba(0,0,0,.35); }
+.dialog h3 { margin: 0 0 6px; font-size: 30px; color: var(--accent); }
+.dialog .stars { font-size: 34px; color: var(--gold); letter-spacing: 6px; min-height: 42px; }
+.dialog p { margin: 6px 0; font-size: 17px; }
+.dialog .sub { color: var(--muted); font-size: 14px; }
+.dialog .row { display: flex; gap: 10px; justify-content: center; margin-top: 18px; }
+.dialog button { border: 1px solid var(--line); background: var(--btn); color: var(--ink); border-radius: 10px; padding: 10px 20px; font: inherit; font-size: 16px; cursor: pointer; }
+.dialog button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+/* mode switch */
+.mode {
+  margin-left: auto; align-self: center; display: flex; align-items: center; gap: 8px;
+  border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 999px;
+  padding: 6px 14px 6px 8px; font: inherit; font-size: 14px; cursor: pointer;
+}
+.mode .knob { width: 34px; height: 20px; border-radius: 999px; background: var(--line); position: relative; transition: background .2s; }
+.mode .knob::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.3); transition: left .2s; }
+.mode[aria-pressed="true"] .knob { background: var(--accent); }
+.mode[aria-pressed="true"] .knob::after { left: 16px; }
+
+/* simple mode */
+.simplenav, .simplectrl { display: none; }
+body.simple main { grid-template-columns: 1fr; }
+body.simple main > .panel, body.simple header p, body.simple .status { display: none; }
+body.simple .simplenav { display: flex; align-items: center; gap: 18px; font-size: 18px; font-weight: 600; }
+body.simple .simplectrl { display: flex; gap: 12px; }
+.simplenav button {
+  border: none; background: none; color: var(--muted); font: inherit; font-size: 26px; line-height: 1;
+  width: 40px; height: 40px; border-radius: 50%; cursor: pointer;
+}
+.simplenav button:hover { background: var(--btn-h); color: var(--ink); }
+.simplectrl button {
+  border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 10px;
+  padding: 10px 26px; font: inherit; font-size: 16px; cursor: pointer;
+}
+.simplectrl button:hover:not(:disabled) { background: var(--btn-h); }
+.simplectrl button:disabled { opacity: .45; cursor: default; }
+.clear-msg {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 44px; font-weight: 700; letter-spacing: 8px; color: #fff; text-shadow: 0 2px 12px rgba(0,0,0,.5);
+  background: rgba(10,14,20,.35); border-radius: 18px; opacity: 0; transition: opacity .35s; pointer-events: none; z-index: 10;
+}
+.clear-msg.show { opacity: 1; }
+
+@media (max-width: 980px) {
+  body { overflow: auto; }
+  main { grid-template-columns: 1fr; padding: 8px 16px 16px; }
+  header { padding: 12px 16px 4px; flex-wrap: wrap; }
+  .stage { order: -1; }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>塞車<span>突圍</span></h1>
+  <p>把車子前後推開，讓紅車從右邊的出口開出去。</p>
+  <button class="mode" id="modeBtn" aria-pressed="false"><span class="knob"></span>簡約模式</button>
+</header>
+<main>
+  <section class="panel" aria-label="選擇關卡">
+    <h2>選擇關卡</h2>
+    <div class="tiers" id="tiers"></div>
+    <p class="tier-note" id="tierNote"></p>
+    <div class="levels" id="levels"></div>
+    <div class="progress" id="progress"></div>
+    <div class="rules">
+      <b>玩法</b><br>
+      ・橫放的車只能左右移，直放的車只能上下移。<br>
+      ・車子不能轉彎，也不能穿過別的車。<br>
+      ・可以用滑鼠拖，或把滑鼠移到車上按 <b>W A S D</b>。<br>
+      ・一台車推一次算一步，推多遠都只算一步。<br>
+      ・<b>★</b> 代表你用最少步數過關。
+    </div>
+  </section>
+
+  <section class="stage">
+    <div class="simplenav"><button id="sPrev" aria-label="上一關">‹</button><span id="sLevel">第 1 關</span><button id="sNext" aria-label="下一關">›</button></div>
+    <div class="tray" id="tray"></div>
+    <div class="status" id="status"></div>
+    <div class="simplectrl"><button id="sUndo">↶ 上一步</button><button id="sReset">⟲ 重來</button></div>
+  </section>
+
+  <section class="panel" aria-label="狀態與操作">
+    <h2 id="levelTitle">第 1 關</h2>
+    <div class="stats">
+      <div class="stat"><div class="k">你的步數</div><div class="v" id="sMoves">0</div></div>
+      <div class="stat"><div class="k">最少步數</div><div class="v" id="sMin">0</div></div>
+      <div class="stat wide"><div class="k">本關最佳紀錄</div><div class="v small" id="sBest">還沒過關</div></div>
+    </div>
+    <div class="ctrl">
+      <button id="bUndo">↶ 復原一步</button>
+      <button id="bReset">⟲ 重來</button>
+      <button id="bHint" class="wide">💡 提示下一步</button>
+      <button id="bPlay" class="wide">▶ 播放最佳解</button>
+      <button id="bPrev">← 上一關</button>
+      <button id="bNext" class="primary">下一關 →</button>
+    </div>
+    <div class="keys">
+      滑鼠指著車：<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 移動<br>
+      快速鍵：<kbd>Ctrl</kbd>+<kbd>Z</kbd> 復原　<kbd>R</kbd> 重來<br>
+      <kbd>H</kbd> 提示　<kbd>P</kbd> 播放解答<br>
+      <kbd>←</kbd> <kbd>→</kbd> 上一關／下一關
+    </div>
+  </section>
+</main>
+
+<div class="overlay" id="overlay">
+  <div class="dialog" role="dialog" aria-modal="true">
+    <h3>過關！</h3>
+    <div class="stars" id="dStars"></div>
+    <p id="dMain"></p>
+    <p class="sub" id="dSub"></p>
+    <div class="row">
+      <button id="dAgain">再玩一次</button>
+      <button id="dNext" class="primary">下一關 →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// 每關是 6×6 盤面字串：A 為紅車，其他字母各為一台車，o 為空格
+const LEVELS = [
+  {"tier":"初級","b":"LGooCCLGMMoBAANooBEINFFDEIHHoDJJJoKK","min":5},
+  {"tier":"初級","b":"MIIINNMEoJJBMEoAABoEFFCCGGKKoLDDHHHL","min":5},
+  {"tier":"初級","b":"MEHHBKMENNBKooAAJIFFGGJIoLLDDIoooCCC","min":6},
+  {"tier":"初級","b":"CLLDDDCNoFFFoNoAABEEEJJBHHoGGKMMIIoK","min":6},
+  {"tier":"初級","b":"NooIIINoGGBBAACooJMMCDDJoEEFHKoLLFHK","min":7},
+  {"tier":"初級","b":"KKMoNNFFMoLLHAAoGEHCDDGEICoBGEIooBJJ","min":7},
+  {"tier":"初級","b":"KLLJJMKGGoCMKBAACHoBEoFHoBEIFHDDEINN","min":8},
+  {"tier":"初級","b":"oLDDFFMLJJoGMLEAAGIIEoCHBBNNCHooKKoH","min":8},
+  {"tier":"初級","b":"oBFFFLoBKKMLIoAAMGICoDDGHCoNNGHJJEEE","min":9},
+  {"tier":"初級","b":"GCFFFMGCHHEMJCAAEDJBooKDJBLIKDNNLIKo","min":9},
+  {"tier":"中級","b":"oooIIMJooBBMJAAoLGoEEoLGNFHHDDNFCCKK","min":10},
+  {"tier":"中級","b":"IDCCMMIDLLNNIAAKBGooJKBGFFJoBHooEEEH","min":11},
+  {"tier":"中級","b":"oCCEEooMMBBFAALJNFKKLJNooIIHHoGGDDoo","min":11},
+  {"tier":"中級","b":"IIIooDEJJJCDEKAACHEKLMCHGFLMooGFNNBB","min":12},
+  {"tier":"中級","b":"oHHooooDDBBKoAAGJKCCIGJoLoIMNNLFFMEE","min":13},
+  {"tier":"中級","b":"JKooFFJKHHHIAANEoIMMNEGGoCBLLooCBDDo","min":13},
+  {"tier":"中級","b":"DHHNNMDCCCKMAAoEKooGoEFFoGLLIIoBBBJJ","min":14},
+  {"tier":"中級","b":"ooKHEEBBKHooAAGNJLIMGNJLIMGoFCoDDDFC","min":15},
+  {"tier":"中級","b":"oKLLMGoKNoMGAANFooJJoFDDBCCIIoBHHHEE","min":15},
+  {"tier":"中級","b":"oDDBBEoKKMoEIAAMoHIGNFFHLGNoJHLCCoJo","min":16},
+  {"tier":"高級","b":"JoDDLLJoKKNoAAHBNoGGHBIIECCBoMEoFFoM","min":17},
+  {"tier":"高級","b":"ooGGFILLBBFIoECAAIDECMNNDKKMoooHHJJo","min":18},
+  {"tier":"高級","b":"FECCLLFEDDDMAAHooMooHoIIBBGGNKoJJoNK","min":19},
+  {"tier":"高級","b":"HHMMCIFFoJCIAAoJooGLLNNoGoEBKKDDEBoo","min":20},
+  {"tier":"高級","b":"MFFJNNMCCJLLAAIooGooIKKGoEIoBHoEDDBH","min":21},
+  {"tier":"高級","b":"NBBIooNoCIMMAACooEKHCLLEKHDDFJoGGGFJ","min":21},
+  {"tier":"高級","b":"MMIICoGDDDCoGAAEooNJHEKKNJHBBFLLHooF","min":22},
+  {"tier":"高級","b":"CoMMKKCEFFoBoEDAABLLDJoBooHJIIGGHNNo","min":23},
+  {"tier":"高級","b":"KFMMBIKFCLBIAACLJHEEGDJHooGDoooNNOOo","min":24},
+  {"tier":"高級","b":"oBBNGoKCCNGDKMAAGDoMIooJHoIFFJHEELLo","min":25},
+  {"tier":"專家","b":"oHFFCKNHoDCKNAADoLJMMGILJoEGIoooEBBB","min":26},
+  {"tier":"專家","b":"IoBCNNIoBCDMLAAJDMLKKJoGooEEoGFFHHoo","min":28},
+  {"tier":"專家","b":"NEBBLJNEoMLJGAAMoHGoDKKHGoDFFFIIICCo","min":29},
+  {"tier":"專家","b":"JJooDoKBBBDFKAAoCFoGMMCEoGHIIEooHLLo","min":31},
+  {"tier":"專家","b":"BBBDoGMMoDKGAAoDKJHIICCJHoEFFFLLEooo","min":33},
+  {"tier":"專家","b":"BNNJHHBLLJIoBAAKIoDDMKIFooMCCFoEEGGo","min":34},
+  {"tier":"專家","b":"DBBBJoDHHHJoAAoLIMFFGLIMooGEKKoooECC","min":37},
+  {"tier":"專家","b":"JJJoHILMMoHILAAoBCoDGGBCoDEKKoFFEooo","min":37},
+  {"tier":"專家","b":"oNNNDoCoGGDKCAAJDKLFoJEELFBMMHIIBooH","min":38},
+  {"tier":"專家","b":"GLMMoDGLJJEDCAAFEKCooFoKCoIBBBHHINNN","min":41}
+];
+const TIERS = [
+  { name: '初級', note: '5–9 步，熟悉規則' },
+  { name: '中級', note: '10–16 步，開始要先想再推' },
+  { name: '高級', note: '17–25 步，常要先讓路再回頭' },
+  { name: '專家', note: '26–41 步，耐心挑戰' },
+];
+const RED = '#d62828';
+const CAR_COLORS = ['#7cc96d', '#f28c28', '#2eb5c9', '#f29cc2', '#7a52b3', '#1f7a3f', '#454b55', '#d8c49d', '#b9c1ca', '#8c5a2e', '#9aa83a', '#5d8fd6'];
+const TRUCK_COLORS = ['#f2c21b', '#2c4ea3', '#0f9b8e', '#c44f7a', '#6d7d33'];
+const STORE = 'jam-escape-progress-v1';
+
+const $ = id => document.getElementById(id);
+const tray = $('tray');
+let store = loadStore();
+let game = null;        // 目前這一關的狀態
+let viewTier = 0;
+let geo = { cell: 80, gap: 6, pad: 18 };
+let sel = null;         // 滑鼠指著（WASD 要移動）的車
+let nextTimer = null;   // 簡約模式過關後自動換關
+const simple = () => document.body.classList.contains('simple');
+
+function loadStore() {
+  try { return Object.assign({ best: {}, last: 0, simple: false }, JSON.parse(localStorage.getItem(STORE) || '{}')); }
+  catch (e) { return { best: {}, last: 0, simple: false }; }
+}
+function saveStore() { try { localStorage.setItem(STORE, JSON.stringify(store)); } catch (e) {} }
+
+// ---------- 盤面與規則 ----------
+function parse(b) {
+  const cells = {};
+  for (let i = 0; i < 36; i++) if (b[i] !== 'o') (cells[b[i]] = cells[b[i]] || []).push(i);
+  let car = 0, truck = 0;
+  return Object.keys(cells).sort().map(ch => {
+    const c = cells[ch], h = c[1] - c[0] === 1, len = c.length;
+    const color = ch === 'A' ? RED : len === 3 ? TRUCK_COLORS[truck++ % TRUCK_COLORS.length] : CAR_COLORS[car++ % CAR_COLORS.length];
+    return { h, len, fixed: h ? Math.floor(c[0] / 6) : c[0] % 6, pos: h ? c[0] % 6 : Math.floor(c[0] / 6), color, red: ch === 'A' };
+  });
+}
+function grid(pieces, state) {
+  const g = new Int8Array(36).fill(-1);
+  pieces.forEach((p, i) => { for (let k = 0; k < p.len; k++) g[p.h ? p.fixed * 6 + state[i] + k : (state[i] + k) * 6 + p.fixed] = i; });
+  return g;
+}
+function range(pieces, state, i) {
+  const p = pieces[i], g = grid(pieces, state), cell = x => p.h ? p.fixed * 6 + x : x * 6 + p.fixed;
+  let lo = state[i], hi = state[i];
+  while (lo > 0 && g[cell(lo - 1)] < 0) lo--;
+  while (hi + p.len < 6 && g[cell(hi + p.len)] < 0) hi++;
+  return [lo, hi];
+}
+// BFS：回傳從 state 到紅車抵達出口的最短移動序列 [[車編號, 新位置], ...]
+function solve(pieces, state) {
+  const key = s => s.join(',');
+  const prev = new Map([[key(state), null]]);
+  let frontier = [state];
+  while (frontier.length) {
+    const next = [];
+    for (const s of frontier) {
+      if (s[0] === 4) {
+        const path = []; let k = key(s);
+        while (prev.get(k)) { const [pk, i, v] = prev.get(k); path.unshift([i, v]); k = pk; }
+        return path;
+      }
+      const g = grid(pieces, s), sk = key(s);
+      pieces.forEach((p, i) => {
+        const cell = x => p.h ? p.fixed * 6 + x : x * 6 + p.fixed;
+        const add = v => { const t = s.slice(); t[i] = v; const k = key(t); if (!prev.has(k)) { prev.set(k, [sk, i, v]); next.push(t); } };
+        for (let x = s[i] - 1; x >= 0 && g[cell(x)] < 0; x--) add(x);
+        for (let x = s[i] + p.len; x < 6 && g[cell(x)] < 0; x++) add(x - p.len + 1);
+      });
+    }
+    frontier = next;
+  }
+  return null;
+}
+
+// ---------- 畫面 ----------
+function layout() {
+  const narrow = innerWidth <= 980;
+  const availW = narrow ? innerWidth - 32 : simple() ? innerWidth - 48 - 70 : innerWidth - 48 - 250 * 2 - 40 - 70;
+  const availH = narrow ? innerHeight * 0.7 : simple() ? innerHeight - 70 - 26 - 130 : innerHeight - 70 - 26 - 60;
+  const size = Math.min(availW, availH);
+  const cell = Math.max(40, Math.min(118, Math.floor((size - 36) / 6.12)));
+  geo = { cell, gap: Math.round(cell * 0.07), pad: Math.round(cell * 0.22) };
+}
+const xy = (p, pos) => {
+  const step = geo.cell, col = p.h ? pos : p.fixed, row = p.h ? p.fixed : pos;
+  return [geo.pad + col * step, geo.pad + row * step];
+};
+function sizeOf(p) {
+  const long = p.len * geo.cell - geo.gap * 2, short = geo.cell - geo.gap * 2;
+  return p.h ? [long, short] : [short, long];
+}
+function place(i, pos) {
+  const p = game.pieces[i], [x, y] = xy(p, pos);
+  p.el.style.transform = `translate(${x + geo.gap}px, ${y + geo.gap}px)`;
+}
+function buildBoard() {
+  layout();
+  const { cell, pad } = geo, inner = cell * 6;
+  tray.innerHTML = '';
+  tray.style.width = inner + pad * 2 + 'px';
+  tray.style.height = inner + pad * 2 + 'px';
+  tray.style.marginRight = cell * 0.9 + 'px';
+  for (let r = 0; r < 6; r++) for (let c = 0; c < 6; c++) {
+    const d = document.createElement('div'); d.className = 'cell';
+    Object.assign(d.style, { left: pad + c * cell + geo.gap / 2 + 'px', top: pad + r * cell + geo.gap / 2 + 'px', width: cell - geo.gap + 'px', height: cell - geo.gap + 'px' });
+    tray.appendChild(d);
+  }
+  const ex = document.createElement('div'); ex.className = 'exit';
+  Object.assign(ex.style, { left: pad + inner - geo.gap / 2 + 'px', top: pad + 2 * cell + geo.gap / 2 + 'px', width: pad + geo.gap / 2 + 'px', height: cell - geo.gap + 'px' });
+  tray.appendChild(ex);
+  const lab = document.createElement('div'); lab.className = 'exit-label'; lab.textContent = '出口 ▶';
+  Object.assign(lab.style, { left: inner + pad * 2 + 8 + 'px', top: pad + 2 * cell + 'px', height: cell + 'px', fontSize: Math.max(13, cell * 0.2) + 'px' });
+  tray.appendChild(lab);
+
+  game.pieces.forEach((p, i) => {
+    const el = document.createElement('div');
+    const [w, h] = sizeOf(p);
+    el.className = 'piece ' + (p.h ? 'h' : 'v') + (p.len === 3 ? ' truck' : '');
+    Object.assign(el.style, { width: w + 'px', height: h + 'px', background: p.color });
+    el.innerHTML = (p.len === 3 ? '<div class="cargo"></div>' : '<div class="glass rear"></div>') + '<div class="glass front"></div>';
+    el.setAttribute('aria-label', p.red ? '紅車' : (p.len === 3 ? '卡車' : '汽車'));
+    p.el = el;
+    tray.appendChild(el);
+    place(i, game.state[i]);
+    el.addEventListener('pointerdown', e => startDrag(e, i));
+    el.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse' && !drag) setSel(i); });
+  });
+  if (sel !== null) game.pieces[sel].el.classList.add('sel');
+  const msg = document.createElement('div'); msg.className = 'clear-msg'; msg.id = 'clearMsg'; msg.textContent = '過關';
+  tray.appendChild(msg);
+}
+function setSel(i) {
+  if (sel === i) return;
+  if (sel !== null && game.pieces[sel]) game.pieces[sel].el.classList.remove('sel');
+  sel = i;
+  if (sel !== null) game.pieces[sel].el.classList.add('sel');
+}
+
+// ---------- 拖曳 ----------
+let drag = null;
+function startDrag(e, i) {
+  if (game.won || game.playing) return;
+  clearHint();
+  if (e.pointerType === 'mouse') setSel(i);
+  const [lo, hi] = range(game.pieces, game.state, i);
+  drag = { i, lo, hi, start: game.state[i], x: e.clientX, y: e.clientY, cur: game.state[i], id: e.pointerId };
+  game.pieces[i].el.setPointerCapture(e.pointerId);
+  game.pieces[i].el.classList.add('drag');
+  e.preventDefault();
+}
+addEventListener('pointermove', e => {
+  if (!drag || e.pointerId !== drag.id) return;
+  const p = game.pieces[drag.i];
+  const d = (p.h ? e.clientX - drag.x : e.clientY - drag.y) / geo.cell;
+  drag.cur = Math.max(drag.lo, Math.min(drag.hi, drag.start + d));
+  const [x, y] = xy(p, drag.cur);
+  p.el.style.transform = `translate(${x + geo.gap}px, ${y + geo.gap}px)`;
+});
+function endDrag(e) {
+  if (!drag || e.pointerId !== drag.id) return;
+  const { i, start } = drag, v = Math.round(drag.cur);
+  game.pieces[i].el.classList.remove('drag');
+  drag = null;
+  commit(i, v, start);
+}
+addEventListener('pointerup', endDrag);
+addEventListener('pointercancel', endDrag);
+
+function commit(i, v, from) {
+  game.keyStep = null;
+  if (v !== from) {
+    game.undo.push([i, from]);
+    game.state[i] = v;
+    game.moves++;
+  }
+  place(i, game.state[i]);
+  updateStats();
+  if (game.state[0] === 4) win();
+}
+
+// ---------- WASD ----------
+// 同一台車連續按鍵只算一步；中間有其他動作（換車、拖曳、復原…）就開始新的一步
+function keyMove(dir) {
+  if (sel === null || game.won || game.playing || drag) return;
+  const i = sel, p = game.pieces[i];
+  if (p.h !== (dir === 'a' || dir === 'd')) return shake(p);
+  const d = dir === 'a' || dir === 'w' ? -1 : 1, [lo, hi] = range(game.pieces, game.state, i), v = game.state[i] + d;
+  if (v < lo || v > hi) return shake(p);
+  clearHint(); setStatus('');
+  if (game.keyStep === i) {
+    game.state[i] = v;
+    const top = game.undo[game.undo.length - 1];
+    if (top[1] === v) { game.undo.pop(); game.moves--; game.keyStep = null; }  // 推回原位，這一步取消
+  } else {
+    game.undo.push([i, game.state[i]]);
+    game.state[i] = v; game.moves++;
+    game.keyStep = i;
+  }
+  place(i, v);
+  updateStats();
+  if (game.state[0] === 4) win();
+}
+function shake(p) {
+  const c = p.h ? 'shake-h' : 'shake-v';
+  p.el.classList.remove(c); void p.el.offsetWidth; p.el.classList.add(c);
+  setTimeout(() => p.el.classList.remove(c), 300);
+}
+
+// ---------- 遊戲流程 ----------
+function loadLevel(idx) {
+  stopPlay();
+  clearTimeout(nextTimer);
+  idx = (idx + LEVELS.length) % LEVELS.length;
+  const lv = LEVELS[idx], pieces = parse(lv.b);
+  game = { idx, pieces, init: pieces.map(p => p.pos), state: pieces.map(p => p.pos), moves: 0, undo: [], won: false, playing: false, sawSolution: false, hints: 0, keyStep: null };
+  sel = null;
+  store.last = idx; saveStore();
+  viewTier = Math.floor(idx / 10);
+  buildBoard();
+  renderPicker();
+  updateStats();
+  setStatus('');
+  $('overlay').classList.remove('show');
+}
+function resetLevel() {
+  if (!game) return;
+  stopPlay(); clearHint(); clearTimeout(nextTimer);
+  game.state = game.init.slice(); game.moves = 0; game.undo = []; game.won = false; game.sawSolution = false; game.hints = 0; game.keyStep = null;
+  game.pieces[0].el.style.opacity = '';
+  $('clearMsg').classList.remove('show');
+  game.pieces.forEach((p, i) => place(i, game.state[i]));
+  updateStats(); setStatus('');
+}
+function undo() {
+  if (game.won || game.playing || !game.undo.length) return;
+  clearHint();
+  const [i, v] = game.undo.pop();
+  game.state[i] = v; game.moves--; game.keyStep = null;
+  place(i, v); updateStats(); setStatus('');
+}
+function win() {
+  game.won = true; clearHint();
+  const red = game.pieces[0], [x, y] = xy(red, 7);
+  setTimeout(() => {
+    red.el.style.transform = `translate(${x + geo.gap}px, ${y + geo.gap}px)`;
+    red.el.style.opacity = '0';
+  }, 200);
+  if (simple()) {  // 簡約模式：不記成績，淡淡顯示過關後自動進下一關
+    updateStats();
+    setTimeout(() => $('clearMsg').classList.add('show'), 450);
+    nextTimer = setTimeout(() => loadLevel(game.idx + 1), 1950);
+    return;
+  }
+  const min = LEVELS[game.idx].min, best = store.best[game.idx];
+  let sub = '';
+  if (game.sawSolution) {
+    sub = '這次有看最佳解，不列入紀錄。';
+  } else {
+    if (best === undefined || game.moves < best) { store.best[game.idx] = game.moves; saveStore(); sub = best === undefined ? '新紀錄！' : `進步了！原本 ${best} 步。`; }
+    else sub = `你的最佳紀錄是 ${best} 步。`;
+  }
+  const optimal = game.moves === min && !game.sawSolution;
+  $('dStars').textContent = game.sawSolution ? '' : optimal ? '★ ★ ★' : game.moves <= min + Math.ceil(min * 0.3) ? '★ ★' : '★';
+  $('dMain').innerHTML = `你用了 <b>${game.moves}</b> 步，最少步數是 <b>${min}</b> 步。`;
+  $('dSub').textContent = optimal ? '完美！你找到最佳解了。' + (sub === '新紀錄！' ? '' : ' ' + sub) : sub + (game.sawSolution ? '' : ' 試試看能不能用更少步數完成。');
+  renderPicker(); updateStats();
+  setTimeout(() => $('overlay').classList.add('show'), 650);
+}
+
+// ---------- 提示與播放 ----------
+let ghost = null;
+function clearHint() {
+  if (ghost) { ghost.remove(); ghost = null; }
+  game && game.pieces.forEach(p => p.el && p.el.classList.remove('hint'));
+}
+function hint() {
+  if (game.won || game.playing || simple()) return;
+  clearHint();
+  const path = solve(game.pieces, game.state);
+  if (!path || !path.length) return;
+  const [i, v] = path[0], p = game.pieces[i];
+  p.el.classList.add('hint');
+  ghost = document.createElement('div'); ghost.className = 'ghost';
+  const [w, h] = sizeOf(p), [x, y] = xy(p, v);
+  Object.assign(ghost.style, { width: w + 'px', height: h + 'px', transform: `translate(${x + geo.gap}px, ${y + geo.gap}px)` });
+  tray.appendChild(ghost);
+  const d = v - game.state[i], dir = p.h ? (d > 0 ? '右' : '左') : (d > 0 ? '下' : '上');
+  game.hints++;
+  setStatus(`提示：把<b>發光的${p.red ? '紅車' : p.len === 3 ? '卡車' : '車'}</b>往${dir}推 ${Math.abs(d)} 格到虛線框。從這裡開始還要 <b>${path.length}</b> 步。`);
+}
+let playTimer = null;
+function togglePlay() {
+  if (simple() && !game.playing) return;
+  if (game.playing) { stopPlay(); setStatus('已停止播放，你可以接著自己推。'); return; }
+  if (game.won) resetLevel();
+  clearHint();
+  const path = solve(game.pieces, game.state);
+  if (!path) return;
+  game.playing = true; game.sawSolution = true;
+  $('bPlay').textContent = '■ 停止播放';
+  setStatus(`播放最佳解：從目前位置還要 <b>${path.length}</b> 步。`);
+  let k = 0;
+  const step = () => {
+    if (!game.playing) return;
+    if (k >= path.length) { stopPlay(); return; }
+    const [i, v] = path[k++];
+    game.pieces[i].el.classList.add('hint');
+    setTimeout(() => game.pieces[i].el.classList.remove('hint'), 420);
+    commit(i, v, game.state[i]);
+    if (!game.won) setStatus(`播放最佳解：第 <b>${k}</b> / ${path.length} 步`);
+    playTimer = setTimeout(step, 620);
+  };
+  playTimer = setTimeout(step, 300);
+  updateStats();
+}
+function stopPlay() {
+  clearTimeout(playTimer);
+  if (game) game.playing = false;
+  $('bPlay').textContent = '▶ 播放最佳解';
+  updateStats();
+}
+
+// ---------- 介面更新 ----------
+function setStatus(html) { $('status').innerHTML = html; }
+function updateStats() {
+  if (!game) return;
+  const lv = LEVELS[game.idx], best = store.best[game.idx];
+  $('levelTitle').textContent = `第 ${game.idx + 1} 關・${lv.tier}`;
+  $('sMoves').textContent = game.moves;
+  $('sMin').textContent = lv.min;
+  $('sBest').textContent = best === undefined ? '還沒過關' : `${best} 步` + (best === lv.min ? '　★ 最佳解' : '');
+  $('bUndo').disabled = game.won || game.playing || !game.undo.length;
+  $('bReset').disabled = game.playing || (!game.moves && !game.won);
+  $('bHint').disabled = game.won || game.playing;
+  $('sLevel').textContent = `第 ${game.idx + 1} 關`;
+  $('sUndo').disabled = $('bUndo').disabled;
+  $('sReset').disabled = game.won || !game.moves;
+}
+function setSimple(on) {
+  stopPlay(); clearHint(); setStatus('');
+  document.body.classList.toggle('simple', on);
+  $('modeBtn').setAttribute('aria-pressed', on);
+  store.simple = on; saveStore();
+  if (game) {
+    if (game.won) return loadLevel(game.idx + 1);
+    buildBoard(); updateStats();
+  }
+}
+function renderPicker() {
+  $('tiers').innerHTML = '';
+  TIERS.forEach((t, k) => {
+    const b = document.createElement('button');
+    b.textContent = t.name; b.className = k === viewTier ? 'on' : '';
+    b.onclick = () => { viewTier = k; renderPicker(); };
+    $('tiers').appendChild(b);
+  });
+  $('tierNote').textContent = TIERS[viewTier].note;
+  $('levels').innerHTML = '';
+  for (let j = 0; j < 10; j++) {
+    const idx = viewTier * 10 + j, best = store.best[idx], b = document.createElement('button');
+    b.textContent = idx + 1;
+    if (best !== undefined) {
+      b.classList.add('done');
+      const m = document.createElement('span');
+      m.className = 'mark' + (best === LEVELS[idx].min ? ' star' : '');
+      m.textContent = best === LEVELS[idx].min ? '★' : '✓';
+      b.appendChild(m);
+    }
+    if (game && idx === game.idx) b.classList.add('cur');
+    b.title = `第 ${idx + 1} 關，最少 ${LEVELS[idx].min} 步` + (best !== undefined ? `，你的紀錄 ${best} 步` : '');
+    b.onclick = () => loadLevel(idx);
+    $('levels').appendChild(b);
+  }
+  const done = Object.keys(store.best).length, stars = Object.entries(store.best).filter(([i, v]) => LEVELS[i] && v === LEVELS[i].min).length;
+  $('progress').textContent = `已過關 ${done} / 40　★ ${stars}`;
+}
+
+$('bUndo').onclick = undo;
+$('bReset').onclick = resetLevel;
+$('bHint').onclick = hint;
+$('bPlay').onclick = togglePlay;
+$('bPrev').onclick = () => loadLevel(game.idx - 1);
+$('bNext').onclick = () => loadLevel(game.idx + 1);
+$('dAgain').onclick = () => { $('overlay').classList.remove('show'); resetLevel(); };
+$('dNext').onclick = () => loadLevel(game.idx + 1);
+$('sUndo').onclick = undo;
+$('sReset').onclick = resetLevel;
+$('sPrev').onclick = () => loadLevel(game.idx - 1);
+$('sNext').onclick = () => loadLevel(game.idx + 1);
+$('modeBtn').onclick = () => setSimple(!simple());
+addEventListener('keydown', e => {
+  if ($('overlay').classList.contains('show')) {
+    if (e.key === 'Enter') loadLevel(game.idx + 1);
+    if (e.key === 'Escape') $('overlay').classList.remove('show');
+    return;
+  }
+  const k = e.key.toLowerCase(), wasd = { KeyW: 'w', KeyA: 'a', KeyS: 's', KeyD: 'd' }[e.code];
+  if ((e.ctrlKey || e.metaKey) && k === 'z') { e.preventDefault(); undo(); }
+  else if (e.ctrlKey || e.metaKey || e.altKey) return;
+  else if (wasd) { e.preventDefault(); keyMove(wasd); }
+  else if (k === 'r') resetLevel();
+  else if (k === 'h') hint();
+  else if (k === 'p') togglePlay();
+  else if (e.key === 'ArrowLeft') loadLevel(game.idx - 1);
+  else if (e.key === 'ArrowRight') loadLevel(game.idx + 1);
+});
+let rz;
+addEventListener('resize', () => {
+  clearTimeout(rz);
+  rz = setTimeout(() => { if (!game) return; const won = game.won; clearHint(); buildBoard(); if (won) game.pieces[0].el.style.opacity = '0'; }, 120);
+});
+
+setSimple(!!store.simple);
+loadLevel(Math.min(store.last || 0, LEVELS.length - 1));
+</script>
+</body>
+</html>

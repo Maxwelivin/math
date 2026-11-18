@@ -181,8 +181,11 @@ body.simple .simplectrl { display: flex; gap: 12px; }
 .clear-msg.show { opacity: 1; }
 
 @media (max-width: 980px) {
-  body { overflow: auto; }
-  main { grid-template-columns: 1fr; padding: 8px 16px 16px; }
+  html, body { height: auto; min-height: 100%; }
+  body { overflow-x: hidden; overflow-y: auto; }
+  main { flex: none; grid-template-columns: minmax(0, 1fr); padding: 8px 16px 16px; }
+  .tray { flex-shrink: 0; }
+  .panel { min-width: 0; }
   header { padding: 12px 16px 4px; flex-wrap: wrap; }
   .stage { order: -1; }
 }
@@ -378,10 +381,10 @@ function solve(pieces, state) {
 // ---------- 畫面 ----------
 function layout() {
   const narrow = innerWidth <= 980;
-  const availW = narrow ? innerWidth - 32 : simple() ? innerWidth - 48 - 70 : innerWidth - 48 - 250 * 2 - 40 - 70;
+  const availW = narrow ? innerWidth - 32 - 56 : simple() ? innerWidth - 48 - 70 : innerWidth - 48 - 250 * 2 - 40 - 70;
   const availH = narrow ? innerHeight * 0.7 : simple() ? innerHeight - 70 - 26 - 130 : innerHeight - 70 - 26 - 60;
   const size = Math.min(availW, availH);
-  const cell = Math.max(40, Math.min(118, Math.floor((size - 36) / 6.12)));
+  const cell = Math.max(narrow ? 34 : 40, Math.min(118, Math.floor((size - 36) / 6.12)));
   geo = { cell, gap: Math.round(cell * 0.07), pad: Math.round(cell * 0.22) };
 }
 const xy = (p, pos) => {

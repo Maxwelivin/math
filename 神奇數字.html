@@ -1,0 +1,700 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>神奇數字</title>
+<style>
+:root {
+  --bg: #f4f1fb; --ink: #27223a; --muted: #756e8c; --panel: #fff; --line: #e3ddf2;
+  --btn: #ece7f8; --btn-h: #ddd4f3; --accent: #6c4ee3; --accent-h: #5939d1;
+  --a: #2f9e44; --b: #f08c00; --no: #b8b2c8; --yes: #2f9e44; --bad: #e03131;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  background: var(--bg); color: var(--ink); overflow: hidden; user-select: none; -webkit-user-select: none;
+  font-family: "Microsoft JhengHei", "PingFang TC", "Noto Sans TC", system-ui, sans-serif;
+}
+button { font: inherit; color: inherit; }
+header { height: 58px; display: flex; align-items: center; gap: 18px; padding: 0 24px; }
+header h1 { margin: 0; font-size: 22px; letter-spacing: 2px; }
+header h1 span { color: var(--accent); }
+.tabs { display: flex; gap: 4px; background: var(--btn); border-radius: 12px; padding: 4px; }
+.tabs button { border: 0; background: none; border-radius: 9px; padding: 6px 16px; cursor: pointer; font-size: 15px; }
+.tabs button[aria-pressed="true"] { background: var(--panel); color: var(--accent); font-weight: 700; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+header .sp { flex: 1; }
+.toggle {
+  display: inline-flex; align-items: center; gap: 8px; cursor: pointer; border: 0;
+  background: var(--btn); border-radius: 999px; padding: 6px 14px 6px 6px; font-size: 14px;
+}
+.toggle:hover { background: var(--btn-h); }
+.toggle .knob { width: 34px; height: 20px; border-radius: 999px; background: #c9c2db; position: relative; transition: background .2s; }
+.toggle .knob::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: left .2s; }
+.toggle[aria-pressed="true"] .knob { background: var(--accent); }
+.toggle[aria-pressed="true"] .knob::after { left: 16px; }
+
+.bar { height: 50px; display: flex; align-items: center; gap: 22px; padding: 0 24px; font-size: 14px; color: var(--muted); }
+.bar .grp { display: flex; align-items: center; gap: 6px; }
+.seg { display: flex; gap: 4px; }
+.seg button, .chk {
+  border: 0; background: var(--btn); border-radius: 8px; padding: 5px 12px; cursor: pointer; font-size: 14px; color: var(--ink);
+}
+.seg button:hover, .chk:hover { background: var(--btn-h); }
+.seg button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+.chk[aria-pressed="true"] { background: var(--accent); color: #fff; }
+.chk::before { content: "☐ "; }
+.chk[aria-pressed="true"]::before { content: "☑ "; }
+
+main {
+  height: calc(100% - 58px - 50px); display: grid; grid-template-columns: 330px 1fr 330px;
+  gap: 20px; padding: 4px 24px 20px;
+}
+.panel {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 16px;
+  display: flex; flex-direction: column; gap: 10px; min-height: 0;
+}
+.panel h2 { margin: 0; font-size: 15px; color: var(--muted); font-weight: 700; letter-spacing: 1px; display: flex; justify-content: space-between; align-items: baseline; }
+.panel h2 small { font-weight: 400; font-size: 13px; }
+.hist { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; min-height: 0; padding-right: 4px; }
+.empty { color: var(--muted); font-size: 14px; line-height: 1.7; }
+.row {
+  display: flex; align-items: center; gap: 8px; background: #f8f6fd; border-radius: 10px; padding: 6px 8px;
+}
+.row.fresh { animation: pop .25s ease-out; }
+@keyframes pop { from { transform: scale(.94); opacity: 0; } }
+.row .no { width: 16px; color: var(--muted); font-size: 13px; text-align: right; }
+.row .code { display: flex; gap: 3px; }
+.row .code b {
+  width: 23px; height: 30px; display: grid; place-items: center; background: #fff; border: 1px solid var(--line);
+  border-radius: 6px; font-size: 18px; font-variant-numeric: tabular-nums;
+}
+.row .ab { display: flex; gap: 4px; margin-left: 2px; }
+.row .ab i { font-style: normal; font-weight: 700; font-size: 14px; padding: 3px 5px; border-radius: 6px; color: #fff; }
+.row .ab .a { background: var(--a); } .row .ab .b { background: var(--b); }
+.row .ab i.z { opacity: .35; }
+.row .ex { margin-left: auto; font-size: 12px; color: var(--muted); text-align: right; line-height: 1.25; }
+.row.win { background: #e6f6e9; }
+.row.wrong { background: #ffe9e9; outline: 2px solid var(--bad); }
+.row.wrong .ex { color: var(--bad); font-weight: 700; }
+
+.center { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; min-height: 0; }
+.prompt { font-size: 19px; font-weight: 700; text-align: center; min-height: 28px; }
+.prompt small { display: block; font-size: 14px; color: var(--muted); font-weight: 400; margin-top: 4px; }
+.slots { display: flex; gap: 10px; }
+.slot {
+  width: 68px; height: 84px; border-radius: 14px; background: var(--panel); border: 3px solid var(--line);
+  display: grid; place-items: center; font-size: 46px; font-weight: 700; font-variant-numeric: tabular-nums;
+}
+.slot.cur { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(108,78,227,.15); }
+.slot.big { background: #fff8e1; border-color: #ffd43b; }
+.slots.shake { animation: shake .3s; }
+@keyframes shake { 20% { transform: translateX(-8px); } 45% { transform: translateX(8px); } 70% { transform: translateX(-4px); } 100% { transform: none; } }
+.keypad { display: grid; grid-template-columns: repeat(5, 64px); gap: 8px; }
+.keypad button {
+  height: 54px; border: 0; border-radius: 12px; background: var(--panel); font-size: 24px; font-weight: 700; cursor: pointer;
+  box-shadow: 0 2px 0 var(--line), 0 0 0 1px var(--line);
+}
+.keypad button:hover:not(:disabled) { background: #f6f3ff; }
+.keypad button:active:not(:disabled) { transform: translateY(1px); }
+.keypad button:disabled { opacity: .35; cursor: default; }
+.keypad button.m1 { color: #fff; background: var(--no); }
+.keypad button.m2 { color: #fff; background: var(--yes); }
+.keypad .wide { grid-column: span 2; font-size: 17px; }
+.keypad .go { background: var(--accent); color: #fff; grid-column: span 3; font-size: 18px; }
+.keypad .go:hover:not(:disabled) { background: var(--accent-h); }
+.marks { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.marks .lbl { font-size: 13px; color: var(--muted); }
+.marks .ds { display: flex; gap: 5px; }
+.marks .ds button {
+  width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); cursor: pointer; font-size: 16px; font-weight: 700;
+}
+.marks .ds button.m1 { background: var(--no); color: #fff; text-decoration: line-through; border-color: var(--no); }
+.marks .ds button.m2 { background: var(--yes); color: #fff; border-color: var(--yes); }
+.abpick { display: flex; flex-direction: column; gap: 10px; align-items: center; }
+.abpick .line { display: flex; align-items: center; gap: 6px; }
+.abpick .line > span { width: 28px; font-weight: 700; font-size: 20px; }
+.abpick .line.a > span { color: var(--a); } .abpick .line.b > span { color: var(--b); }
+.abpick .line button {
+  width: 50px; height: 46px; border: 0; border-radius: 10px; background: var(--panel); font-size: 20px; font-weight: 700; cursor: pointer;
+  box-shadow: 0 0 0 1px var(--line);
+}
+.abpick .line.a button[aria-pressed="true"] { background: var(--a); color: #fff; }
+.abpick .line.b button[aria-pressed="true"] { background: var(--b); color: #fff; }
+.abpick .line button:disabled { opacity: .3; cursor: default; }
+.actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.b {
+  border: 0; border-radius: 10px; background: var(--btn); padding: 10px 18px; cursor: pointer; font-size: 15px;
+}
+.b:hover:not(:disabled) { background: var(--btn-h); }
+.b:disabled { opacity: .45; cursor: default; }
+.b.main { background: var(--accent); color: #fff; }
+.b.main:hover:not(:disabled) { background: var(--accent-h); }
+.msg { min-height: 24px; font-size: 16px; text-align: center; line-height: 1.6; }
+.msg.good { color: var(--a); font-weight: 700; font-size: 20px; }
+.msg.bad { color: var(--bad); }
+.msg.info { color: var(--accent); }
+
+.stat { display: flex; justify-content: space-between; align-items: baseline; }
+.stat small { color: var(--muted); font-size: 14px; }
+.stat b { font-size: 30px; font-variant-numeric: tabular-nums; }
+.stat b.mid { font-size: 22px; }
+.note { font-size: 13px; color: var(--muted); line-height: 1.7; }
+.rule { font-size: 13px; line-height: 1.8; background: #f8f6fd; border-radius: 10px; padding: 8px 12px; }
+.rule i { font-style: normal; font-weight: 700; color: #fff; border-radius: 5px; padding: 0 5px; }
+.rule i.a { background: var(--a); } .rule i.b { background: var(--b); }
+.secret { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--muted); white-space: nowrap; }
+.secret b { font-size: 22px; letter-spacing: 3px; color: var(--ink); font-variant-numeric: tabular-nums; }
+.secret button { margin-left: auto; border: 0; background: var(--btn); border-radius: 8px; padding: 3px 8px; cursor: pointer; }
+.tally { display: flex; gap: 8px; }
+.tally div { flex: 1; text-align: center; background: #f8f6fd; border-radius: 10px; padding: 6px 0; font-size: 13px; color: var(--muted); }
+.tally b { display: block; font-size: 22px; color: var(--ink); }
+.turn { font-size: 13px; padding: 2px 8px; border-radius: 999px; background: var(--btn); color: var(--muted); }
+.turn.on { background: var(--accent); color: #fff; }
+kbd { font-family: inherit; background: var(--btn); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; font-size: 12px; }
+[hidden] { display: none !important; }
+
+.flash {
+  position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; z-index: 20;
+  opacity: 0; transition: opacity .3s;
+}
+.flash span { background: rgba(39,34,58,.8); color: #fff; font-size: 54px; font-weight: 900; padding: 16px 48px; border-radius: 24px; }
+.flash.on { opacity: 1; }
+
+/* 簡約模式：只剩輸入格、紀錄、數字按鈕 */
+body.simple .tabs, body.simple .bar, body.simple #right, body.simple .marks { display: none !important; }
+body.simple main { grid-template-columns: 330px auto; justify-content: center; height: calc(100% - 58px); padding-top: 10px; }
+
+@media (max-width: 900px) {
+  body { overflow: auto; }
+  header { flex-wrap: wrap; height: auto; padding: 10px 14px; gap: 10px; }
+  .bar { flex-wrap: wrap; height: auto; padding: 4px 14px 10px; gap: 10px; }
+  main { grid-template-columns: minmax(0, 1fr); height: auto; padding: 0 16px 20px; }
+  #centerCol { order: -1; justify-content: flex-start; gap: 14px; }
+  #entryView, #reportView { gap: 12px !important; }
+  .panel { min-width: 0; }
+  .marks .ds { flex-wrap: wrap; justify-content: center; gap: 4px; }
+  .marks .ds button { width: 28px; height: 30px; font-size: 15px; }
+  .abpick .line button { width: 44px; }
+  .hist { max-height: 300px; }
+  .slot { width: 56px; height: 70px; font-size: 38px; }
+  .keypad { grid-template-columns: repeat(5, 56px); }
+  body.simple main { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 360px) {
+  .slot { width: 50px; height: 64px; font-size: 34px; }
+  .slots { gap: 7px; }
+  .keypad { grid-template-columns: repeat(5, 50px); gap: 6px; }
+  .keypad button { height: 48px; }
+  .abpick .line button { width: 38px; }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>神奇<span>數字</span></h1>
+  <div class="tabs" id="tabs">
+    <button data-m="guess">你猜</button><button data-m="reverse">電腦猜</button><button data-m="battle">對戰</button>
+  </div>
+  <span class="sp"></span>
+  <button class="toggle" id="soundBtn"><span class="knob"></span>音效</button>
+  <button class="toggle" id="simpleBtn"><span class="knob"></span>簡約模式</button>
+</header>
+<div class="bar">
+  <div class="grp">位數 <div class="seg" id="lens"><button data-l="3">3</button><button data-l="4">4</button><button data-l="5">5</button></div></div>
+  <button class="chk" id="repBtn">數字可重複</button>
+  <div class="grp" id="lvGrp">電腦程度 <div class="seg" id="levels"><button data-v="0">簡單</button><button data-v="1">普通</button><button data-v="2">厲害</button></div></div>
+  <button class="b main" id="newBtn" style="padding:6px 16px">新局</button>
+</div>
+<main>
+  <section class="panel" id="left"></section>
+  <section class="center" id="centerCol">
+    <div class="prompt" id="prompt"></div>
+    <div id="entryView" class="center" style="gap:16px">
+      <div class="slots" id="slots"></div>
+      <div class="keypad" id="keypad"></div>
+      <div class="marks" id="marks">
+        <span class="lbl">刪去板：點一下＝不可能（灰），再點＝一定有（綠）</span>
+        <div class="ds" id="ds"></div>
+      </div>
+    </div>
+    <div id="reportView" class="center" style="gap:16px" hidden>
+      <div class="slots" id="cslots"></div>
+      <div class="abpick">
+        <div class="line a" id="pickA"><span>A</span></div>
+        <div class="line b" id="pickB"><span>B</span></div>
+      </div>
+    </div>
+    <div class="actions" id="actions"></div>
+    <div class="msg" id="msg"></div>
+  </section>
+  <section class="panel" id="right"></section>
+</main>
+<div class="flash" id="flash"><span>猜中了！</span></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const STORE = 'magic-number-v1';
+const store = (() => {
+  const d = { mode: 'guess', L: 4, rep: false, level: 1, simple: false, sound: true, showCount: true, best: {}, tally: {} };
+  try { return Object.assign(d, JSON.parse(localStorage.getItem(STORE) || '{}')); } catch (e) { return d; }
+})();
+function save() { try { localStorage.setItem(STORE, JSON.stringify(store)); } catch (e) {} }
+if (![3, 4, 5].includes(store.L)) store.L = 4;
+if (![0, 1, 2].includes(store.level)) store.level = 1;
+if (!['guess', 'reverse', 'battle'].includes(store.mode)) store.mode = 'guess';
+
+// ===== 題庫與計分 =====
+// 每組數字用編號表示；sc(i, j) 回傳 A*8+B
+const POP = new Uint8Array(1024);
+for (let i = 1; i < 1024; i++) POP[i] = POP[i >> 1] + (i & 1);
+let E = null;
+function buildEngine(L, rep) {
+  const codes = [], idx = new Map(), max = 10 ** L;
+  for (let n = 0; n < max; n++) {
+    const s = String(n).padStart(L, '0');
+    if (!rep && new Set(s).size < L) continue;
+    idx.set(s, codes.length); codes.push(s);
+  }
+  const n = codes.length, D = new Uint8Array(n * L), M = new Uint16Array(n);
+  codes.forEach((s, i) => { for (let k = 0; k < L; k++) { const d = s.charCodeAt(k) - 48; D[i * L + k] = d; M[i] |= 1 << d; } });
+  const ca = new Uint8Array(10), cb = new Uint8Array(10);
+  function sc(i, j) {
+    const oi = i * L, oj = j * L; let A = 0;
+    if (!rep) {
+      for (let k = 0; k < L; k++) if (D[oi + k] === D[oj + k]) A++;
+      return A * 8 + POP[M[i] & M[j]] - A;
+    }
+    ca.fill(0); cb.fill(0);
+    for (let k = 0; k < L; k++) { const x = D[oi + k], y = D[oj + k]; if (x === y) A++; else { ca[x]++; cb[y]++; } }
+    let B = 0; for (let d = 0; d < 10; d++) B += Math.min(ca[d], cb[d]);
+    return A * 8 + B;
+  }
+  return { L, rep, codes, idx, n, sc, all: Array.from({ length: n }, (_, i) => i), WIN: L * 8 };
+}
+const scoreStr = (a, b) => E.sc(E.idx.get(a), E.idx.get(b));
+const keyA = k => k >> 3, keyB = k => k & 7;
+const pick = a => a[Math.random() * a.length | 0];
+function sample(arr, k) {
+  if (arr.length <= k) return arr.slice();
+  const out = new Set(); while (out.size < k) out.add(arr[Math.random() * arr.length | 0]);
+  return [...out];
+}
+const filt = (cands, g, key) => cands.filter(c => E.sc(c, g) === key);
+
+// 最能縮小範圍的一猜：猜完後剩下組數的期望值最小
+function bestGuess(cands, used) {
+  const n = cands.length;
+  if (n <= 2) return pick(cands);
+  if (n === E.n && !E.rep) return pick(E.all);  // 第一猜：不重複時每一組都一樣好
+  const evalSet = n > 2000 ? sample(cands, 2000) : cands;
+  const inC = new Uint8Array(E.n); cands.forEach(c => inC[c] = 1);
+  const pool = n <= 400 ? cands.concat(sample(E.all, 300)) : sample(cands, 300).concat(sample(E.all, 150));
+  const cnt = new Uint32Array(64);
+  let best = cands[0], bv = Infinity;
+  for (const g of pool) {
+    if (used && used.has(g)) continue;
+    cnt.fill(0);
+    for (const c of evalSet) cnt[E.sc(g, c)]++;
+    let v = 0; for (let k = 0; k < 64; k++) v += cnt[k] * cnt[k];
+    if (inC[g]) v -= 1.5;  // 猜中就結束，同分時優先猜可能的答案
+    if (v < bv) { bv = v; best = g; }
+  }
+  return best;
+}
+// 電腦依程度出手。hist: [{g, key}]
+function computerGuess(level, cands, hist) {
+  const used = new Set(hist.map(h => h.g));
+  if (level === 2) return bestGuess(cands, used);
+  if (level === 1) return pick(cands);
+  // 簡單：只記得最近三次的線索
+  let loose = E.all;
+  for (const h of hist.slice(-3)) loose = filt(loose, h.g, h.key);
+  loose = loose.filter(c => !used.has(c));
+  return loose.length ? pick(loose) : pick(cands);
+}
+function randomSecret() { return pick(E.all); }
+const validAB = (A, B) => A + B <= E.L && !(A === E.L - 1 && B === 1) && !(A === E.L && B);
+
+// ===== 音效 =====
+let actx = null;
+function tone(freqs, dur = 0.12, type = 'triangle', vol = 0.15, gap = 0.1) {
+  if (!store.sound) return;
+  try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; }
+  freqs.forEach((f, i) => {
+    const o = actx.createOscillator(), g = actx.createGain(), t = actx.currentTime + i * gap;
+    o.type = type; o.frequency.value = f;
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + 0.01); g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + dur + 0.02);
+  });
+}
+const sKey = () => tone([660], 0.05, 'square', 0.04);
+const sResult = () => tone([520, 700], 0.12);
+const sWin = () => tone([523, 659, 784, 1047], 0.45, 'triangle', 0.18, 0.11);
+const sLose = () => tone([392, 330, 262], 0.4, 'triangle', 0.16, 0.16);
+const sBad = () => tone([200], 0.15, 'square', 0.06);
+
+// ===== 狀態 =====
+let G = null, timerId = null, busy = false, flashTimer = null, seen = {};
+const mode = () => store.mode;
+const simple = () => document.body.classList.contains('simple');
+const fmt = ms => { const s = Math.floor(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+const ruleText = () => `${E.L} 位數字${E.rep ? '（可重複）' : '（不重複）'}`;
+
+function newGame() {
+  clearInterval(timerId); timerId = null; busy = false; clearTimeout(flashTimer); seen = {};
+  $('flash').classList.remove('on');
+  if (!E || E.L !== store.L || E.rep !== store.rep) E = buildEngine(store.L, store.rep);
+  const m = simple() ? 'guess' : mode();
+  const base = { entry: '', marks: new Array(10).fill(0), msg: '', msgCls: '' };
+  if (m === 'guess') G = { ...base, m, secret: randomSecret(), hist: [], cands: E.all, won: false, t0: 0, elapsed: 0, hints: 0 };
+  if (m === 'reverse') G = { ...base, m, phase: 'think', hist: [], cands: E.all, cur: -1, ra: null, rb: null, check: null, level: store.level };
+  if (m === 'battle') G = { ...base, m, phase: 'setup', mine: -1, show: false, csecret: randomSecret(), ph: [], ch: [], pc: E.all, cc: E.all, hints: 0, level: store.level, result: '' };
+  render();
+}
+function setMsg(t, cls = '') { G.msg = t; G.msgCls = cls; }
+
+// ===== 輸入 =====
+function entryActive() {
+  if (G.m === 'guess') return !G.won;
+  if (G.m === 'battle') return (G.phase === 'setup' || G.phase === 'play') && !busy;
+  if (G.m === 'reverse') return G.phase === 'verify';
+  return false;
+}
+function typeDigit(d) {
+  if (G.m === 'reverse' && G.phase === 'answer') { reportDigit(d); return; }
+  if (!entryActive() || G.entry.length >= E.L) return;
+  if (!E.rep && G.entry.includes(String(d))) { shakeSlots(); sBad(); return; }
+  G.entry += d; sKey();
+  if (G.m === 'guess' && !G.t0 && !G.hist.length && !G.elapsed) startTimer();
+  render();
+}
+function backspace() {
+  if (G.m === 'reverse' && G.phase === 'answer') { if (G.rb !== null) G.rb = null; else G.ra = null; render(); return; }
+  if (!entryActive() || !G.entry) return;
+  G.entry = G.entry.slice(0, -1); render();
+}
+function enter() {
+  if (G.m === 'reverse') {
+    if (G.phase === 'think') return revStart();
+    if (G.phase === 'answer') return revReport();
+    if (G.phase === 'verify') return revVerify();
+    return;
+  }
+  if (!entryActive()) return;
+  if (G.entry.length < E.L) { shakeSlots(); sBad(); setMsg(`要打滿 ${E.L} 個數字`, 'bad'); render(); return; }
+  const g = E.idx.get(G.entry);
+  if (G.m === 'guess') guessSubmit(g);
+  else if (G.phase === 'setup') battleSetup(g);
+  else battleGuess(g);
+}
+function shakeSlots() {
+  const s = $('slots'); s.classList.remove('shake'); void s.offsetWidth; s.classList.add('shake');
+}
+
+// ===== 你猜 =====
+function startTimer() {
+  G.t0 = Date.now();
+  clearInterval(timerId);
+  timerId = setInterval(() => { const t = $('time'); if (t && G.m === 'guess') t.textContent = fmt(curTime()); }, 250);
+}
+const curTime = () => G.t0 ? G.elapsed + Date.now() - G.t0 : G.elapsed;
+function stopTimer() { if (G.t0) { G.elapsed += Date.now() - G.t0; G.t0 = 0; } clearInterval(timerId); timerId = null; }
+function guessSubmit(g) {
+  if (G.hist.some(h => h.g === g)) { setMsg('這組猜過了', 'bad'); sBad(); G.entry = ''; render(); return; }
+  if (!G.t0) startTimer();
+  const key = E.sc(g, G.secret);
+  G.cands = filt(G.cands, g, key);
+  G.hist.push({ g, key, left: G.cands.length });
+  G.entry = '';
+  setMsg('');
+  if (key === E.WIN) guessWin(); else sResult();
+  render();
+}
+function guessWin() {
+  G.won = true; stopTimer(); sWin();
+  if (simple()) {
+    $('flash').classList.add('on');
+    flashTimer = setTimeout(newGame, 1500);
+    return;
+  }
+  const k = `${E.L}-${E.rep ? 1 : 0}`, old = store.best[k], n = G.hist.length, t = G.elapsed;
+  let extra = '';
+  if (G.hints) extra = `（用了 ${G.hints} 次提示，不列入紀錄）`;
+  else {
+    const nb = { n: Math.min(n, old ? old.n : Infinity), t: Math.min(t, old ? old.t : Infinity) };
+    const rec = [];
+    if (old && n < old.n) rec.push('最少次數'); if (old && t < old.t) rec.push('最快時間');
+    store.best[k] = nb; save();
+    if (rec.length) extra = `　🎉 新紀錄：${rec.join('、')}`;
+  }
+  setMsg(`猜中了！用了 ${n} 次・${fmt(t)}${extra}`, 'good');
+}
+function hint() {
+  if (busy) return;
+  let cands, hist;
+  if (G.m === 'guess' && !G.won) { cands = G.cands; hist = G.hist; }
+  else if (G.m === 'battle' && G.phase === 'play') { cands = G.pc; hist = G.ph; }
+  else return;
+  const g = bestGuess(cands, new Set(hist.map(h => h.g)));
+  G.hints++;
+  G.entry = E.codes[g];
+  setMsg(cands.length === 1 ? '只剩一種可能，就是它！按 Enter 送出' : `提示：猜 ${E.codes[g]} 最能縮小範圍，按 Enter 送出`, 'info');
+  render();
+}
+
+// ===== 電腦猜 =====
+function revStart() {
+  G.phase = 'answer'; setMsg('');
+  revNext();
+}
+function revNext() {
+  busy = true; render();
+  setTimeout(() => {
+    G.cur = computerGuess(G.level, G.cands, G.hist);
+    G.ra = null; G.rb = null; busy = false;
+    sKey(); render();
+  }, 350);
+}
+function reportDigit(d) {
+  if (busy) return;
+  if (G.ra === null) { if (d <= E.L) G.ra = d; }
+  else if (G.rb === null) { if (d <= E.L) G.rb = d; }
+  render();
+}
+function revReport() {
+  if (busy || G.phase !== 'answer') return;
+  if (G.ra === null || G.rb === null) { setMsg('請選好 A 和 B 再回報', 'bad'); render(); return; }
+  if (!validAB(G.ra, G.rb)) { setMsg(`${G.ra}A${G.rb}B 不可能出現，請再檢查一次`, 'bad'); sBad(); render(); return; }
+  const key = G.ra * 8 + G.rb, g = G.cur;
+  G.cands = filt(G.cands, g, key);
+  G.hist.push({ g, key, left: G.cands.length });
+  setMsg('');
+  if (key === E.WIN) {
+    G.phase = 'done'; sLose();
+    setMsg(`電腦用 ${G.hist.length} 次猜中你的數字：${E.codes[g]}`, 'good');
+  } else if (!G.cands.length) {
+    G.phase = 'conflict'; sBad();
+    setMsg('線索互相矛盾：沒有任何數字符合全部回報，可能有一次算錯了。', 'bad');
+  } else { sResult(); revNext(); }
+  render();
+}
+function revUndo() {
+  const h = G.hist.pop(); if (!h) return;
+  G.cands = E.all; for (const x of G.hist) G.cands = filt(G.cands, x.g, x.key);
+  G.cur = h.g; G.ra = keyA(h.key); G.rb = keyB(h.key); G.phase = 'answer'; G.check = null;
+  setMsg('已收回上一次回報，請重新回報', 'info'); render();
+}
+function revVerify() {
+  if (G.entry.length < E.L) { shakeSlots(); sBad(); setMsg(`要打滿 ${E.L} 個數字`, 'bad'); render(); return; }
+  const s = E.idx.get(G.entry);
+  G.check = { s, wrong: G.hist.map(h => E.sc(h.g, s) !== h.key) };
+  const bad = G.check.wrong.map((w, i) => w ? i + 1 : 0).filter(Boolean);
+  G.phase = 'checked';
+  setMsg(bad.length ? `找到了：第 ${bad.join('、')} 次的回報算錯了（左邊紅色那幾行）` : '全部回報都正確，那就是電腦還沒猜到喔！', bad.length ? 'bad' : 'good');
+  render();
+}
+
+// ===== 對戰 =====
+function battleSetup(g) {
+  G.mine = g; G.entry = ''; G.phase = 'play';
+  setMsg('藏好了！你先猜', 'info'); sResult(); render();
+}
+function battleGuess(g) {
+  if (G.ph.some(h => h.g === g)) { setMsg('這組猜過了', 'bad'); sBad(); G.entry = ''; render(); return; }
+  const key = E.sc(g, G.csecret);
+  G.pc = filt(G.pc, g, key);
+  G.ph.push({ g, key, left: G.pc.length });
+  G.entry = ''; setMsg('');
+  const youHit = key === E.WIN;
+  sResult();
+  busy = true; render();
+  setTimeout(() => {
+    const cg = computerGuess(G.level, G.cc, G.ch), ck = E.sc(cg, G.mine);
+    G.cc = filt(G.cc, cg, ck);
+    G.ch.push({ g: cg, key: ck, left: G.cc.length });
+    const cHit = ck === E.WIN;
+    busy = false;
+    if (youHit || cHit) {
+      G.phase = 'over';
+      G.result = youHit && cHit ? 'draw' : youHit ? 'win' : 'lose';
+      const t = store.tally[G.level] || { w: 0, l: 0, d: 0 };
+      t[G.result[0]]++; store.tally[G.level] = t; save();
+      if (G.result === 'win') { sWin(); setMsg(`你贏了！第 ${G.ph.length} 次猜中，電腦還沒猜到${G.hints ? `（用了 ${G.hints} 次提示）` : ''}`, 'good'); }
+      if (G.result === 'lose') { sLose(); setMsg(`電腦先猜中你的數字，它的數字是 ${E.codes[G.csecret]}`, 'bad'); }
+      if (G.result === 'draw') { sWin(); setMsg('平手！同一輪都猜中了', 'good'); }
+    } else sKey();
+    render();
+  }, 700);
+}
+
+// ===== 畫面 =====
+function rowHTML(i, g, key, extra, cls) {
+  const A = keyA(key), B = keyB(key);
+  return `<div class="row ${cls || ''}"><span class="no">${i}</span><span class="code">${[...E.codes[g]].map(d => `<b>${d}</b>`).join('')}</span>
+    <span class="ab"><i class="a${A ? '' : ' z'}">${A}A</i><i class="b${B ? '' : ' z'}">${B}B</i></span>${extra ? `<span class="ex">${extra}</span>` : ''}</div>`;
+}
+const leftTxt = n => store.showCount ? `剩 ${n} 組` : '';
+function histHTML(id, list, emptyTxt, extraFn, clsFn) {
+  if (!list.length) { seen[id] = 0; return `<div class="empty">${emptyTxt}</div>`; }
+  const fresh = list.length > (seen[id] || 0) ? list.length - 1 : -1;
+  seen[id] = list.length;
+  return list.map((h, i) => rowHTML(i + 1, h.g, h.key, extraFn ? extraFn(h, i) : '',
+    (clsFn ? clsFn(h, i) : (h.key === E.WIN ? 'win' : '')) + (i === fresh ? ' fresh' : ''))).join('');
+}
+const ruleBox = () => `<div class="rule"><i class="a">A</i> 數字對、位置也對<br><i class="b">B</i> 數字對、位置不對<br>例：答案 1234，猜 1350 → 1A1B</div>`;
+const countBtn = () => `<button class="chk" id="countBtn" aria-pressed="${store.showCount}">顯示可能答案數</button>`;
+
+function render() {
+  const m = G.m;
+  document.querySelectorAll('#tabs button').forEach(b => b.setAttribute('aria-pressed', b.dataset.m === mode()));
+  document.querySelectorAll('#lens button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.l === store.L));
+  document.querySelectorAll('#levels button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.v === store.level));
+  $('repBtn').setAttribute('aria-pressed', store.rep);
+  $('lvGrp').hidden = mode() === 'guess';
+  $('soundBtn').setAttribute('aria-pressed', store.sound);
+  $('simpleBtn').setAttribute('aria-pressed', simple());
+
+  const showEntry = m !== 'reverse' || G.phase === 'verify' || G.phase === 'checked';
+  $('entryView').hidden = !showEntry;
+  $('reportView').hidden = !(m === 'reverse' && (G.phase === 'answer' || G.phase === 'done'));
+  $('marks').hidden = !(m === 'guess' || (m === 'battle' && G.phase !== 'setup'));
+
+  // 輸入格
+  const shown = m === 'reverse' && G.phase === 'checked' ? E.codes[G.check.s] : G.entry;
+  $('slots').innerHTML = Array.from({ length: E.L }, (_, i) =>
+    `<div class="slot${i === shown.length && entryActive() ? ' cur' : ''}">${shown[i] ?? ''}</div>`).join('');
+  const act = entryActive();
+  $('keypad').innerHTML = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0].map(d =>
+    `<button data-d="${d}" class="${m !== 'reverse' && G.phase !== 'setup' ? ['', 'm1', 'm2'][G.marks[d]] : ''}" ${!act || (!E.rep && G.entry.includes(d)) ? 'disabled' : ''}>${d}</button>`).join('')
+    + `<button class="wide" data-k="bs" ${act && G.entry ? '' : 'disabled'}>⌫ 刪除</button><button class="go" data-k="go" ${act ? '' : 'disabled'}>${m === 'battle' && G.phase === 'setup' ? '藏好了' : m === 'reverse' ? '核對' : '送出'}</button>`;
+  $('ds').innerHTML = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0].map(d => `<button data-m="${d}" class="${['', 'm1', 'm2'][G.marks[d]]}">${d}</button>`).join('');
+
+  let prompt = '', actions = '', left = '', right = '';
+  if (m === 'guess') {
+    prompt = G.won ? '猜中了！' : `猜一組${ruleText()}<small>打數字，按 Enter 送出</small>`;
+    if (G.won && !simple()) actions = `<button class="b main" data-a="new">再玩一局</button>`;
+    left = `<h2>猜測紀錄 <small>${G.hist.length} 次</small></h2><div class="hist" id="hist">${histHTML('g', G.hist, '還沒猜。先隨便打一組試試看！', h => leftTxt(h.left))}</div>`;
+    const best = store.best[`${E.L}-${E.rep ? 1 : 0}`];
+    right = `<div class="stat"><small>次數</small><b>${G.hist.length}</b></div>
+      <div class="stat"><small>時間</small><b id="time">${fmt(curTime())}</b></div>
+      ${store.showCount ? `<div class="stat"><small>可能答案</small><b class="mid">${G.cands.length} 組</b></div>` : ''}
+      <button class="b" data-a="hint" ${G.won ? 'disabled' : ''}>💡 提示</button>
+      ${countBtn()}
+      <div class="note">${best ? `${ruleText()}最佳紀錄：最少 ${best.n} 次・最快 ${fmt(best.t)}` : `${ruleText()}還沒有紀錄`}<br>用過提示的局不列入紀錄</div>
+      ${ruleBox()}
+      <div class="note"><kbd>0</kbd>–<kbd>9</kbd> 輸入　<kbd>Enter</kbd> 送出　<kbd>⌫</kbd> 刪除　<kbd>H</kbd> 提示</div>`;
+  }
+  if (m === 'reverse') {
+    const lv = ['簡單', '普通', '厲害'][G.level];
+    if (G.phase === 'think') {
+      prompt = `在心裡想一組${ruleText()}<small>可以先寫在紙上，不要讓電腦看到（它也看不到）</small>`;
+      actions = `<button class="b main" data-a="revStart">想好了，開始</button>`;
+    } else if (G.phase === 'answer') {
+      prompt = busy ? '電腦思考中…' : `電腦猜這組，請回報幾Ａ幾Ｂ<small>點選 A、B，或直接打兩個數字，按 Enter 回報</small>`;
+      actions = `<button class="b main" data-a="report" ${busy ? 'disabled' : ''}>回報</button>`;
+    } else if (G.phase === 'done') {
+      prompt = '電腦猜中了！';
+      actions = `<button class="b main" data-a="new">再玩一局</button>`;
+    } else if (G.phase === 'conflict') {
+      prompt = '咦？好像哪裡怪怪的';
+      actions = `<button class="b" data-a="revUndo">收回上一次回報</button><button class="b main" data-a="revVerifyStart">輸入我的數字，找出算錯的地方</button>`;
+    } else if (G.phase === 'verify') {
+      prompt = '輸入你心裡想的數字<small>電腦會一行一行幫你核對</small>';
+    } else if (G.phase === 'checked') {
+      prompt = '核對結果';
+      actions = `<button class="b main" data-a="new">再玩一局</button>`;
+    }
+    const cmp = G.check ? (h, i) => (G.check.wrong[i] ? `應為 ${keyA(E.sc(h.g, G.check.s))}A${keyB(E.sc(h.g, G.check.s))}B` : '✔') : h => leftTxt(h.left);
+    const cls = G.check ? (h, i) => (G.check.wrong[i] ? 'wrong' : '') : null;
+    left = `<h2>電腦的猜測 <small>${G.hist.length} 次</small></h2><div class="hist">${histHTML('r', G.hist, '電腦還沒開始猜。', cmp, cls)}</div>`;
+    right = `<div class="stat"><small>電腦程度</small><b class="mid">${lv}</b></div>
+      ${store.showCount ? `<div class="stat"><small>電腦眼中的可能答案</small><b class="mid">${G.cands.length} 組</b></div>` : ''}
+      ${countBtn()}
+      <div class="note">${G.level === 2 ? '「厲害」每次都挑最能縮小範圍的數字。' : G.level === 1 ? '「普通」從所有可能答案裡隨便挑一組。' : '「簡單」只記得最近三次的線索。'}<br>回報錯了也沒關係，電腦發現矛盾會告訴你。</div>
+      ${ruleBox()}`;
+  }
+  if (m === 'battle') {
+    const lv = ['簡單', '普通', '厲害'][G.level];
+    if (G.phase === 'setup') prompt = `先藏好你的數字：${ruleText()}<small>打好按 Enter，電腦看不到，它猜的每一步會自動幫你回答</small>`;
+    else if (G.phase === 'play') prompt = busy ? '電腦正在猜你的數字…' : `輪到你：猜電腦的數字<small>你先攻；同一輪都猜中算平手</small>`;
+    else prompt = { win: '你贏了！🎉', lose: '電腦贏了', draw: '平手！' }[G.result];
+    if (G.phase === 'over') actions = `<button class="b main" data-a="new">再來一局</button>`;
+    const t = store.tally[G.level] || { w: 0, l: 0, d: 0 };
+    left = `<h2>你的猜測 <small>${G.ph.length} 次${store.showCount && G.phase !== 'setup' ? `・剩 ${G.pc.length} 組` : ''}</small></h2>
+      <div class="hist">${histHTML('p', G.ph, G.phase === 'setup' ? '先藏好你的數字。' : '輪到你先猜！', h => leftTxt(h.left))}</div>
+      <div class="actions"><button class="b" data-a="hint" ${G.phase === 'play' && !busy ? '' : 'disabled'}>💡 提示</button>${countBtn()}</div>`;
+    right = `<h2>電腦的猜測 <small>程度：${lv}・${G.ch.length} 次${store.showCount && G.phase !== 'setup' ? `・剩 ${G.cc.length} 組` : ''}</small></h2>
+      <div class="secret">你的數字 <b>${G.mine < 0 ? '－' : G.show || G.phase === 'over' ? E.codes[G.mine] : '●'.repeat(E.L)}</b>${G.mine >= 0 && G.phase !== 'over' ? `<button data-a="eye">${G.show ? '🙈 藏起來' : '👁 看一下'}</button>` : ''}</div>
+      <div class="hist">${histHTML('c', G.ch, '電腦等你先猜。', h => leftTxt(h.left))}</div>
+      <div class="tally"><div>贏<b>${t.w}</b></div><div>輸<b>${t.l}</b></div><div>平手<b>${t.d}</b></div></div>`;
+  }
+  $('prompt').innerHTML = prompt;
+  $('actions').innerHTML = actions;
+  $('left').innerHTML = left;
+  $('right').innerHTML = right;
+  $('msg').textContent = G.msg; $('msg').className = 'msg ' + G.msgCls;
+
+  // 電腦猜：顯示電腦的數字與 A/B 選擇
+  if (m === 'reverse' && (G.phase === 'answer' || G.phase === 'done')) {
+    const code = G.cur >= 0 && !busy ? E.codes[G.cur] : '?'.repeat(E.L);
+    $('cslots').innerHTML = [...code].map(d => `<div class="slot big">${d}</div>`).join('');
+    const dis = G.phase !== 'answer' || busy;
+    $('pickA').innerHTML = '<span>A</span>' + Array.from({ length: E.L + 1 }, (_, i) => `<button data-ra="${i}" aria-pressed="${G.ra === i}" ${dis ? 'disabled' : ''}>${i}</button>`).join('');
+    $('pickB').innerHTML = '<span>B</span>' + Array.from({ length: E.L + 1 }, (_, i) =>
+      `<button data-rb="${i}" aria-pressed="${G.rb === i}" ${dis || (G.ra !== null && !validAB(G.ra, i)) ? 'disabled' : ''}>${i}</button>`).join('');
+  }
+  document.querySelectorAll('.hist').forEach(h => h.scrollTop = h.scrollHeight);
+}
+
+// ===== 事件 =====
+document.addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  b.blur();
+  if (b.dataset.d !== undefined) typeDigit(+b.dataset.d);
+  else if (b.dataset.k === 'bs') backspace();
+  else if (b.dataset.k === 'go') enter();
+  else if (b.dataset.m !== undefined && b.closest('#ds')) { const d = +b.dataset.m; G.marks[d] = (G.marks[d] + 1) % 3; render(); }
+  else if (b.dataset.m && b.closest('#tabs')) { store.mode = b.dataset.m; save(); newGame(); }
+  else if (b.dataset.l) { store.L = +b.dataset.l; save(); newGame(); }
+  else if (b.dataset.v !== undefined && b.closest('#levels')) { store.level = +b.dataset.v; save(); newGame(); }
+  else if (b.dataset.ra !== undefined) { G.ra = +b.dataset.ra; if (G.rb !== null && !validAB(G.ra, G.rb)) G.rb = null; render(); }
+  else if (b.dataset.rb !== undefined) { G.rb = +b.dataset.rb; render(); }
+  else if (b.dataset.a) {
+    const a = b.dataset.a;
+    if (a === 'new') newGame();
+    else if (a === 'hint') hint();
+    else if (a === 'revStart') revStart();
+    else if (a === 'report') revReport();
+    else if (a === 'revUndo') revUndo();
+    else if (a === 'revVerifyStart') { G.phase = 'verify'; G.entry = ''; setMsg(''); render(); }
+    else if (a === 'eye') { G.show = !G.show; render(); }
+  }
+  else if (b.id === 'countBtn') { store.showCount = !store.showCount; save(); render(); }
+});
+$('repBtn').onclick = () => { store.rep = !store.rep; save(); newGame(); };
+$('newBtn').onclick = () => newGame();
+$('soundBtn').onclick = () => { store.sound = !store.sound; save(); render(); };
+$('simpleBtn').onclick = () => {
+  const on = !simple();
+  document.body.classList.toggle('simple', on); store.simple = on; save(); newGame();
+};
+// 看實體按鍵位置（e.code），注音輸入法開著也能用
+document.addEventListener('keydown', e => {
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  const d = /^(?:Digit|Numpad)(\d)$/.exec(e.code);
+  if (d) { e.preventDefault(); typeDigit(+d[1]); return; }
+  if (e.code === 'Backspace') { e.preventDefault(); backspace(); }
+  else if (e.code === 'Enter' || e.code === 'NumpadEnter') { e.preventDefault(); enter(); }
+  else if (e.code === 'KeyH') hint();
+});
+document.addEventListener('visibilitychange', () => {
+  if (!G || G.m !== 'guess' || G.won) return;
+  if (document.hidden) stopTimer(); else if (G.hist.length || G.entry) startTimer();
+});
+
+document.body.classList.toggle('simple', !!store.simple);
+newGame();
+</script>
+</body>
+</html>

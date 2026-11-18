@@ -233,13 +233,13 @@ const A=(()=>{
   const st={step:0,d:22,u:30,s:24,eye:false};
   const sx=cm=>LX+cm*PX;
   const vOf=u=>u===F?Infinity:u*F/(u-F);
-  const LABELS=['找焦距','量焦距','2f 外','2f 上','f～2f','放在 f','f 以內','滑動觀察'];
+  const LABELS=['找焦距','量焦距','2f 外','2f 上','2f～f','放在 f','f 以內','滑動觀察'];
   const CAPS=[
     '太陽光穿過透鏡。拖動白紙，找出最小、最亮的光點。',
     '量出透鏡到光點的距離，這就是 f。尺上標出 f 和 2f。',
     '燈具放在 2f 外。拖動屏幕直到像最清楚，按「記錄」。',
     '燈具移到 2f 上。重新對焦，看看像和剛才有什麼不同。',
-    '燈具移到 f 和 2f 之間。重新對焦並記錄。',
+    '燈具移到 2f 和 f 之間。重新對焦並記錄。',
     '燈具放在 f 上。屏幕找得到清楚的像嗎？換眼睛看看。',
     '燈具移進 f 以內。屏幕找不到像，就用眼睛透過透鏡看。',
     '拖動滑桿，讓燈具從遠處慢慢靠近；屏幕會自動對焦。'];
@@ -409,8 +409,8 @@ const A=(()=>{
     let html=v.outerHTML.replace(/clip-path="[^"]*"/,'');
     insetIds.forEach(id=>{const nid=id+'r'+(++fxId);html=html.split(`"${id}"`).join(`"${nid}"`).split(`#${id})`).join(`#${nid})`)});
     const clear=!st.eye&&blurOf()<.3;
-    const uReg=u=>Math.abs(u-2*F)<.01?'2f 上':u>2*F?'2f 外':Math.abs(u-F)<.01?'f 上':u>F?'f～2f':'f 內';
-    const sReg=v=>Math.abs(v-2*F)<.3?'2f 上':v>2*F?'2f 外':'f～2f';
+    const uReg=u=>Math.abs(u-2*F)<.01?'2f 上':u>2*F?'2f 外':Math.abs(u-F)<.01?'f 上':u>F?'2f～f':'f 內';
+    const sReg=v=>Math.abs(v-2*F)<.3?'2f 上':v>2*F?'2f 外':'2f～f';
     const line1=`物｜${uReg(st.u)}<small>${r5(st.u)} cm</small>`;
     const line2=Math.abs(st.u-F)<.01?'像｜找不到':st.eye?'像｜眼睛看':clear?`像｜${sReg(st.s)}<small>${r5(st.s)} cm</small>`:'像｜—<small>不清楚</small>';
     const c=document.createElement('div');c.className='card';
@@ -424,7 +424,7 @@ const A=(()=>{
   const bar=mkBar($('#barA'),LABELS,go);
   function setUA(u){u=clamp(u,3,40);for(const t of [20,10])if(Math.abs(u-t)<.4)u=t;st.u=u;draw()}
   $('#uSliderA').addEventListener('input',e=>setUA(-e.target.value));
-  [['2f 外',30],['2f 上',20],['f～2f',15],['f 上',10],['f 內',6]].forEach(([t,u])=>{
+  [['2f 外',30],['2f 上',20],['2f～f',15],['f 上',10],['f 內',6]].forEach(([t,u])=>{
     const b=document.createElement('button');b.className='btn';b.textContent=t;b.style.marginRight='6px';
     b.addEventListener('click',()=>setUA(u));$('#presetsA').appendChild(b)});
   st.step=-1;go(0);
@@ -551,7 +551,7 @@ const B=(()=>{
     const h=el('rect',{x:xo-30,y:Y0-H-40,width:60,height:H+110,fill:'transparent',style:'cursor:ew-resize'},obj);
     dragX(svg,h,x=>{stopAuto();setU((X0-x)/F)});
     drawRight(anim);
-    $('#uRead').textContent=({out2F:'2f 外','2F':'2f 上',F2F:'f～2f',F:'f 上',inF:'f 內',cc:st.u>1.5?'遠':'近'})[region()];
+    $('#uRead').textContent=({out2F:'2f 外','2F':'2f 上',F2F:'2f～f',F:'f 上',inF:'f 內',cc:st.u>1.5?'遠':'近'})[region()];
     $('#capB').textContent=caption();
     if(s>=3&&curPanel==='pB')C.fill(region());
   }
@@ -607,7 +607,7 @@ const B=(()=>{
         txt(g,x0+i*(tw+gap)+tw/2,ty+40,t,{'font-size':30,'font-weight':900,fill:'#fff','text-anchor':'middle'});
       });
       if(im){
-        const where=im.real?(rg==='out2F'?'像在 f～2f':rg==='2F'?'像在 2f 上':'像在 2f 外'):'像和物在同一側';
+        const where=im.real?(rg==='out2F'?'像在 2f～f':rg==='2F'?'像在 2f 上':'像在 2f 外'):'像和物在同一側';
         txt(g,PC.x,ty+100,`${where}　大小 ×${Math.abs(im.m)<10?Math.abs(im.m).toFixed(2):'很大'}`,{'font-size':23,'font-weight':700,fill:'#5b6078','text-anchor':'middle'});
       }
     }
@@ -618,7 +618,7 @@ const B=(()=>{
     st.u=u;$('#uSlider').value=-u;draw();
   }
   $('#uSlider').addEventListener('input',e=>{stopAuto();setU(-e.target.value)});
-  const PRE={convex:[['2f 外',2.6],['2f 上',2],['f～2f',1.5],['f 上',1],['f 內',.6]],concave:[['遠',2.6],['近',.7]]};
+  const PRE={convex:[['2f 外',2.6],['2f 上',2],['2f～f',1.5],['f 上',1],['f 內',.6]],concave:[['遠',2.6],['近',.7]]};
   function buildPresets(){
     const h=$('#presets');h.replaceChildren();
     PRE[st.type].forEach(([t,u])=>{const b=document.createElement('button');b.className='btn';b.textContent=t;b.style.marginRight='6px';b.addEventListener('click',()=>{stopAuto();setU(u)});h.appendChild(b)});
@@ -645,9 +645,9 @@ const B=(()=>{
 /* ===================== ③ 表格統整 ===================== */
 const ROWS=[
   {key:'inf',  pos:'很遠處', c:['鏡後 f 上','實像','—','一點']},
-  {key:'out2F',pos:'2f 外', c:['鏡後 f～2f','實像','倒立','縮小'], u:2.6},
+  {key:'out2F',pos:'2f 外', c:['鏡後 2f～f','實像','倒立','縮小'], u:2.6},
   {key:'2F',   pos:'2f 上', c:['鏡後 2f 上','實像','倒立','相等'], u:2},
-  {key:'F2F',  pos:'f～2f', c:['鏡後 2f 外','實像','倒立','放大'], u:1.5},
+  {key:'F2F',  pos:'2f～f', c:['鏡後 2f 外','實像','倒立','放大'], u:1.5},
   {key:'F',    pos:'f 上',  c:['無法成像'], u:1},
   {key:'inF',  pos:'f 內',  c:['鏡前（同側）','虛像','正立','放大'], u:.6},
   {key:'cc',   pos:'任何位置', c:['鏡前（同側）','虛像','正立','縮小'], u:2.6, concave:true}];
@@ -700,7 +700,7 @@ const C=(()=>{
     el('ellipse',{cx:XL,cy:52,rx:9,ry:36,fill:'#cfe8f6',stroke:'#6aaed6','stroke-width':3},RS);
     T(XL+100,62,'凸透鏡',{fill:'#3c7fa8','font-size':28});
     for(const [x,t] of [[X2,'2f'],[X1,'f']]){el('circle',{cx:x,cy:52,r:8,fill:'#5b4bb7'},RS);T(x,30,t,{fill:'#5b4bb7'})}
-    for(const [x,t] of [[(L+X2)/2,'2f 外'],[(X2+X1)/2,'f～2f'],[(X1+XL)/2,'f 內']])T(x,34,t,{fill:'#8d92aa','font-size':26,'font-weight':500});
+    for(const [x,t] of [[(L+X2)/2,'2f 外'],[(X2+X1)/2,'2f～f'],[(X1+XL)/2,'f 內']])T(x,34,t,{fill:'#8d92aa','font-size':26,'font-weight':500});
     // 列名
     T(24,128,'實虛．正倒',{'text-anchor':'start','font-size':28});
     T(24,208,'大小',{'text-anchor':'start','font-size':28});

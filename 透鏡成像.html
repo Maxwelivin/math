@@ -78,7 +78,10 @@ table.sum td.ans.virt{color:var(--accent);font-weight:700}
 table.sum tr.hot td{background:#fff4ec}
 .play{font:inherit;border:0;background:none;color:var(--warm);cursor:pointer;font-size:.9em;padding:0 0 0 .3em}
 .rules{background:var(--surface);border:2px solid var(--line);border-radius:16px;padding:6px 12px}
-.rules svg{display:block;width:100%;max-height:30vh}
+.rules svg{display:block;width:100%;max-height:25vh}
+.rhead{display:flex;align-items:center;gap:8px;margin:2px 0 4px}
+.rhead .chip{font-size:.85em;padding:.15em .8em}
+.rhead .rule{margin-left:auto;font-weight:700;color:var(--accent);font-size:1.05em}
 table.sum.compact{font-size:1.15em}
 table.sum.compact th,table.sum.compact td{padding:.28em .6em}
 @keyframes pop{0%{transform:scale(.6);opacity:0}100%{transform:scale(1);opacity:1}}
@@ -135,7 +138,10 @@ table.sum.compact th,table.sum.compact td{padding:.28em .6em}
     <div class="tablewrap">
       <div class="quiz" id="quiz"><span class="q" id="qText"></span><span class="g">先猜：實／虛．正／倒．大／小</span><span class="sp" style="flex:1"></span><button class="btn primary" id="qShow">▶ 揭曉</button></div>
       <table class="sum" id="sumTable"></table>
-      <div class="rules" id="rules" hidden><svg id="ruleSvg" viewBox="0 0 1600 290"></svg></div>
+      <div class="rules" id="rules" hidden>
+        <div class="rhead"><button class="chip on" data-r="a">實虛．正倒．大小</button><button class="chip" data-r="b">成像位置</button>
+          <span class="rule" id="ruleTxt" hidden>物體往右，像也往右；物體往左，像也往左</span></div>
+        <svg id="ruleSvg" viewBox="0 0 1600 290"></svg></div>
     </div>
   </section>
 </main>
@@ -685,7 +691,38 @@ const C=(()=>{
   /* 判斷法：凸透鏡看物體在 f、2f 的哪一側 */
   const RS=$('#ruleSvg'), L=270, X2=720, X1=1070, XL=1420;
   const HL={out2F:[L-8,X2-34],'2F':[X2-38,X2+38],F2F:[X2+34,X1-12],F:[X1-24,X1+24],inF:[X1+12,XL-4]};
+  let rulePage='a', ruleHL=null;
+  /* 成像位置：完整主軸，透鏡在中間 */
+  function drawPos(hl){
+    RS.setAttribute('viewBox','0 0 1600 290');RS.replaceChildren();
+    const XC=860, FU=200, xf=k=>XC+k*FU, AX0=300, AX1=1300;
+    const T=(x,y,str,a)=>txt(RS,x,y,str,Object.assign({'font-size':28,'font-weight':700,'text-anchor':'middle',fill:'#191c2e'},a||{}));
+    const B1=92, B2=172, B3=250;
+    const key=hl==='cc'?B3:hl==='inF'?B2:['out2F','2F','F2F'].includes(hl)?B1:null;
+    if(key)el('rect',{x:8,y:key-62,width:1584,height:key===B1?106:84,rx:14,fill:'#d9480f','fill-opacity':.1,stroke:'#d9480f','stroke-width':4},RS);
+    for(const k of [-2,-1,1,2])T(xf(k),24,Math.abs(k)===2?'2f':'f',{fill:'#5b4bb7','font-size':26});
+    // 同向箭頭
+    const arr=(x,y,col)=>{el('line',{x1:x-22,y1:y,x2:x+14,y2:y,stroke:col,'stroke-width':4},RS);el('path',{d:`M${x+24},${y} l-12,-8 v16 Z`,fill:col},RS)};
+    const row=(b,title,concave,ox,ix,ih,mode,note)=>{
+      T(24,b-8,title,{'text-anchor':'start','font-size':27});
+      el('line',{x1:AX0,y1:b,x2:AX1,y2:b,stroke:'#8d92aa','stroke-width':2.5},RS);
+      if(concave)el('path',{d:`M${XC-9},${b-28} h18 q-7,28 0,56 h-18 q7,-28 0,-56 Z`,fill:'#cfe8f6',stroke:'#6aaed6','stroke-width':2.5},RS);
+      else el('ellipse',{cx:XC,cy:b,rx:8,ry:28,fill:'#cfe8f6',stroke:'#6aaed6','stroke-width':2.5},RS);
+      for(const k of [-2,-1,1,2])el('circle',{cx:xf(k),cy:b,r:6,fill:'#5b4bb7'},RS);
+      drawCandle(RS,ox,b,44,1,'obj');arr(ox,b-58,'#d9480f');
+      const real=mode==='real';
+      drawCandle(RS,ix,b,ih,real?-1:1,mode);arr(ix,real?b+ih+14:b-ih-14,'#15803d');
+      T(1330,b-8,note,{'text-anchor':'start','font-size':28,fill:'#15803d'});
+    };
+    row(B1,'凸透鏡．f 以外',false,xf(-2.6),xf(1.625),30,'real','2f 對 2f');
+    el('path',{d:`M${xf(-2)},${B1-6} Q${XC},${B1-62} ${xf(2)},${B1-6}`,fill:'none',stroke:'#5b4bb7','stroke-width':2.5,'stroke-dasharray':'8 7'},RS);
+    row(B2,'凸透鏡．f 以內',false,xf(-.6),xf(-1.5),52,'virtual','像在物體後');
+    row(B3,'凹透鏡',true,xf(-2),xf(-2/3),24,'virtual','像在物體前');
+  }
   function drawRules(hl){
+    ruleHL=hl;
+    if(rulePage==='b')return drawPos(hl);
+    RS.setAttribute('viewBox','0 0 1600 290');
     RS.replaceChildren();
     const T=(x,y,str,a)=>txt(RS,x,y,str,Object.assign({'font-size':30,'font-weight':700,'text-anchor':'middle',fill:'#191c2e'},a||{}));
     const box=(x1,x2,y,fill,stroke,label,col)=>{el('rect',{x:x1,y,width:x2-x1,height:62,rx:12,fill,stroke,'stroke-width':3},RS);T((x1+x2)/2,y+42,label,{fill:col,'font-size':32})};
@@ -722,6 +759,11 @@ const C=(()=>{
     if(hl==='cc')el('rect',{x:12,y:240,width:560,height:46,rx:10,fill:'#d9480f','fill-opacity':.08,stroke:'#d9480f','stroke-width':4},RS);
   }
   drawRules(null);
+  document.querySelectorAll('.rhead .chip').forEach(b=>b.addEventListener('click',()=>{
+    rulePage=b.dataset.r;
+    document.querySelectorAll('.rhead .chip').forEach(c=>c.classList.toggle('on',c===b));
+    $('#ruleTxt').hidden=rulePage!=='b';drawRules(ruleHL);
+  }));
   $('#tRule').addEventListener('click',()=>{
     const on=$('#rules').hidden;$('#rules').hidden=!on;
     $('#tRule').classList.toggle('on',on);tb.classList.toggle('compact',on);

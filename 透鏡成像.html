@@ -452,7 +452,7 @@ const B=(()=>{
     for(const k of [-2,-1,1,2]){
       const x=X0+k*F;
       el('circle',{cx:x,cy:Y0,r:6,fill:'#191c2e'},base);
-      txt(base,x,Y0+36,Math.abs(k)===2?'2F':'F',{'font-size':26,'font-weight':700,fill:'#191c2e','text-anchor':'middle'});
+      txt(base,x,Y0+36,Math.abs(k)===2?'2f':'f',{'font-size':26,'font-weight':700,fill:'#191c2e','text-anchor':'middle'});
     }
     const lens=st.type==='convex'
       ? `M${X0},${Y0-175} Q${X0+40},${Y0} ${X0},${Y0+175} Q${X0-40},${Y0} ${X0},${Y0-175} Z`
@@ -551,7 +551,7 @@ const B=(()=>{
     const h=el('rect',{x:xo-30,y:Y0-H-40,width:60,height:H+110,fill:'transparent',style:'cursor:ew-resize'},obj);
     dragX(svg,h,x=>{stopAuto();setU((X0-x)/F)});
     drawRight(anim);
-    $('#uRead').textContent=({out2F:'2F 外','2F':'2F 上',F2F:'F～2F',F:'F 上',inF:'F 內',cc:st.u>1.5?'遠':'近'})[region()];
+    $('#uRead').textContent=({out2F:'2f 外','2F':'2f 上',F2F:'f～2f',F:'f 上',inF:'f 內',cc:st.u>1.5?'遠':'近'})[region()];
     $('#capB').textContent=caption();
     if(s>=3&&curPanel==='pB')C.fill(region());
   }
@@ -607,7 +607,7 @@ const B=(()=>{
         txt(g,x0+i*(tw+gap)+tw/2,ty+40,t,{'font-size':30,'font-weight':900,fill:'#fff','text-anchor':'middle'});
       });
       if(im){
-        const where=im.real?(rg==='out2F'?'像在 F～2F':rg==='2F'?'像在 2F 上':'像在 2F 外'):'像和物在同一側';
+        const where=im.real?(rg==='out2F'?'像在 f～2f':rg==='2F'?'像在 2f 上':'像在 2f 外'):'像和物在同一側';
         txt(g,PC.x,ty+100,`${where}　大小 ×${Math.abs(im.m)<10?Math.abs(im.m).toFixed(2):'很大'}`,{'font-size':23,'font-weight':700,fill:'#5b6078','text-anchor':'middle'});
       }
     }
@@ -618,7 +618,7 @@ const B=(()=>{
     st.u=u;$('#uSlider').value=-u;draw();
   }
   $('#uSlider').addEventListener('input',e=>{stopAuto();setU(-e.target.value)});
-  const PRE={convex:[['2F 外',2.6],['2F 上',2],['F～2F',1.5],['F 上',1],['F 內',.6]],concave:[['遠',2.6],['近',.7]]};
+  const PRE={convex:[['2f 外',2.6],['2f 上',2],['f～2f',1.5],['f 上',1],['f 內',.6]],concave:[['遠',2.6],['近',.7]]};
   function buildPresets(){
     const h=$('#presets');h.replaceChildren();
     PRE[st.type].forEach(([t,u])=>{const b=document.createElement('button');b.className='btn';b.textContent=t;b.style.marginRight='6px';b.addEventListener('click',()=>{stopAuto();setU(u)});h.appendChild(b)});
@@ -644,12 +644,12 @@ const B=(()=>{
 
 /* ===================== ③ 表格統整 ===================== */
 const ROWS=[
-  {key:'inf',  pos:'很遠處', c:['鏡後 F 上','實像','—','一點']},
-  {key:'out2F',pos:'2F 外', c:['鏡後 F～2F','實像','倒立','縮小'], u:2.6},
-  {key:'2F',   pos:'2F 上', c:['鏡後 2F 上','實像','倒立','相等'], u:2},
-  {key:'F2F',  pos:'F～2F', c:['鏡後 2F 外','實像','倒立','放大'], u:1.5},
-  {key:'F',    pos:'F 上',  c:['無法成像'], u:1},
-  {key:'inF',  pos:'F 內',  c:['鏡前（同側）','虛像','正立','放大'], u:.6},
+  {key:'inf',  pos:'很遠處', c:['鏡後 f 上','實像','—','一點']},
+  {key:'out2F',pos:'2f 外', c:['鏡後 f～2f','實像','倒立','縮小'], u:2.6},
+  {key:'2F',   pos:'2f 上', c:['鏡後 2f 上','實像','倒立','相等'], u:2},
+  {key:'F2F',  pos:'f～2f', c:['鏡後 2f 外','實像','倒立','放大'], u:1.5},
+  {key:'F',    pos:'f 上',  c:['無法成像'], u:1},
+  {key:'inF',  pos:'f 內',  c:['鏡前（同側）','虛像','正立','放大'], u:.6},
   {key:'cc',   pos:'任何位置', c:['鏡前（同側）','虛像','正立','縮小'], u:2.6, concave:true}];
 
 

@@ -44,6 +44,9 @@ svg.stage{width:100%;height:100%;display:block;user-select:none}
 .ctrl input[type=range]{flex:1;min-width:12rem;max-width:32rem;height:2rem;accent-color:var(--accent)}
 .ctrl .val{font-weight:700;color:var(--accent);min-width:6.5rem}
 .ctrl .lbl{color:var(--muted)}
+.ctrl .dim{opacity:.35}
+.ctrl .subs{display:flex;gap:.3rem;padding-left:.6rem;border-left:2px solid var(--line)}
+.ctrl .subs .btn{font-size:.98rem;padding:.25rem .65rem}
 .cap{flex:none;background:#fff;border:2px solid var(--accent);border-radius:.6rem;padding:.4rem .9rem;font-size:1.22rem;min-height:3.7rem;display:flex;align-items:center}
 .cap.obj{border-color:var(--obj)}.cap.sub{border-color:var(--sub)}
 .cap b{color:var(--accent)}
@@ -180,7 +183,7 @@ const PHI=RAYS.map((f,i)=>i*2.399);       // 各頻率固定的初相位
 
 // ---------- 狀態 ----------
 const STEPS=['太陽光','拆開來看','進入三稜鏡','散開','合回白光','錐細胞','結論'];
-const st={step:0,mode:'sub',eye:'one',f:TY,from:0,to:0,t0:0};
+const st={step:0,mode:'sub',eye:'one',tk:0,f:TY,from:0,to:0,t0:0};
 function stopLen(s,p){const g=p.segs;return s<=1?g[0].L:s===2?g[1].c+g[1].L:p.total}
 
 // ---------- SVG 小工具 ----------
@@ -317,7 +320,7 @@ const gx=f=>GR.x0+(f-F0)/(F1-F0)*(GR.x1-GR.x0),gy=v=>GR.y1-v*(GR.y1-GR.y0);
 const EYE={cx:350,cy:440,r:105};
 function signals(){
   if(st.eye==='white')return {A:[1,1,1]};
-  if(st.eye==='trick')return {A:sens(TY),B:MIX};
+  if(st.eye==='trick')return st.tk===0?{A:sens(TY)}:st.tk===1?{A:MIX,hatch:1}:{A:sens(TY),B:MIX};
   return {A:sens(st.f)};
 }
 // 顯示用：以三個訊號中最強者＝100（大腦看的是比例）
@@ -332,7 +335,7 @@ function drawEye(){
   [450,500,550,600,650,700,750].forEach(f=>{h+=LN([fx(f),PK.y+PK.h],[fx(f),PK.y+PK.h+8],'#94a3b8',2);h+=T(fx(f),PK.y+PK.h+32,f,{size:19,fill:'#94a3b8'})});
   // 進入眼睛的光線
   const lensP=[EYE.cx,EYE.cy-EYE.r+18],ret=[EYE.cx,EYE.cy+EYE.r-6];
-  const beams=mode==='white'?[460,540,620,700].map(f=>({f,x:fx(f),d:'',w:1})):mode==='trick'?[{f:TY,x:fx(TY),d:''},{f:TR,x:fx(TR),d:'10 7'},{f:TG,x:fx(TG),d:'10 7'}]:[{f:st.f,x:fx(st.f),d:''}];
+  const beams=mode==='white'?[460,540,620,700].map(f=>({f,x:fx(f),d:'',w:1})):mode==='trick'?[{f:TY,x:fx(TY),d:''},{f:TR,x:fx(TR),d:'10 7'},{f:TG,x:fx(TG),d:'10 7'}].filter((b,i)=>st.tk===2||(st.tk===0)===(i===0)):[{f:st.f,x:fx(st.f),d:''}];
   beams.forEach(b=>{const c=obj?'#e5e7eb':(mode==='white'?'#fff':specRGB(b.f)),top=[b.x,PK.y+PK.h+40];
     if(b.f&&!b.w)h+=`<path d="M${b.x},${PK.y+PK.h+2} l-9,-14 h18Z" transform="rotate(180 ${b.x} ${PK.y+PK.h-5})" fill="#fff"/>`;
     h+=`<path d="${PT([top,lensP,ret])}" fill="none" stroke="${c}" stroke-width="4" stroke-dasharray="${b.d}" filter="url(#glow)"/>`});
@@ -368,7 +371,7 @@ function drawEye(){
   const vl=(f,dash)=>{let s=LN([gx(f),GR.y0-10],[gx(f),GR.y1],obj?'#5eead4':specRGB(f),3,`stroke-dasharray="${dash}"`);
     sens(f).forEach(v=>s+=`<circle cx="${gx(f)}" cy="${gy(v)}" r="7" fill="${obj?'#5eead4':specRGB(f)}" stroke="#0b1020" stroke-width="2"/>`);return s};
   if(mode==='one')h+=vl(st.f,'');
-  if(mode==='trick'){h+=vl(TY,'');h+=vl(TR,'8 6');h+=vl(TG,'8 6')}
+  if(mode==='trick'){if(st.tk!==1)h+=vl(TY,'');if(st.tk!==0){h+=vl(TR,'8 6');h+=vl(TG,'8 6')}}
   if(mode==='white')h+=`<rect x="${GR.x0}" y="${GR.y0-10}" width="${GR.x1-GR.x0}" height="${GR.y1-GR.y0+10}" fill="rgba(255,255,255,.07)"/>`;
   // 訊號長條
   const BR={x0:720,x1:1110,base:830,top:560};
@@ -378,12 +381,13 @@ function drawEye(){
   CONES.forEach((c,i)=>{const cx=BR.x0+70+i*125,H=BR.base-BR.top;
     const bar=(x,w,v,fill)=>`<rect x="${x}" y="${BR.base-H*v/100}" width="${w}" height="${H*v/100}" fill="${fill}" rx="4"/>`+T(x+w/2,BR.base-H*v/100-10,v,{size:22,w:700});
     if(rb){h+=bar(cx-44,40,ra[i],'#e2e8f0')+bar(cx+4,40,rb[i],'url(#hatch)')}
-    else h+=bar(cx-28,56,ra[i],'#e2e8f0');
+    else h+=bar(cx-28,56,ra[i],sg.hatch?'url(#hatch)':'#e2e8f0');
     h+=T(cx,BR.base+32,c.name,{size:22,w:700});
   });
   h+=LN([BR.x0,BR.base],[BR.x1,BR.base],'#94a3b8',2);
   if(rb){h+=`<rect x="${BR.x0+20}" y="${BR.base+50}" width="22" height="18" fill="#e2e8f0"/>`+T(BR.x0+50,BR.base+66,'一種頻率',{size:19,anchor:'start'})+
     `<rect x="${BR.x0+190}" y="${BR.base+50}" width="22" height="18" fill="url(#hatch)"/>`+T(BR.x0+220,BR.base+66,'兩種頻率混合',{size:19,anchor:'start'})}
+  else if(sg.hatch)h+=`<rect x="${BR.x0+120}" y="${BR.base+50}" width="22" height="18" fill="url(#hatch)"/>`+T(BR.x0+150,BR.base+66,'兩種頻率混合',{size:19,anchor:'start'});
   // 大腦
   const BN={x0:1170,x1:1550,y0:500,y1:870},bx=(BN.x0+BN.x1)/2;
   h+=`<path d="M${BR.x1+8},${BR.base-130} L${BN.x0-6},${BR.base-130}" stroke="#94a3b8" stroke-width="3"/><path d="M${BN.x0-6},${BR.base-130} l-14,-9 v18Z" fill="#94a3b8"/>`;
@@ -394,11 +398,12 @@ function drawEye(){
     const row=(y,lab,v)=>T(bx,y,`${lab}${v.join('　')}`,{size:26,w:700});
     if(rb){h+=T(bx,BN.y0+132,'（低頻型　中頻型　高頻型）',{size:19,fill:'#94a3b8'})+row(BN.y0+175,'一種：',ra)+row(BN.y0+222,'兩種：',rb)+T(bx,BN.y0+275,'幾乎一模一樣！',{size:26,w:700,fill:'#5eead4'})}
     else CONES.forEach((c,i)=>{h+=T(bx-20,BN.y0+150+i*48,c.name,{size:25,anchor:'end'})+T(bx+10,BN.y0+150+i*48,ra[i],{size:28,w:700,anchor:'start'})});
-    if(!rb)h+=T(bx,BN.y1-62,'電磁波本身',{size:23,fill:'#94a3b8'})+T(bx,BN.y1-28,'沒有顏色',{size:23,fill:'#94a3b8'});
+    if(sg.hatch)h+=T(bx,BN.y1-62,`光裡根本沒有`,{size:23,fill:'#5eead4'})+T(bx,BN.y1-28,`${TY} THz`,{size:23,w:700,fill:'#5eead4'});
+    else if(!rb)h+=T(bx,BN.y1-62,'電磁波本身',{size:23,fill:'#94a3b8'})+T(bx,BN.y1-28,'沒有顏色',{size:23,fill:'#94a3b8'});
   }else{
     if(rb){[[bx-90,'一種頻率'],[bx+90,'兩種混合']].forEach(([x,l])=>{h+=`<circle cx="${x}" cy="${BN.y0+160}" r="62" fill="${specRGB(TY)}" filter="url(#glow)"/>`+T(x,BN.y0+258,l,{size:21})});
       h+=T(bx,BN.y1-50,'都看成「黃色」！',{size:30,w:700,fill:'#fde68a'})}
-    else{const col=mode==='white'?'#fff':specRGB(st.f),nm=mode==='white'?'白色':cname(st.f);
+    else{const col=mode==='white'?'#fff':mode==='trick'?specRGB(TY):specRGB(st.f),nm=mode==='white'?'白色':mode==='trick'?'黃色':cname(st.f);
       h+=`<circle cx="${bx}" cy="${BN.y0+175}" r="85" fill="${col}" filter="url(#glow)"/>`;
       h+=T(bx,BN.y1-50,`感覺到「${nm}」`,{size:32,w:700,fill:'#fde68a'})}
   }
@@ -412,16 +417,21 @@ function drawCtrl(){
   const c=$('#ctrl');
   if(st.step!==5){c.innerHTML='<span class="lbl">鍵盤：← → 換步驟　↑ ↓ 切換「客觀／主觀」</span>';return}
   c.innerHTML=`<button class="btn ${st.eye==='one'?'on':''}" data-e="one">選一種頻率</button>
-    <input type="range" id="fr" min="${F0}" max="${F1}" step="1" value="${st.f}"><span class="val">${st.f} THz</span>
+    <input type="range" id="fr" class="${st.eye==='one'?'':'dim'}" min="${F0}" max="${F1}" step="1" value="${st.f}"><span class="val ${st.eye==='one'?'':'dim'}">${st.f} THz</span>
     <button class="btn ${st.eye==='white'?'on':''}" data-e="white">白光（全部頻率）</button>
-    <button class="btn ${st.eye==='trick'?'on':''}" data-e="trick">黃光的騙局</button>`;
-  c.querySelectorAll('[data-e]').forEach(b=>b.addEventListener('click',()=>{st.eye=b.dataset.e;render()}));
-  const fr=$('#fr');fr.addEventListener('input',()=>{st.f=+fr.value;st.eye='one';c.querySelector('.val').textContent=st.f+' THz';drawEye();drawCapOnly();c.querySelectorAll('[data-e]').forEach(b=>b.classList.toggle('on',b.dataset.e==='one'))});
+    <button class="btn ${st.eye==='trick'?'on':''}" data-e="trick">黃光的騙局</button>`+
+    (st.eye==='trick'?`<span class="subs">${['① 純黃光','② 紅綠混合','③ 一起比較'].map((t,i)=>`<button class="btn ${st.tk===i?'on':''}" data-k="${i}">${t}</button>`).join('')}</span>`:'');
+  c.querySelectorAll('[data-e]').forEach(b=>b.addEventListener('click',()=>{st.eye=b.dataset.e;if(st.eye==='trick')st.tk=0;render()}));
+  c.querySelectorAll('[data-k]').forEach(b=>b.addEventListener('click',()=>{st.tk=+b.dataset.k;render()}));
+  const fr=$('#fr');fr.addEventListener('input',()=>{st.f=+fr.value;if(st.eye!=='one'){st.eye='one';c.querySelectorAll('.dim').forEach(e=>e.classList.remove('dim'));c.querySelector('.subs')?.remove();c.querySelectorAll('[data-e]').forEach(b=>b.classList.toggle('on',b.dataset.e==='one'))}c.querySelector('.val').textContent=st.f+' THz';drawEye();drawCapOnly()});
 }
 function capText(){
   const s=st.step,obj=st.mode==='obj';
   if(s===5){
     if(st.eye==='white')return obj?'所有頻率一起進入眼睛，三種錐細胞都受到刺激，而且<b>強弱差不多</b>。':'三種訊號差不多強時，大腦產生的感覺就是「<b>白色</b>」。';
+    if(st.eye==='trick'&&st.tk<2){const r=ratio(st.tk?MIX:sens(TY)).join('、');
+      if(st.tk===0)return obj?`只有一種頻率：${TY} THz。三種錐細胞的訊號（低頻型、中頻型、高頻型）是 ${r}。`:`純黃光（只有 ${TY} THz）進入眼睛，大腦產生「<b>黃色</b>」的感覺。`;
+      return obj?`換成 ${TR} THz 加 ${TG} THz 兩種頻率，<b>光裡根本沒有 ${TY} THz</b>。三種錐細胞的訊號是 ${r}。`:'紅光加綠光進入眼睛：明明沒有黃光，大腦卻也感覺到「<b>黃色</b>」！';}
     if(st.eye==='trick')return obj?`物理上完全不同：一邊只有 ${TY} THz 一種頻率，另一邊是 ${TR} THz 加 ${TG} THz，<b>根本沒有 ${TY} THz</b>。但三種錐細胞的訊號幾乎一樣。`
       :'訊號一樣，大腦就分不出來，兩個都看成「<b>黃色</b>」。顏色是大腦對訊號的解讀，不是光本身帶著的。';
     const r=ratio(sens(st.f));

@@ -181,9 +181,9 @@ const RAYDATA=RAYS.map(f=>{
 const PHI=RAYS.map((f,i)=>i*2.399);       // 各頻率固定的初相位
 
 // ---------- 狀態 ----------
-const STEPS=['太陽光','拆開來看','進入三稜鏡','散開','合回白光','錐細胞','結論'];
+const STEPS=['太陽光','進入三稜鏡','散開','拆開來看','合回白光','錐細胞','結論'];
 const st={tab:'A',sB:0,sC:0,step:0,mode:'sub',eye:'one',tk:0,f:TY,from:0,to:0,t0:0};
-function stopLen(s,p){const g=p.segs;return s<=1?g[0].L:s===2?g[1].c+g[1].L:p.total}
+function stopLen(s,p){const g=p.segs;return s===0?g[0].L:s===1?g[1].c+g[1].L:p.total}
 
 // ---------- SVG 小工具 ----------
 const T=(x,y,s,o={})=>`<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" font-size="${o.size||26}" fill="${o.fill||'#e5e7eb'}" text-anchor="${o.anchor||'middle'}" font-weight="${o.w||400}"${o.extra||''}>${s}</text>`;
@@ -202,7 +202,7 @@ function drawScene(){
     // 三稜鏡
     h+=`<path d="${triPath(A,B,Cc)}" fill="rgba(147,197,253,.13)" stroke="#93c5fd" stroke-width="3"/>`;
     h+=T(PC[0],A[1]-20,'三稜鏡',{size:28,w:700,fill:'#bfdbfe'});
-    if(s===3){
+    if(s===2||s===3){
       // 屏幕＋光譜帶
       const s0=add(SC,mul(SD,-215)),s1=add(SC,mul(SD,215)),back=mul(DM,14);
       h+=`<path d="${PT([s0,s1,add(s1,back),add(s0,back)])}Z" fill="#1e293b" stroke="#64748b" stroke-width="2"/>`;
@@ -232,33 +232,33 @@ function drawScene(){
 }
 
 // ---------- 步驟 1：放大框 ----------
-const IN={x:880,y:30,w:690,h:560};
+const IN={x:900,y:15,w:680,h:405};
 function drawInset(){
-  if(st.step!==1){$('#gInset').innerHTML='';return}
+  if(st.step!==3){$('#gInset').innerHTML='';return}
   const obj=st.mode==='obj';
-  let h=`<path d="M300,437 V640 H${IN.x+120} V${IN.y+IN.h}" fill="none" stroke="#64748b" stroke-width="2" stroke-dasharray="6 6"/>`;
+  let h=`<path d="M300,404 V100 H${IN.x}" fill="none" stroke="#64748b" stroke-width="2" stroke-dasharray="6 6"/>`;
   h+=`<circle cx="300" cy="420" r="16" fill="none" stroke="#94a3b8" stroke-width="2"/>`;
   h+=`<rect x="${IN.x}" y="${IN.y}" width="${IN.w}" height="${IN.h}" rx="14" fill="#0f172a" stroke="#475569" stroke-width="2"/>`;
-  h+=T(IN.x+IN.w/2,IN.y+42,obj?'白光 ＝ 這些頻率的電磁波疊在一起':'白光 ＝ 這些顏色的光混在一起',{size:28,w:700,fill:obj?'#5eead4':'#fed7aa'});
+  h+=T(IN.x+IN.w/2,IN.y+40,obj?'白光 ＝ 這些頻率的電磁波疊在一起':'白光 ＝ 這些顏色的光混在一起',{size:28,w:700,fill:obj?'#5eead4':'#fed7aa'});
   h+=`<g id="insetWaves"></g>`;
   $('#gInset').innerHTML=h;
 }
 function insetFrame(t){
   const g=document.getElementById('insetWaves');if(!g)return;
   const obj=st.mode==='obj',x0=IN.x+150,x1=IN.x+IN.w-30;let h='';
-  const yS=IN.y+92;
+  const yS=IN.y+80;
   h+=T(IN.x+80,yS+9,'白光',{size:24,w:700});
   if(obj){
     const pts=[];for(let x=x0;x<=x1;x+=2){let v=0;RAYS.forEach((f,i)=>v+=Math.sin(2*Math.PI*(x-VPX*t)/lamPx(f)+PHI[i]));pts.push([x,yS+v*4.2])}
     h+=`<path d="${PT(pts)}" fill="none" stroke="#e5e7eb" stroke-width="2.2"/>`;
   }else h+=`<rect x="${x0}" y="${yS-9}" width="${x1-x0}" height="18" rx="9" fill="#fff" filter="url(#glow)"/>`;
-  h+=T(IN.x+IN.w/2,yS+56,'＝',{size:30,w:700,fill:'#94a3b8'});
+  h+=T(IN.x+IN.w/2,yS+44,'＝',{size:26,w:700,fill:'#94a3b8'});
   RAYS.forEach((f,i)=>{
-    const y=IN.y+190+i*52;
-    h+=T(IN.x+80,y+9,obj?f+' THz':NAMES[i]+'光',{size:obj?22:25,w:700,fill:obj?'#cbd5e1':specLight(f)});
-    if(obj){const pts=[];for(let x=x0;x<=x1;x+=2)pts.push([x,y+12*Math.sin(2*Math.PI*(x-VPX*t)/lamPx(f)+PHI[i])]);
+    const y=IN.y+152+i*36;
+    h+=T(IN.x+80,y+8,obj?f+' THz':NAMES[i]+'光',{size:obj?21:23,w:700,fill:obj?'#cbd5e1':specLight(f)});
+    if(obj){const pts=[];for(let x=x0;x<=x1;x+=2)pts.push([x,y+9*Math.sin(2*Math.PI*(x-VPX*t)/lamPx(f)+PHI[i])]);
       h+=`<path d="${PT(pts)}" fill="none" stroke="#cbd5e1" stroke-width="2"/>`;}
-    else h+=`<rect x="${x0}" y="${y-8}" width="${x1-x0}" height="16" rx="8" fill="${specRGB(f)}"/>`;
+    else h+=`<rect x="${x0}" y="${y-7}" width="${x1-x0}" height="14" rx="7" fill="${specRGB(f)}"/>`;
   });
   g.innerHTML=h;
 }
@@ -437,9 +437,9 @@ function capText(){
   }
   const C=[
     ['換成物理的角度：這束光是<b>電磁波</b>。不談顏色，只看它的波形：一條不規則的波。','太陽光射向三稜鏡。用眼睛看，它就是一束「<b>白色</b>」的光。'],
-    ['白光其實是很多<b>不同頻率</b>的電磁波疊在一起，從約 430 THz 到 750 THz，中間連續不斷（1 THz＝每秒振動一兆次）。','用眼睛的說法：白光是七彩的光混在一起。可是「紅、橙、黃…」是誰決定的？切到「客觀」看看。'],
     ['進入玻璃後，頻率不變，速率變慢、波長變短。<b>頻率越高，在玻璃中越慢，偏折越多。</b>','光進入三稜鏡後轉彎，而且開始<b>分開</b>。'],
     ['不同頻率的電磁波依頻率排開，落在屏幕不同位置，這就是<b>色散</b>。這是物理上真的發生的事，跟有沒有人在看無關。','屏幕上出現紅、橙、黃、綠、藍、靛、紫。顏色其實是<b>連續變化</b>的，「七種」只是我們取的名字。'],
+    ['回頭看射進來的白光：它其實是很多<b>不同頻率</b>的電磁波疊在一起，從約 430 THz 到 750 THz 連續不斷（1 THz＝每秒振動一兆次）。三稜鏡只是把它們<b>分開</b>。','所以白光是七彩的光混在一起。可是「紅、橙、黃…」是誰決定的？切到「客觀」看看。'],
     ['倒過來再走一次：所有頻率回到同一條路，又疊成原來的不規則波。三稜鏡沒有「製造」新的光，這些頻率<b>本來就在白光裡</b>。','牛頓用透鏡把散開的光聚到第二個三稜鏡，各色光重新疊在一起，看起來<b>又是白光</b>。'],
     null,
     ['結論：<b>色散</b>是電磁波依頻率分開的物理事實；<b>顏色</b>是錐細胞的訊號在大腦中產生的視覺感受。','結論：<b>色散</b>是電磁波依頻率分開的物理事實；<b>顏色</b>是錐細胞的訊號在大腦中產生的視覺感受。']];
@@ -816,7 +816,7 @@ document.addEventListener('keydown',e=>{
   else if(e.key==='ArrowUp'||e.key==='ArrowDown'){e.preventDefault();setMode(st.mode==='obj'?'sub':'obj')}
   else if(e.key>='1'&&e.key<='3')setTab('ABC'[+e.key-1]);
 });
-function loop(now){drawRays(now);if(st.tab==='A'&&st.step===1)insetFrame(now/1000);requestAnimationFrame(loop)}
+function loop(now){drawRays(now);if(st.tab==='A'&&st.step===3)insetFrame(now/1000);requestAnimationFrame(loop)}
 bar=buildBar();st.t0=0;go(0);requestAnimationFrame(loop);
 </script>
 </body>

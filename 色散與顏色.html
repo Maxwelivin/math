@@ -727,7 +727,7 @@ function ctrlBC(){
     else if(a==='pre')st.px=b.dataset.v.split(',').map(Number);
     else if(a==='reset'){st.blobs[0].x=560;st.blobs[0].y=390;st.blobs[1].x=800;st.blobs[1].y=390;st.blobs[2].x=680;st.blobs[2].y=590;st.probe.x=680;st.probe.y=470}
     else if(a==='rev'){const j=st.rev[st.lc].indexOf(0);if(j>=0)st.rev[st.lc][j]=1}else if(a==='all')st.rev=st.rev.map(r=>r.map(()=>1));else if(a==='hide')st.rev=st.rev.map(r=>r.map(()=>0));
-    else if(a==='q'){st.q=v;st.ans=0}else if(a==='ans')st.ans=st.ans?0:1;
+    else if(a==='q'){st.q=v;st.ans=0}else if(a==='ans'){st.ans=st.ans?0:1;if(st.ans){if(st.q===0)st.fl=1;else st.pl=2}}
     else if(a==='fl'||a==='pl'){st[a]=v}
     else st[a]=v;
     render()}));

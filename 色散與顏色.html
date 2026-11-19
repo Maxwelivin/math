@@ -24,6 +24,11 @@ body{margin:0;height:100vh;display:flex;flex-direction:column;background:var(--b
 .seg button:last-child{border-radius:0 .55rem .55rem 0;border-left:none}
 .seg button.on[data-m=obj]{background:var(--obj);border-color:var(--obj);color:#fff;font-weight:700}
 .seg button.on[data-m=sub]{background:var(--sub);border-color:var(--sub);color:#fff;font-weight:700}
+.tabs{display:flex;gap:.3rem}
+.tabs button{font:inherit;font-size:1.05rem;padding:.3rem .85rem;border:1.5px solid var(--line);background:#eef2f7;border-radius:.5rem;cursor:pointer;color:var(--muted);white-space:nowrap}
+.tabs button.on{background:var(--ink);color:#fff;border-color:var(--ink);font-weight:700}
+.ctrl input.sm{flex:none;width:7.5rem;min-width:0}
+.ctrl .sep{width:2px;align-self:stretch;background:var(--line);margin:0 .2rem}
 .stepbar{flex:none;display:flex;flex-wrap:wrap;gap:.35rem;align-items:center;padding:.4rem .9rem;border-bottom:1px solid var(--line);background:#fafcff}
 .stepbar .chip{font:inherit;font-size:1rem;border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:.2rem .75rem;cursor:pointer;color:var(--muted);white-space:nowrap}
 .stepbar .chip b{margin-right:.3rem}
@@ -73,7 +78,8 @@ svg.stage{width:100%;height:100%;display:block;user-select:none}
 </head>
 <body>
 <header class="top">
-  <h1>4-5 色散：白光裡藏著什麼？</h1>
+  <h1>4-5 色散與顏色</h1>
+  <nav class="tabs" id="tabs"><button data-t="A" class="on">① 色散與視覺</button><button data-t="B">② 三原色</button><button data-t="C">③ 光與顏色（探討活動 4-4）</button></nav>
   <span class="sp"></span>
   <div class="mode"><span>切換看法</span>
     <div class="seg" id="seg"><button data-m="obj">客觀（物理）</button><button data-m="sub" class="on">主觀（人眼視覺）</button></div>
@@ -87,27 +93,20 @@ svg.stage{width:100%;height:100%;display:block;user-select:none}
       <defs>
         <filter id="glow" filterUnits="userSpaceOnUse" x="-50" y="-50" width="1700" height="1000"><feGaussianBlur stdDeviation="3.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
         <filter id="soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="9"/></filter>
+        <pattern id="h0" width="16" height="16" patternUnits="userSpaceOnUse" patternTransform="rotate(30)"><line x1="0" y1="0" x2="0" y2="16" stroke="#334155" stroke-width="3"/></pattern>
+        <pattern id="h1" width="16" height="16" patternUnits="userSpaceOnUse" patternTransform="rotate(90)"><line x1="0" y1="0" x2="0" y2="16" stroke="#334155" stroke-width="3"/></pattern>
+        <pattern id="h2" width="16" height="16" patternUnits="userSpaceOnUse" patternTransform="rotate(150)"><line x1="0" y1="0" x2="0" y2="16" stroke="#334155" stroke-width="3"/></pattern>
         <pattern id="hatch" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="10" height="10" fill="#475569"/><line x1="0" y1="0" x2="0" y2="10" stroke="#e2e8f0" stroke-width="5"/></pattern>
       </defs>
       <g id="gScene"></g>
       <g id="gRays"></g>
       <g id="gInset"></g>
       <g id="gEye"></g>
+      <g id="gB"></g>
+      <g id="gC"></g>
       <g id="gBadge"></g>
     </svg>
-    <div class="concl" id="concl">
-      <div class="cd obj"><h2>客觀（物理）</h2>
-        <ol><li>太陽光是許多不同<b>頻率</b>的電磁波疊在一起</li>
-          <li>頻率越高，在玻璃中越慢、偏折越多</li>
-          <li>經過三稜鏡，依頻率分開＝<b>色散</b></li></ol>
-        <div class="big">頻率是光本身的性質</div></div>
-      <div class="mid">→</div>
-      <div class="cd sub"><h2>主觀（人眼視覺）</h2>
-        <ol><li>光進入眼睛，三種錐細胞產生強弱不同的訊號</li>
-          <li>大腦比較三個訊號的比例</li>
-          <li>產生紅、橙、黃、綠…的<b>感覺</b></li></ol>
-        <div class="big">顏色是大腦產生的視覺感受</div></div>
-    </div>
+    <div class="concl" id="concl"></div>
   </div>
   <div class="ctrl" id="ctrl"></div>
   <div class="cap" id="cap"></div>
@@ -183,7 +182,7 @@ const PHI=RAYS.map((f,i)=>i*2.399);       // 各頻率固定的初相位
 
 // ---------- 狀態 ----------
 const STEPS=['太陽光','拆開來看','進入三稜鏡','散開','合回白光','錐細胞','結論'];
-const st={step:0,mode:'sub',eye:'one',tk:0,f:TY,from:0,to:0,t0:0};
+const st={tab:'A',sB:0,sC:0,step:0,mode:'sub',eye:'one',tk:0,f:TY,from:0,to:0,t0:0};
 function stopLen(s,p){const g=p.segs;return s<=1?g[0].L:s===2?g[1].c+g[1].L:p.total}
 
 // ---------- SVG 小工具 ----------
@@ -230,10 +229,6 @@ function drawScene(){
   }
   $('#gScene').innerHTML=h;
   drawInset();drawEye();
-  $('#gBadge').innerHTML=s===6?'':`<rect x="16" y="14" width="${obj?318:330}" height="46" rx="10" fill="${obj?'#134e4a':'#7c2d12'}"/>`+
-    T(32,46,obj?'客觀：電磁波的頻率':'主觀：眼睛看到的顏色',{size:25,w:700,anchor:'start',fill:obj?'#99f6e4':'#fed7aa'});
-  $('#concl').classList.toggle('on',s===6);
-  document.querySelectorAll('.concl .cd').forEach(c=>c.classList.toggle('hl',c.classList.contains(st.mode)));
 }
 
 // ---------- 步驟 1：放大框 ----------
@@ -282,7 +277,7 @@ function sumPts(segIdx,from,to,t,amp,pathKey){
   return pts;
 }
 function drawRays(now){
-  const s=st.step;if(s>4){$('#gRays').innerHTML='';return}
+  const s=st.step;if(st.tab!=='A'||s>4){$('#gRays').innerHTML='';return}
   const t=now/1000,obj=st.mode==='obj',key=s===4?'pB':'pA';
   const shown=Math.min(st.to,st.from+(now-st.t0)*0.75);
   let h='';
@@ -414,8 +409,9 @@ function svgPt(e){const sv=$('#svg'),pt=sv.createSVGPoint();pt.x=e.clientX;pt.y=
 
 // ---------- 控制列與說明 ----------
 function drawCtrl(){
+  if(st.tab!=='A')return ctrlBC();
   const c=$('#ctrl');
-  if(st.step!==5){c.innerHTML='<span class="lbl">鍵盤：← → 換步驟　↑ ↓ 切換「客觀／主觀」</span>';return}
+  if(st.step!==5){c.innerHTML='';return}
   c.innerHTML=`<button class="btn ${st.eye==='one'?'on':''}" data-e="one">選一種頻率</button>
     <input type="range" id="fr" class="${st.eye==='one'?'':'dim'}" min="${F0}" max="${F1}" step="1" value="${st.f}"><span class="val ${st.eye==='one'?'':'dim'}">${st.f} THz</span>
     <button class="btn ${st.eye==='white'?'on':''}" data-e="white">白光（全部頻率）</button>
@@ -426,6 +422,7 @@ function drawCtrl(){
   const fr=$('#fr');fr.addEventListener('input',()=>{st.f=+fr.value;if(st.eye!=='one'){st.eye='one';c.querySelectorAll('.dim').forEach(e=>e.classList.remove('dim'));c.querySelector('.subs')?.remove();c.querySelectorAll('[data-e]').forEach(b=>b.classList.toggle('on',b.dataset.e==='one'))}c.querySelector('.val').textContent=st.f+' THz';drawEye();drawCapOnly()});
 }
 function capText(){
+  if(st.tab==='B')return capB();if(st.tab==='C')return capC();
   const s=st.step,obj=st.mode==='obj';
   if(s===5){
     if(st.eye==='white')return obj?'所有頻率一起進入眼睛，三種錐細胞都受到刺激，而且<b>強弱差不多</b>。':'三種訊號差不多強時，大腦產生的感覺就是「<b>白色</b>」。';
@@ -448,20 +445,347 @@ function capText(){
     ['結論：<b>色散</b>是電磁波依頻率分開的物理事實；<b>顏色</b>是錐細胞的訊號在大腦中產生的視覺感受。','結論：<b>色散</b>是電磁波依頻率分開的物理事實；<b>顏色</b>是錐細胞的訊號在大腦中產生的視覺感受。']];
   return C[s][obj?0:1];
 }
-function drawCapOnly(){const c=$('#cap');c.innerHTML=capText();c.className='cap '+st.mode}
+function drawCapOnly(){const c=$('#cap');c.innerHTML='<span>'+capText()+'</span>';c.className='cap '+st.mode}
 
-// ---------- 步驟列 ----------
-const bar=(()=>{
-  const host=$('#bar');
+// =================== 共用：三段頻率的簡化模型（課本的理想化說法） ===================
+// 光用 [低頻段, 中頻段, 高頻段] 的強度表示；主觀模式顯示為紅、綠、藍
+const BS=['低頻','中頻','高頻'],PRI=['紅','綠','藍'];
+const cv=v=>`rgb(${v.map(x=>Math.round(255*Math.max(0,Math.min(1,x)))).join(',')})`;
+const vm=(a,b)=>a.map((x,i)=>x*b[i]);
+const bandsOf=v=>{const s=v.map((x,i)=>x>0.05?BS[i]:null).filter(Boolean);return s.length?s.join('＋'):'沒有光'};
+const colsOf=v=>{const s=v.map((x,i)=>x>0.05?PRI[i]+'光':null).filter(Boolean);return s.length?s.join('、'):'沒有'};
+const grayOf=v=>{const g=Math.round(255*Math.min(1,(v[0]+v[1]+v[2])/3));return `rgb(${g},${g},${g})`};
+function vname(v,noDark){
+  const mx=Math.max(...v);if(mx<0.06)return '黑色';
+  const n=v.map(x=>x/mx),k=n.map(x=>x>0.25?1:0).join('');
+  let nm={'100':'紅色','010':'綠色','001':'藍色','110':'黃色','101':'洋紅色','011':'青色','111':'白色'}[k];
+  if(k==='110'){if(n[1]<0.7)nm='橙色';else if(n[0]<0.7)nm='黃綠色'}
+  if(k==='101'){if(n[2]<0.7)nm='桃紅色';else if(n[0]<0.7)nm='紫色'}
+  if(k==='011'){if(n[2]<0.7)nm='青綠色';else if(n[1]<0.7)nm='天藍色'}
+  if(k==='111'){const mn=Math.min(...n);if(mn<0.75)nm='淡'+vname(n.map(x=>x-mn),1)}
+  if(!noDark&&mx<0.45)nm=nm==='白色'?'灰色':'暗'+nm;
+  return nm;
+}
+const HALO=' stroke="#000" stroke-width="6" paint-order="stroke"';
+const LIGHTS=[{n:'白光',o:'全部頻段',v:[1,1,1]},{n:'紅光',o:'低頻段',v:[1,0,0]},{n:'藍光',o:'高頻段',v:[0,0,1]},{n:'綠光',o:'中頻段',v:[0,1,0]}];
+const lname=i=>st.mode==='obj'?LIGHTS[i].o:LIGHTS[i].n;
+const FILMS=[{n:'紅色',v:[1,0,0]},{n:'綠色',v:[0,1,0]},{n:'藍色',v:[0,0,1]},{n:'無色透明',v:[1,1,1]}];
+const PAPERS=[{n:'紅',v:[1,0,0]},{n:'藍',v:[0,0,1]},{n:'綠',v:[0,1,0]},{n:'黑',v:[0,0,0]},{n:'白',v:[1,1,1]}];
+Object.assign(st,{lamp:[1,1,1],lev:[255,255,255],px:[255,255,0],
+  blobs:[{x:560,y:390,v:[0,1,1]},{x:800,y:390,v:[1,0,1]},{x:680,y:590,v:[1,1,0]}],probe:{x:680,y:470},drag:null,
+  src:0,film:0,lc:0,rev:[0,0,0,0],wp:0,wl:0,q:0,fl:0,pl:1,ans:0});
+const BLOB_R=180,PAPER={x0:80,x1:1200,y0:90,y1:860};
+const BLOB_N=[['青','洋紅','黃'],['吸收低頻','吸收中頻','吸收高頻']];
+
+// =================== 分頁 ②：三原色 ===================
+function drawB(){
+  const obj=st.mode==='obj',s=st.sB;let h='';
+  if(s===0){
+    const L=[{x:660,y:340},{x:900,y:340},{x:780,y:550}],lv=st.lamp.map((on,i)=>on*st.lev[i]/255);
+    h+=`<g style="isolation:isolate">`;
+    L.forEach((p,i)=>{if(!st.lamp[i])return;const c=[0,0,0];c[i]=lv[i];
+      h+=`<circle cx="${p.x}" cy="${p.y}" r="220" fill="${obj?`rgb(${Math.round(115*lv[i])},${Math.round(115*lv[i])},${Math.round(115*lv[i])})`:cv(c)}" style="mix-blend-mode:screen"/>`});
+    h+=`</g>`;
+    L.forEach((p,i)=>h+=`<circle cx="${p.x}" cy="${p.y}" r="220" fill="none" stroke="${st.lamp[i]?'#94a3b8':'#334155'}" stroke-width="2" stroke-dasharray="${st.lamp[i]?'':'8 8'}"/>`);
+    const LB=[[500,105,'start'],[1060,105,'end'],[780,815,'middle']];
+    L.forEach((p,i)=>h+=T(LB[i][0],LB[i][1],(obj?BS[i]+'段的燈':PRI[i]+'光燈')+(st.lamp[i]?'':'（關）'),{size:26,w:700,anchor:LB[i][2],fill:obj?'#cbd5e1':cv([[1,.45,.45],[.45,1,.45],[.55,.65,1]][i])}));
+    const R=[{m:[1,0,0],x:560,y:290},{m:[0,1,0],x:1000,y:290},{m:[0,0,1],x:780,y:690},{m:[1,1,0],x:780,y:245},{m:[1,0,1],x:640,y:500},{m:[0,1,1],x:920,y:500},{m:[1,1,1],x:780,y:410}];
+    R.forEach(r=>{if(r.m.some((u,i)=>u&&!st.lamp[i]))return;const v=r.m.map((u,i)=>u*lv[i]);if(Math.max(...v)<0.05)return;
+      h+=T(r.x,r.y+10,obj?bandsOf(v):vname(v),{size:obj?24:28,w:700,fill:'#fff',extra:HALO})});
+    // 說明卡
+    const X=1210;h+=`<rect x="${X}" y="120" width="370" height="${obj?400:420}" rx="16" fill="#111a2e" stroke="#334155" stroke-width="2"/>`;
+    h+=T(X+185,170,obj?'重疊＝頻段相加':'光的三原色',{size:28,w:700,fill:obj?'#5eead4':'#fdba74'});
+    const rows=obj?[['低＋中'],['低＋高'],['中＋高'],['低＋中＋高']]:[['紅＋綠','黃',[1,1,0]],['紅＋藍','洋紅',[1,0,1]],['綠＋藍','青',[0,1,1]],['紅＋綠＋藍','白',[1,1,1]]];
+    rows.forEach((r,i)=>{const y=235+i*62;
+      if(obj)h+=T(X+185,y+8,r[0],{size:26});
+      else h+=T(X+170,y+8,`${r[0]} →`,{size:26,anchor:'end'})+`<circle cx="${X+205}" cy="${y}" r="17" fill="${cv(r[2])}"/>`+T(X+232,y+8,r[1],{size:26,w:700,anchor:'start'})});
+    h+=T(X+185,obj?495:500,obj?'重疊處沒有出現新的頻率':'紅、綠、藍＝光的三原色',{size:21,fill:'#94a3b8'});
+  }
+  if(s===1){
+    const v=st.px.map(x=>x/255);
+    h+=`<rect x="80" y="130" width="420" height="640" rx="18" fill="${obj?grayOf(v):cv(v)}" stroke="#475569" stroke-width="3"/>`;
+    h+=T(290,815,'螢幕（從遠處看）',{size:26,w:700});
+    h+=`<rect x="270" y="430" width="40" height="40" fill="none" stroke="#fff" stroke-width="3"/>`;
+    h+=`<path d="M310,430 L600,140 M310,470 L600,760" stroke="#94a3b8" stroke-width="2" stroke-dasharray="6 6"/>`;
+    h+=`<rect x="600" y="140" width="520" height="620" rx="16" fill="#000" stroke="#94a3b8" stroke-width="2"/>`;
+    h+=T(860,815,'放大一個像素',{size:26,w:700});
+    [0,1,2].forEach(i=>{const x=650+i*150,c=[0,0,0];c[i]=v[i];
+      h+=`<rect x="${x}" y="190" width="120" height="460" rx="10" fill="${obj?grayOf([v[i],v[i],v[i]]):cv(c)}" stroke="#334155" stroke-width="2"/>`;
+      h+=T(x+60,700,`${obj?BS[i]:PRI[i]}　${st.px[i]}`,{size:26,w:700,fill:obj?'#e5e7eb':cv([[1,.5,.5],[.5,1,.5],[.6,.7,1]][i])})});
+    const X=1180;h+=`<rect x="${X}" y="140" width="390" height="620" rx="16" fill="#111a2e" stroke="#334155" stroke-width="2"/>`;
+    h+=T(X+195,200,`RGB( ${st.px.join(' , ')} )`,{size:28,w:700});
+    if(obj){h+=T(X+195,300,'三個發光點的強度',{size:24,fill:'#94a3b8'});
+      [0,1,2].forEach(i=>h+=T(X+195,360+i*52,`${BS[i]}段：${st.px[i]}`,{size:28,w:700}));}
+    else{h+=`<circle cx="${X+195}" cy="380" r="110" fill="${cv(v)}" stroke="#475569" stroke-width="2"/>`;h+=T(X+195,545,`看起來：${vname(v)}`,{size:30,w:700,fill:'#fde68a'})}
+    h+=T(X+195,640,'每個 0～255，共有',{size:22,fill:'#94a3b8'})+T(X+195,680,'256×256×256＝16,777,216 種',{size:23,w:700,fill:'#cbd5e1'});
+  }
+  if(s===2){
+    const P=PAPER;
+    h+=`<g style="isolation:isolate"><rect x="${P.x0}" y="${P.y0}" width="${P.x1-P.x0}" height="${P.y1-P.y0}" rx="12" fill="${obj?'#e5e7eb':'#fff'}"/>`;
+    st.blobs.forEach((b,i)=>h+=`<circle cx="${b.x}" cy="${b.y}" r="${BLOB_R}" fill="${obj?`url(#h${i})`:cv(b.v)}" style="mix-blend-mode:multiply;cursor:grab"/>`);
+    h+=`</g>`;
+    if(obj)st.blobs.forEach(b=>h+=`<circle cx="${b.x}" cy="${b.y}" r="${BLOB_R}" fill="none" stroke="#334155" stroke-width="3"/>`);
+    const cx=st.blobs.reduce((a,b)=>a+b.x,0)/3,cy=st.blobs.reduce((a,b)=>a+b.y,0)/3;
+    st.blobs.forEach((b,i)=>{const d=Math.hypot(b.x-cx,b.y-cy)||1,x=b.x+(b.x-cx)/d*105,y=b.y+(b.y-cy)/d*105;
+      h+=T(x,y+10,BLOB_N[obj?1:0][i],{size:obj?24:30,w:700,fill:'#111',extra:' stroke="#fff" stroke-width="6" paint-order="stroke"'})});
+    const pr=st.probe;h+=`<g style="cursor:move"><circle cx="${pr.x}" cy="${pr.y}" r="30" fill="rgba(255,255,255,.15)" stroke="#111" stroke-width="4"/><circle cx="${pr.x}" cy="${pr.y}" r="30" fill="none" stroke="#fff" stroke-width="1.5"/><path d="M${pr.x-44},${pr.y}h24M${pr.x+20},${pr.y}h24M${pr.x},${pr.y-44}v24M${pr.x},${pr.y+20}v24" stroke="#111" stroke-width="3"/></g>`;
+    const pv=probeInfo(),X=1225;
+    h+=`<rect x="${X}" y="90" width="355" height="770" rx="16" fill="#111a2e" stroke="#334155" stroke-width="2"/>`;
+    h+=T(X+178,140,'⊕ 放大鏡這一點',{size:26,w:700,fill:obj?'#5eead4':'#fdba74'});
+    const row=(y,a,b)=>T(X+24,y,a,{size:21,anchor:'start',fill:'#94a3b8'})+T(X+24,y+36,b,{size:25,w:700,anchor:'start'});
+    h+=row(195,'照到的光',obj?'低＋中＋高':'白光');
+    h+=row(285,'這裡的顏料',pv.names.length?pv.names.join('、'):'沒有（白紙）');
+    h+=row(375,'被吸收',obj?bandsOf(pv.abs).replace('沒有光','沒有'):colsOf(pv.abs));
+    h+=row(465,'反射出來',obj?bandsOf(pv.ref):colsOf(pv.ref));
+    if(obj)h+=T(X+178,640,'（只有頻段，沒有顏色）',{size:21,fill:'#94a3b8'});
+    else h+=`<circle cx="${X+178}" cy="640" r="70" fill="${cv(pv.ref)}" stroke="#475569" stroke-width="2"/>`+T(X+178,770,`看起來：${vname(pv.ref)}`,{size:28,w:700,fill:'#fde68a'});
+    h+=T(X+178,840,'可以拖動顏料和放大鏡',{size:19,fill:'#64748b'});
+  }
+  if(s===3){
+    h+=`<rect x="60" y="100" width="710" height="760" rx="20" fill="#000" stroke="#475569" stroke-width="2"/>`;
+    h+=`<g style="isolation:isolate">`+[[300,420,[1,0,0]],[530,420,[0,1,0]],[415,620,[0,0,1]]].map(([x,y,c])=>`<circle cx="${x}" cy="${y}" r="150" fill="${obj?'#555':cv(c)}" style="mix-blend-mode:screen"/>`).join('')+`</g>`;
+    h+=`<rect x="830" y="100" width="710" height="760" rx="20" fill="${obj?'#e5e7eb':'#fff'}"/>`;
+    h+=`<g style="isolation:isolate"><rect x="830" y="100" width="710" height="760" rx="20" fill="${obj?'#e5e7eb':'#fff'}"/>`+[[1070,420,[0,1,1]],[1300,420,[1,0,1]],[1185,620,[1,1,0]]].map(([x,y,c],i)=>`<circle cx="${x}" cy="${y}" r="150" fill="${obj?`url(#h${i})`:cv(c)}" style="mix-blend-mode:multiply"/>`).join('')+`</g>`;
+    h+=T(415,170,obj?'色光：頻段相加':'色光的混合',{size:32,w:700,fill:'#fff'});
+    h+=T(1185,170,obj?'顏料：吸收的頻段相加':'顏料的混合',{size:32,w:700,fill:'#111'});
+    h+=T(415,820,obj?'頻段越加越多 → 越亮':'越加越亮 → 白色',{size:30,w:700,fill:'#fde68a'});
+    h+=T(1185,820,obj?'吸收越多、反射越少 → 越暗':'越混越暗 → 接近黑色',{size:30,w:700,fill:'#7c2d12'});
+  }
+  return h;
+}
+function probeInfo(){
+  const pr=st.probe,ins=st.blobs.map(b=>Math.hypot(b.x-pr.x,b.y-pr.y)<BLOB_R);
+  let ref=[1,1,1];ins.forEach((t,i)=>{if(t)ref=vm(ref,st.blobs[i].v)});
+  return {names:ins.map((t,i)=>t?BLOB_N[st.mode==='obj'?1:0][i]+(st.mode==='obj'?'':''):null).filter(Boolean),ref,abs:ref.map(x=>1-x)};
+}
+function capB(){
+  const obj=st.mode==='obj',s=st.sB;
+  if(s===0)return obj?'三盞燈各發出一段頻率的光。重疊的地方只是<b>頻段相加</b>，例如低頻＋中頻的區域，裡面<b>並沒有黃光那一段頻率</b>。'
+    :'紅、綠、藍三種色光重疊：紅＋綠看起來是<b>黃色</b>，紅＋藍是<b>洋紅</b>，綠＋藍是<b>青色</b>，三種一起是<b>白色</b>。這三種叫做<b>光的三原色</b>。';
+  if(s===1){const v=st.px.map(x=>x/255);
+    return obj?`一個像素其實是三個很小的發光點，各發出一段頻率，強度從 0 到 255；螢幕上從來沒有發出「黃光」那一段頻率。`
+      :`RGB( ${st.px.join(', ')} )：三個小發光點離遠一點看就混在一起，眼睛看到「<b>${vname(v)}</b>」。`}
+  if(s===2){const pv=probeInfo();
+    return obj?`顏料不會發光，它<b>吸收</b>一部分頻段，只反射剩下的。放大鏡這一點：吸收 ${bandsOf(pv.abs).replace('沒有光','沒有')}，反射 ${bandsOf(pv.ref).replace('沒有光','沒有')}。`
+      :`青、洋紅、黃是<b>顏料三原色</b>。放大鏡這一點${pv.ref.some(x=>x>.05)?'反射'+colsOf(pv.ref):'什麼光都不反射'}，看起來是「<b>${vname(pv.ref)}</b>」。`}
+  return obj?'色光相加：頻段越加越多，越來越亮。顏料相混：被吸收的頻段越來越多，反射的光越來越少。'
+    :'色光是<b>越混越亮</b>，三原色加在一起變白色；顏料是<b>越混越暗</b>，三原色混在一起接近黑色。';
+}
+
+// =================== 分頁 ③：光與顏色（探討活動 4-4） ===================
+function drawC(){
+  const obj=st.mode==='obj',s=st.sC;let h='';
+  const lamp=(x,y,v,lab)=>`<rect x="${x-60}" y="${y-45}" width="110" height="90" rx="12" fill="#334155" stroke="#94a3b8" stroke-width="2"/><rect x="${x+50}" y="${y-30}" width="16" height="60" fill="${obj?'#e5e7eb':cv(v)}"/>`+T(x,y+80,lab,{size:24,w:700});
+  if(s===0){
+    const src=LIGHTS[st.src].v,fm=FILMS[st.film].v,out=vm(src,fm),abs=src.map((x,i)=>x-out[i]);
+    h+=lamp(170,420,src,'光源：'+lname(st.src));
+    h+=T(800,150,'透明物體：玻璃紙',{size:30,w:700});
+    if(obj){
+      [0,1,2].forEach(i=>{const y=375+i*45;if(!src[i])return;
+        h+=T(320,y+8,BS[i],{size:20,anchor:'end',fill:'#cbd5e1'});
+        h+=LN([330,y],[770,y],'#e5e7eb',5);
+        if(out[i])h+=LN([800,y],[1330,y],'#e5e7eb',5);else h+=T(822,y+10,'✕',{size:30,w:700,fill:'#f87171'});
+      });
+    }else{
+      h+=LN([235,420],[770,420],cv(src),26,'filter="url(#glow)" opacity=".9"');
+      if(Math.max(...out)>0)h+=LN([800,420],[1330,420],cv(out),26,'filter="url(#glow)" opacity=".9"');
+    }
+    h+=`<rect x="770" y="230" width="30" height="380" rx="4" fill="${obj?'#94a3b8':(st.film===3?'#e2e8f0':cv(fm))}" opacity="${obj?.45:st.film===3?.3:.6}" stroke="#cbd5e1" stroke-width="2"/>`;
+    h+=T(785,665,FILMS[st.film].n+'玻璃紙',{size:26,w:700});
+    h+=T(785,705,obj?(st.film===3?'全部頻段都能穿過':'只讓'+bandsOf(fm)+'段穿過'):'',{size:22,fill:'#94a3b8'});
+    if(Math.max(...abs)>0)h+=T(785,745,'被吸收：'+(obj?bandsOf(abs):colsOf(abs)),{size:22,fill:'#f87171'});
+    h+=`<rect x="1330" y="230" width="30" height="380" rx="4" fill="#1e293b" stroke="#64748b" stroke-width="2"/>`;
+    if(Math.max(...out)>0&&!obj)h+=`<ellipse cx="1328" cy="420" rx="16" ry="70" fill="${cv(out)}" filter="url(#glow)"/>`;
+    h+=T(1345,665,'屏幕',{size:24,fill:'#94a3b8'});
+    h+=T(1345,710,obj?'收到：'+bandsOf(out):(Math.max(...out)>0?'看到：'+vname(out):'暗的（沒有光）'),{size:26,w:700,fill:'#fde68a'});
+  }
+  if(s===1){
+    const L=LIGHTS[st.lc].v,rv=st.rev[st.lc];
+    h+=`<rect x="60" y="80" width="1480" height="420" rx="18" fill="#03050a" stroke="#475569" stroke-width="2"/>`;
+    h+=T(150,125,'暗箱',{size:24,fill:'#64748b'});
+    h+=`<rect x="760" y="92" width="80" height="34" rx="8" fill="#334155"/><polygon points="770,126 830,126 1450,440 150,440" fill="${obj?'#fff':cv(L)}" opacity=".10"/>`;
+    h+=T(800,165,'光源：'+lname(st.lc),{size:24,w:700,fill:obj?'#e5e7eb':cv(L.map(x=>.5+.5*x))});
+    PAPERS.forEach((p,i)=>{const x=170+i*270,o=vm(L,p.v);
+      h+=`<rect x="${x}" y="215" width="200" height="200" rx="8" fill="${rv?(obj?grayOf(o):cv(o)):'#1e293b'}" stroke="#475569" stroke-width="2"/>`;
+      if(!rv)h+=T(x+100,335,'？',{size:70,w:700,fill:'#64748b'});
+      else if(obj)h+=T(x+100,325,o.some(x=>x)?bandsOf(o):'不反射',{size:24,w:700,fill:o.some(x=>x)?'#111':'#94a3b8'});
+      h+=T(x+100,465,p.n+'紙',{size:26,w:700});
+    });
+    // 記錄表
+    const X0=150,CW=240,HW=180,Y0=525,RH=58;
+    h+=`<rect x="${X0}" y="${Y0}" width="${HW+CW*5}" height="${RH*5}" fill="#0f172a" stroke="#475569"/>`;
+    h+=T(X0+HW/2,Y0+38,'光源＼色紙',{size:21,fill:'#94a3b8'});
+    PAPERS.forEach((p,j)=>h+=T(X0+HW+CW*j+CW/2,Y0+38,p.n,{size:24,w:700}));
+    LIGHTS.forEach((l,i)=>{const y=Y0+RH*(i+1);
+      if(i===st.lc)h+=`<rect x="${X0}" y="${y}" width="${HW+CW*5}" height="${RH}" fill="rgba(37,99,235,.25)"/>`;
+      h+=LN([X0,y],[X0+HW+CW*5,y],'#334155',1.5);
+      h+=T(X0+HW/2,y+38,lname(i),{size:23,w:700});
+      PAPERS.forEach((p,j)=>{const o=vm(l.v,p.v),cx=X0+HW+CW*j+CW/2;
+        if(!st.rev[i])return;
+        if(obj)h+=T(cx,y+38,o.some(x=>x)?bandsOf(o):'—',{size:22});
+        else h+=`<rect x="${cx-62}" y="${y+18}" width="24" height="24" rx="4" fill="${cv(o)}" stroke="#64748b"/>`+T(cx+12,y+38,vname(o),{size:23,w:700,anchor:'middle'});
+      });
+    });
+    for(let j=0;j<=5;j++){const x=X0+HW+CW*j-(j===0?0:0);h+=LN([j===0?X0+HW:x,Y0],[j===0?X0+HW:x,Y0+RH*5],'#334155',1.5)}
+  }
+  if(s===2){
+    const L=LIGHTS[st.wl].v,P=PAPERS[st.wp].v,ref=vm(L,P),abs=L.map((x,i)=>x-ref[i]);
+    h+=lamp(230,180,L,'光源：'+lname(st.wl));
+    h+=`<rect x="520" y="640" width="560" height="130" rx="10" fill="${obj?grayOf(ref):cv(ref)}" stroke="#94a3b8" stroke-width="2"/>`;
+    h+=T(800,825,PAPERS[st.wp].n+'紙（不透明）',{size:28,w:700});
+    const ac=i=>{const c=[0,0,0];c[i]=1;return obj?'#e5e7eb':cv(c)};
+    const arrow=(a,b,c,w)=>{const d=unit(sub(b,a)),q=[-d[1],d[0]],t=sub(b,mul(d,22));return LN(a,t,c,w,'stroke-linecap="round"')+`<path d="M${b[0]},${b[1]}L${t[0]+q[0]*12},${t[1]+q[1]*12}L${t[0]-q[0]*12},${t[1]-q[1]*12}Z" fill="${c}"/>`};
+    [0,1,2].forEach(i=>{if(!L[i])return;const hit=[700+i*100,640],st0=[320+i*30,250+i*28];
+      h+=arrow(st0,hit,ac(i),7);
+      const lp=lerp(st0,hit,.35);h+=T(lp[0]-18,lp[1]+8,obj?BS[i]:PRI[i]+'光',{size:20,anchor:'end',fill:obj?'#cbd5e1':cv([[1,.5,.5],[.5,1,.5],[.6,.7,1]][i])});
+      if(ref[i])h+=arrow(hit,[1300+i*30,230+i*28],ac(i),7);
+      else h+=T(hit[0],hit[1]+75,'吸收',{size:22,w:700,fill:'#f87171',extra:' stroke="#000" stroke-width="5" paint-order="stroke"'});
+    });
+    // 眼睛
+    h+=`<ellipse cx="1400" cy="180" rx="80" ry="45" fill="#f8fafc" stroke="#94a3b8" stroke-width="3"/><circle cx="1385" cy="190" r="28" fill="#1e3a8a"/><circle cx="1380" cy="195" r="12" fill="#000"/>`;
+    h+=T(1400,110,'眼睛',{size:24,w:700});
+    h+=T(1400,300,obj?'收到：'+bandsOf(ref):'看到：'+vname(ref),{size:30,w:700,fill:'#fde68a'});
+    const X=1180;h+=`<rect x="${X}" y="380" width="390" height="220" rx="14" fill="#111a2e" stroke="#334155" stroke-width="2"/>`;
+    h+=T(X+24,430,'反射：'+(obj?bandsOf(ref):colsOf(ref)),{size:25,w:700,anchor:'start'});
+    h+=T(X+24,485,'吸收：'+(obj?bandsOf(abs).replace('沒有光','沒有'):colsOf(abs)),{size:25,w:700,anchor:'start',fill:'#fca5a5'});
+    h+=T(X+24,555,obj?'紙只決定反射哪些頻段':'看到的是反射出來的光',{size:21,anchor:'start',fill:'#94a3b8'});
+  }
+  if(s===3){
+    if(st.q===0){
+      h+=T(800,95,'改用紅光照這三面國旗：哪一面的顏色變了，圖案的樣子卻和原來一樣？',{size:30,w:700});
+      const L=st.fl?[1,0,0]:[1,1,1],F=v=>obj?grayOf(vm(L,v)):cv(vm(L,v));
+      const R=[1,0,0],W=[1,1,1],B=[0,0,1];
+      const flags=[
+        `<svg x="90" y="240" width="420" height="280" viewBox="0 0 27 18">`+[0,1,2,3,4,5,6,7,8].map(k=>`<rect x="0" y="${k*2}" width="27" height="2" fill="${F(k%2?W:B)}"/>`).join('')+`<rect width="10" height="10" fill="${F(B)}"/><rect x="0" y="4" width="10" height="2" fill="${F(W)}"/><rect x="4" y="0" width="2" height="10" fill="${F(W)}"/></svg>`,
+        `<svg x="590" y="240" width="420" height="280" viewBox="0 0 60 40" preserveAspectRatio="none"><rect width="60" height="40" fill="${F(B)}"/><path d="M0,0L60,40M60,0L0,40" stroke="${F(W)}" stroke-width="8"/><path d="M0,0L60,40M60,0L0,40" stroke="${F(R)}" stroke-width="2.6"/><rect x="24" width="12" height="40" fill="${F(W)}"/><rect y="14" width="60" height="12" fill="${F(W)}"/><rect x="26.5" width="7" height="40" fill="${F(R)}"/><rect y="16.5" width="60" height="7" fill="${F(R)}"/></svg>`,
+        `<svg x="1090" y="240" width="420" height="280" viewBox="0 0 120 80" preserveAspectRatio="none"><rect width="120" height="80" fill="${F(W)}"/><rect width="30" height="80" fill="${F(R)}"/><rect x="90" width="30" height="80" fill="${F(R)}"/><path transform="translate(0,10) scale(1,1)" d="M60,10 L64,18 L69,16 L67,27 L74,21 L76,25 L82,24 L79,31 L82,33 L72,40 L74,44 L62,42 L62,52 L58,52 L58,42 L46,44 L48,40 L38,33 L41,31 L38,24 L44,25 L46,21 L53,27 L51,16 L56,18 Z" fill="${F(R)}"/></svg>`];
+      flags.forEach((f,i)=>{const x=90+i*500;h+=f+`<rect x="${x}" y="240" width="420" height="280" fill="none" stroke="${st.ans&&i===0?'#22c55e':'#475569'}" stroke-width="${st.ans&&i===0?8:2}"/>`;
+        h+=T(x+210,580,['(A) 希臘','(B) 英國','(C) 加拿大'][i],{size:30,w:700,fill:st.ans&&i===0?'#4ade80':'#e5e7eb'})});
+      h+=T(800,680,'現在照的是：'+(st.fl?(obj?'只有低頻段的光':'紅光'):(obj?'全部頻段（白光）':'白光')),{size:28,w:700,fill:st.fl?'#fca5a5':'#e5e7eb'});
+      if(st.ans)h+=T(800,760,obj?'藍色部分不反射→暗；白色、紅色部分都反射低頻→一樣亮':'藍→黑、白→紅：還是兩種顏色分得開，所以圖案不變',{size:26,w:700,fill:'#4ade80'});
+    }else{
+      h+=T(800,95,'綠色的葉子在哪一種光下，看起來會是黑色？',{size:30,w:700});
+      const PL=[[0,1,0],[1,1,1],[1,0,0],[1,1,1]],PN=['(A) 綠光','(B) 白光','(C) 紅光','(D) 太陽光'],L=PL[st.pl];
+      const F=v=>obj?grayOf(vm(L,v)):cv(vm(L,v)),G=[0,.85,.2].map(x=>x>0.5?1:0),leaf=F([0,1,0]);
+      h+=`<polygon points="720,140 880,140 1050,620 550,620" fill="${obj?'#fff':cv(L)}" opacity=".08"/><rect x="760" y="120" width="80" height="34" rx="8" fill="#334155"/>`;
+      h+=T(1000,170,'光源：'+(obj?['中頻段','全部頻段','低頻段','全部頻段'][st.pl]:PN[st.pl].slice(4)),{size:26,w:700,anchor:'start'});
+      h+=`<path d="M800,700 C800,600 795,500 800,400" stroke="${leaf}" stroke-width="12" fill="none"/>`;
+      [[800,400,-40,0],[800,470,40,0],[800,540,-35,1],[800,600,38,1]].forEach(([x,y,a])=>{h+=`<ellipse cx="${x+(a>0?75:-75)}" cy="${y}" rx="85" ry="34" transform="rotate(${a} ${x} ${y})" fill="${leaf}" stroke="#334155" stroke-width="2"/>`});
+      h+=`<ellipse cx="800" cy="360" rx="34" ry="80" fill="${leaf}" stroke="#334155" stroke-width="2"/>`;
+      h+=`<polygon points="700,700 900,700 875,840 725,840" fill="${F([.8,.8,.8])}" stroke="#64748b" stroke-width="2"/>`;
+      h+=T(1180,500,obj?'葉子反射：'+(L[1]?'中頻段':'沒有'):'葉子看起來：'+vname(vm(L,[0,1,0])),{size:30,w:700,anchor:'start',fill:'#fde68a'});
+      if(st.ans)h+=T(1180,570,'答案：(C) 紅光',{size:32,w:700,anchor:'start',fill:'#4ade80'});
+      void G;
+    }
+  }
+  return h;
+}
+function capC(){
+  const obj=st.mode==='obj',s=st.sC;
+  if(s===0){const src=LIGHTS[st.src].v,fm=FILMS[st.film].v,out=vm(src,fm),on=Math.max(...out)>0;
+    return obj?`${lname(st.src)}的光照到${FILMS[st.film].n}玻璃紙，穿過去的只有：<b>${bandsOf(out)}</b>。其餘頻段被玻璃紙吸收。`
+      :`${LIGHTS[st.src].n}照在${FILMS[st.film].n}玻璃紙上，${on?`穿過去的是「<b>${vname(out)}</b>」的光`:'<b>沒有光</b>穿過去，屏幕是暗的'}。透明物體的顏色，要看<b>哪些光能穿過它</b>。`}
+  if(s===1){const l=st.lc;
+    if(!st.rev[l])return obj?`暗箱裡換成只有<b>${lname(l)}</b>的光：先猜猜看，每張紙會反射哪些頻段？再按「揭曉」。`:`暗箱裡換成<b>${LIGHTS[l].n}</b>：先猜猜看，五張色紙會變成什麼顏色？再按「揭曉」。`;
+    return obj?'每張紙只反射特定的頻段：白紙全部反射，黑紙全部吸收；光源裡沒有那段頻率，紙就沒有東西可以反射。'
+      :`在${LIGHTS[l].n}下：`+PAPERS.map(p=>`${p.n}紙→${vname(vm(LIGHTS[l].v,p.v))}`).join('、')+'。白紙跟著光源變色，黑紙永遠是黑的。'}
+  if(s===2){const L=LIGHTS[st.wl].v,ref=vm(L,PAPERS[st.wp].v);
+    return obj?`${PAPERS[st.wp].n}紙在${lname(st.wl)}的光下：反射 ${bandsOf(ref)}，其餘吸收。紙本身不帶顏色，只決定<b>反射哪些頻段</b>。`
+      :`${PAPERS[st.wp].n}紙在${LIGHTS[st.wl].n}下看起來是「<b>${vname(ref)}</b>」。不透明物體的顏色，要看<b>它反射哪些光</b>。`}
+  if(s===3){
+    if(st.q===0)return st.ans?(obj?'答案 <b>(A) 希臘</b>：只有低頻段的光時，白、紅部分都反射它，藍色部分不反射，希臘國旗仍分成亮、暗兩種；英國、加拿大的白和紅一樣亮，圖案糊成一片。'
+      :'答案 <b>(A) 希臘</b>：紅光下藍色變黑、白色變紅，還是兩種顏色，圖案不變。英國的白色和紅色都變紅、連成一片；加拿大全部變紅，楓葉不見了。')
+      :'先在白光下看三面國旗，再按「紅光」換光源，猜猜看哪一面的圖案還和原來一樣，最後按「揭曉答案」。';
+    return st.ans?'答案 <b>(C) 紅光</b>：葉子只反射綠光，紅光裡沒有綠光，葉子沒有光可以反射，所以看起來是黑的。'
+      :'點選項換光源，看葉子會變成什麼樣子，再按「揭曉答案」。';
+  }
+  return '結論：光源決定有哪些光；物體決定哪些光能穿透或反射進入眼睛；眼睛和大腦再把它變成顏色的感覺。';
+}
+
+// =================== 控制列（分頁 ②③） ===================
+function ctrlBC(){
+  const c=$('#ctrl'),obj=st.mode==='obj',B=(act,v,t,on,cls='')=>`<button class="btn ${on?'on':''} ${cls}" data-act="${act}" data-v="${v}">${t}</button>`;
+  let h='';
+  if(st.tab==='B'){
+    if(st.sB===0)h=[0,1,2].map(i=>B('lamp',i,(obj?BS[i]:PRI[i])+'燈',st.lamp[i])+`<input type="range" class="sm" data-act="lev" data-v="${i}" min="0" max="255" value="${st.lev[i]}">`).join('<span class="sep"></span>');
+    if(st.sB===1)h=[0,1,2].map(i=>`<span class="lbl">${obj?BS[i]:PRI[i]}</span><input type="range" class="sm" data-act="px" data-v="${i}" min="0" max="255" value="${st.px[i]}">`).join('')+
+      '<span class="sep"></span>'+[['黃',[255,255,0]],['洋紅',[255,0,255]],['青',[0,255,255]],['白',[255,255,255]],['橙',[255,128,0]],['灰',[128,128,128]]].map(([n,v])=>`<button class="btn" data-act="pre" data-v="${v}">${obj?v.join(','):n}</button>`).join('');
+    if(st.sB===2)h=B('reset',0,'顏料放回原位',0);
+  }else{
+    const lights=act=>LIGHTS.map((l,i)=>B(act,i,lname(i),st[act]===i)).join('');
+    if(st.sC===0)h='<span class="lbl">光源</span>'+lights('src')+'<span class="sep"></span><span class="lbl">玻璃紙</span>'+FILMS.map((f,i)=>B('film',i,f.n,st.film===i)).join('');
+    if(st.sC===1)h='<span class="lbl">光源</span>'+lights('lc')+'<span class="sep"></span>'+B('rev',0,'揭曉',0,'primary')+B('all',0,'全部顯示',0)+B('hide',0,'重新猜',0);
+    if(st.sC===2)h='<span class="lbl">色紙</span>'+PAPERS.map((p,i)=>B('wp',i,p.n+'紙',st.wp===i)).join('')+'<span class="sep"></span><span class="lbl">光源</span>'+lights('wl');
+    if(st.sC===3)h=B('q',0,'國旗',st.q===0)+B('q',1,'綠色植物',st.q===1)+'<span class="sep"></span>'+
+      (st.q===0?B('fl',0,obj?'全部頻段':'白光',st.fl===0)+B('fl',1,obj?'低頻段':'紅光',st.fl===1):['(A) 綠光','(B) 白光','(C) 紅光','(D) 太陽光'].map((t,i)=>B('pl',i,t,st.pl===i)).join(''))+
+      '<span class="sep"></span>'+B('ans',0,'揭曉答案',st.ans,'primary');
+  }
+  c.innerHTML=h;
+  c.querySelectorAll('button[data-act]').forEach(b=>b.addEventListener('click',()=>{const a=b.dataset.act,v=+b.dataset.v;
+    if(a==='lamp')st.lamp[v]=st.lamp[v]?0:1;
+    else if(a==='pre')st.px=b.dataset.v.split(',').map(Number);
+    else if(a==='reset'){st.blobs[0].x=560;st.blobs[0].y=390;st.blobs[1].x=800;st.blobs[1].y=390;st.blobs[2].x=680;st.blobs[2].y=590;st.probe.x=680;st.probe.y=470}
+    else if(a==='rev')st.rev[st.lc]=1;else if(a==='all')st.rev=[1,1,1,1];else if(a==='hide')st.rev=[0,0,0,0];
+    else if(a==='q'){st.q=v;st.ans=0}else if(a==='ans')st.ans=st.ans?0:1;
+    else if(a==='fl'||a==='pl'){st[a]=v}
+    else st[a]=v;
+    render()}));
+  c.querySelectorAll('input[data-act]').forEach(r=>r.addEventListener('input',()=>{const a=r.dataset.act,i=+r.dataset.v;
+    if(a==='lev'){st.lev[i]=+r.value;st.lamp[i]=1}else st.px[i]=+r.value;
+    $('#gB').innerHTML=drawB();drawCapOnly()}));
+}
+
+// =================== 結論、標記、拖曳 ===================
+const CONCL={
+  A:{o:['太陽光是許多不同<b>頻率</b>的電磁波疊在一起','頻率越高，在玻璃中越慢、偏折越多','經過三稜鏡，依頻率分開＝<b>色散</b>'],ob:'頻率是光本身的性質',
+     s:['光進入眼睛，三種錐細胞產生強弱不同的訊號','大腦比較三個訊號的比例','產生紅、橙、黃、綠…的<b>感覺</b>'],sb:'顏色是大腦產生的視覺感受'},
+  C:{o:['光源決定有哪些<b>頻段</b>','透明物體讓某些頻段<b>穿透</b>，其餘吸收','不透明物體把某些頻段<b>反射</b>，其餘吸收'],ob:'物體只決定哪些頻率進入眼睛',
+     s:['透明物體的顏色：看<b>穿透</b>出來的光','不透明物體的顏色：看<b>反射</b>出來的光','光源換了，看到的顏色就跟著變'],sb:'顏色是進入眼睛的光引起的感覺'}};
+function drawConcl(){
+  const on=(st.tab==='A'&&st.step===6)||(st.tab==='C'&&st.sC===4),c=$('#concl');c.classList.toggle('on',on);if(!on)return;
+  const d=CONCL[st.tab],li=a=>a.map(x=>`<li>${x}</li>`).join('');
+  c.innerHTML=`<div class="cd obj ${st.mode==='obj'?'hl':''}"><h2>客觀（物理）</h2><ol>${li(d.o)}</ol><div class="big">${d.ob}</div></div><div class="mid">→</div><div class="cd sub ${st.mode==='sub'?'hl':''}"><h2>主觀（人眼視覺）</h2><ol>${li(d.s)}</ol><div class="big">${d.sb}</div></div>`;
+}
+function drawBadge(){
+  const obj=st.mode==='obj',hide=$('#concl').classList.contains('on');
+  $('#gBadge').innerHTML=hide?'':`<rect x="16" y="14" width="${obj?318:330}" height="46" rx="10" fill="${obj?'#134e4a':'#7c2d12'}"/>`+
+    T(32,46,obj?'客觀：電磁波的頻率':'主觀：眼睛看到的顏色',{size:25,w:700,anchor:'start',fill:obj?'#99f6e4':'#fed7aa'});
+}
+(()=>{const sv=$('#svg'),P=PAPER,cl=(v,a,b)=>Math.max(a,Math.min(b,v));
+  sv.addEventListener('pointerdown',e=>{if(!(st.tab==='B'&&st.sB===2))return;const p=svgPt(e);
+    if(p[0]<P.x0||p[0]>P.x1||p[1]<P.y0||p[1]>P.y1)return;
+    let t=Math.hypot(p[0]-st.probe.x,p[1]-st.probe.y)<46?st.probe:null;
+    if(!t)for(let i=st.blobs.length-1;i>=0;i--){const b=st.blobs[i];if(Math.hypot(p[0]-b.x,p[1]-b.y)<BLOB_R){t=b;break}}
+    if(!t){t=st.probe;t.x=p[0];t.y=p[1]}
+    st.drag={t,dx:t.x-p[0],dy:t.y-p[1]};sv.setPointerCapture(e.pointerId);e.preventDefault();$('#gB').innerHTML=drawB();drawCapOnly()});
+  sv.addEventListener('pointermove',e=>{if(!st.drag)return;const p=svgPt(e),d=st.drag;
+    d.t.x=cl(p[0]+d.dx,P.x0+20,P.x1-20);d.t.y=cl(p[1]+d.dy,P.y0+20,P.y1-20);$('#gB').innerHTML=drawB();drawCapOnly()});
+  const up=()=>{st.drag=null};sv.addEventListener('pointerup',up);sv.addEventListener('pointercancel',up);
+})();
+
+// ---------- 步驟列（每個分頁各自的步驟） ----------
+const TABS={A:STEPS,B:['色光混合','螢幕放大','顏料混合','對照'],C:['玻璃紙','暗箱色紙','為什麼','挑戰題','結論']};
+const cur=()=>st.tab==='A'?st.step:st.tab==='B'?st.sB:st.sC;
+function buildBar(){
+  const host=$('#bar');host.innerHTML='';const labels=TABS[st.tab];
   const prev=document.createElement('button');prev.className='btn';prev.textContent='← 上一步';
   const next=document.createElement('button');next.className='btn primary';next.textContent='下一步 →';
   const sp=document.createElement('span');sp.className='sp';
-  const chips=STEPS.map((t,i)=>{const b=document.createElement('button');b.className='chip';b.innerHTML=`<b>${i}</b>${t}`;b.addEventListener('click',()=>go(i));return b});
-  prev.addEventListener('click',()=>go(st.step-1));next.addEventListener('click',()=>go(st.step+1));
-  host.append(prev,...chips,sp,next);
-  return {refresh(s){chips.forEach((c,i)=>{c.classList.toggle('on',i===s);c.classList.toggle('past',i<s)});prev.disabled=s===0;next.disabled=s===STEPS.length-1}};
-})();
+  const hint=document.createElement('span');hint.className='hint';hint.textContent='← → 換步驟　↑ ↓ 切換看法　1 2 3 換分頁';
+  const chips=labels.map((t,i)=>{const b=document.createElement('button');b.className='chip';b.innerHTML=`<b>${i}</b>${t}`;b.addEventListener('click',()=>go(i));return b});
+  prev.addEventListener('click',()=>go(cur()-1));next.addEventListener('click',()=>go(cur()+1));
+  host.append(prev,...chips,sp,hint,next);
+  return {refresh(s){chips.forEach((c,i)=>{c.classList.toggle('on',i===s);c.classList.toggle('past',i<s)});prev.disabled=s===0;next.disabled=s===labels.length-1}};
+}
+let bar=null;
+function setTab(t){
+  st.tab=t;document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
+  bar=buildBar();
+  if(t==='A'&&st.step<=4){const p=RAYDATA[0][st.step===4?'pB':'pA'];st.from=st.to=stopLen(st.step,p);st.t0=1}
+  render();
+}
 function go(s){
+  if(st.tab!=='A'){s=Math.max(0,Math.min(TABS[st.tab].length-1,s));if(st.tab==='B')st.sB=s;else st.sC=s;render();return}
   s=Math.max(0,Math.min(STEPS.length-1,s));if(s===st.step&&st.t0)return;
   const key=s===4?'pB':'pA',p=RAYDATA[0][key],prev=st.step;
   if(s<=4){
@@ -474,15 +798,23 @@ function go(s){
   st.step=s;render();
 }
 function setMode(m){st.mode=m;document.querySelectorAll('#seg button').forEach(b=>b.classList.toggle('on',b.dataset.m===m));render()}
-function render(){bar.refresh(st.step);drawScene();drawCtrl();drawCapOnly()}
+function render(){
+  bar.refresh(cur());
+  if(st.tab==='A')drawScene();else ['gScene','gRays','gInset','gEye'].forEach(id=>$('#'+id).innerHTML='');
+  $('#gB').innerHTML=st.tab==='B'?drawB():'';
+  $('#gC').innerHTML=st.tab==='C'?drawC():'';
+  drawConcl();drawBadge();drawCtrl();drawCapOnly();
+}
+document.querySelectorAll('#tabs button').forEach(b=>b.addEventListener('click',()=>setTab(b.dataset.t)));
 document.querySelectorAll('#seg button').forEach(b=>b.addEventListener('click',()=>setMode(b.dataset.m)));
 document.addEventListener('keydown',e=>{
   if(e.target.tagName==='INPUT'&&(e.key==='ArrowLeft'||e.key==='ArrowRight'))return;
-  if(e.key==='ArrowRight')go(st.step+1);else if(e.key==='ArrowLeft')go(st.step-1);
+  if(e.key==='ArrowRight')go(cur()+1);else if(e.key==='ArrowLeft')go(cur()-1);
   else if(e.key==='ArrowUp'||e.key==='ArrowDown'){e.preventDefault();setMode(st.mode==='obj'?'sub':'obj')}
+  else if(e.key>='1'&&e.key<='3')setTab('ABC'[+e.key-1]);
 });
-function loop(now){drawRays(now);if(st.step===1)insetFrame(now/1000);requestAnimationFrame(loop)}
-st.t0=0;go(0);requestAnimationFrame(loop);
+function loop(now){drawRays(now);if(st.tab==='A'&&st.step===1)insetFrame(now/1000);requestAnimationFrame(loop)}
+bar=buildBar();st.t0=0;go(0);requestAnimationFrame(loop);
 </script>
 </body>
 </html>

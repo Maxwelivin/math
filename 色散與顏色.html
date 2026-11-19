@@ -473,7 +473,7 @@ const FILMS=[{n:'紅色',v:[1,0,0]},{n:'綠色',v:[0,1,0]},{n:'藍色',v:[0,0,1]
 const PAPERS=[{n:'紅',v:[1,0,0]},{n:'藍',v:[0,0,1]},{n:'綠',v:[0,1,0]},{n:'黑',v:[0,0,0]},{n:'白',v:[1,1,1]}];
 Object.assign(st,{lamp:[1,1,1],lev:[255,255,255],px:[255,255,0],
   blobs:[{x:560,y:390,v:[0,1,1]},{x:800,y:390,v:[1,0,1]},{x:680,y:590,v:[1,1,0]}],probe:{x:680,y:470},drag:null,
-  src:0,film:0,lc:0,rev:[0,1,2,3].map(()=>[0,0,0,0,0]),wp:0,wl:0,q:0,fl:0,pl:1,ans:0});
+  src:0,film:0,irev:0,lastRev:null,lc:0,rev:[0,1,2,3].map(()=>[0,0,0,0,0]),wp:0,wl:0,q:0,fl:0,pl:1,ans:0});
 const BLOB_R=180,PAPER={x0:80,x1:1200,y0:90,y1:860};
 const BLOB_N=[['青','洋紅','黃'],['吸收低頻','吸收中頻','吸收高頻']];
 
@@ -573,8 +573,9 @@ function capB(){
 }
 
 // =================== 分頁 ③：光與顏色（探討活動 4-4） ===================
+const cIdx=()=>st.sC===1?-1:st.sC>1?st.sC-1:st.sC;
 function drawC(){
-  const obj=st.mode==='obj',s=st.sC;let h='';
+  const obj=st.mode==='obj',s=cIdx();let h='';
   const lamp=(x,y,v,lab)=>`<rect x="${x-60}" y="${y-45}" width="110" height="90" rx="12" fill="#334155" stroke="#94a3b8" stroke-width="2"/><rect x="${x+50}" y="${y-30}" width="16" height="60" fill="${obj?'#e5e7eb':cv(v)}"/>`+T(x,y+80,lab,{size:24,w:700});
   if(s===0){
     const src=LIGHTS[st.src].v,fm=FILMS[st.film].v,out=vm(src,fm),abs=src.map((x,i)=>x-out[i]);
@@ -597,6 +598,25 @@ function drawC(){
     if(Math.max(...out)>0&&!obj)h+=`<ellipse cx="1328" cy="420" rx="16" ry="70" fill="${cv(out)}" filter="url(#glow)"/>`;
     h+=T(1345,665,'屏幕',{size:24,fill:'#94a3b8'});
     h+=T(1345,710,obj?'收到：'+bandsOf(out):(Math.max(...out)>0?'看到：'+vname(out):'暗的（沒有光）'),{size:26,w:700,fill:'#fde68a'});
+  }
+  if(s===-1){
+    const L=[1,0,0],lc=obj?'#e5e7eb':cv(L),rv=st.irev;
+    const arrow=(a,b,c,w)=>{const d=unit(sub(b,a)),q=[-d[1],d[0]],t=sub(b,mul(d,22));return LN(a,t,c,w,'stroke-linecap="round"')+`<path d="M${b[0]},${b[1]}L${t[0]+q[0]*12},${t[1]+q[1]*12}L${t[0]-q[0]*12},${t[1]-q[1]*12}Z" fill="${c}"/>`};
+    const eye=(x,y)=>`<ellipse cx="${x}" cy="${y}" rx="70" ry="40" fill="#f8fafc" stroke="#94a3b8" stroke-width="3"/><circle cx="${x}" cy="${y+6}" r="24" fill="#1e3a8a"/><circle cx="${x}" cy="${y+8}" r="10" fill="#000"/>`;
+    h+=`<rect x="755" y="95" width="90" height="40" rx="8" fill="#334155"/>`+T(865,124,'光源：'+(obj?'低頻段':'紅光'),{size:26,w:700,anchor:'start',fill:obj?'#e5e7eb':'#fca5a5'});
+    [[470,1],[1130,0]].forEach(([x,r],k)=>{
+      const top=[x,560];
+      h+=arrow([800+(k?30:-30),140],top,lc,7);
+      h+=`<rect x="${x-150}" y="560" width="300" height="170" rx="10" fill="${rv?(r?(obj?grayOf(L):cv(L)):'#000'):'#1e293b'}" stroke="#94a3b8" stroke-width="2" style="cursor:pointer"/>`;
+      if(!rv)h+=T(x,670,'？',{size:72,w:700,fill:'#64748b'});
+      const ex=k?1400:200,ey=330;h+=eye(ex,ey);
+      if(rv){
+        if(r)h+=arrow([x-40,560],[ex+40,ey+40],lc,7);
+        h+=T(ex,ey-62,r?(obj?'收到：低頻段':'看到：紅色'):(obj?'什麼都沒收到':'看到：黑色'),{size:28,w:700,fill:'#fde68a'});
+        h+=T(x,785,r?(obj?'低頻段進入眼睛':'紅光進入眼睛'):'沒有光進入眼睛',{size:26,w:700});
+        h+=T(x,835,r?'→ 紙反射了'+(obj?'低頻段':'紅光'):'→ 紙吸收了'+(obj?'低頻段':'紅光'),{size:30,w:700,fill:r?'#4ade80':'#f87171'});
+      }
+    });
   }
   if(s===1){
     const L=LIGHTS[st.lc].v,R=st.rev[st.lc];
@@ -680,13 +700,19 @@ function drawC(){
   return h;
 }
 function capC(){
-  const obj=st.mode==='obj',s=st.sC;
+  const obj=st.mode==='obj',s=cIdx();
+  if(s===-1)return st.irev?(obj?'收到低頻段 → 紙<b>反射</b>低頻段；什麼都沒收到 → 紙把它<b>吸收</b>了。接下來用暗箱，一張一張試試看。':'看到什麼顏色，就知道有什麼光進入眼睛；看到<b>黑色</b>，表示<b>沒有光</b>進入眼睛。接下來用暗箱，一張一張試試看。')
+    :(obj?'只有低頻段的光照在兩張紙上：猜猜看，各有什麼光會進入眼睛？':'紅光照在兩張紙上：猜猜看，眼睛會看到什麼顏色？');
   if(s===0){const src=LIGHTS[st.src].v,fm=FILMS[st.film].v,out=vm(src,fm),on=Math.max(...out)>0;
     return obj?`${lname(st.src)}的光照到${FILMS[st.film].n}玻璃紙，穿過去的只有：<b>${bandsOf(out)}</b>。其餘頻段被玻璃紙吸收。`
       :`${LIGHTS[st.src].n}照在${FILMS[st.film].n}玻璃紙上，${on?`穿過去的是「<b>${vname(out)}</b>」的光`:'<b>沒有光</b>穿過去，屏幕是暗的'}。透明物體的顏色，要看<b>哪些光能穿過它</b>。`}
   if(s===1){const l=st.lc;
     const R=st.rev[l],k=R.filter(Boolean).length,done=PAPERS.map((p,j)=>R[j]?`${p.n}紙→${obj?(vm(LIGHTS[l].v,p.v).some(x=>x)?bandsOf(vm(LIGHTS[l].v,p.v)):'不反射'):vname(vm(LIGHTS[l].v,p.v))}`:null).filter(Boolean).join('、');
     if(k===0)return obj?`暗箱裡換成只有<b>${lname(l)}</b>的光：先猜猜看，每張紙會反射哪些頻段？點一張紙或按「揭曉下一張」。`:`暗箱裡換成<b>${LIGHTS[l].n}</b>：先猜猜看，五張色紙會變成什麼顏色？點一張紙或按「揭曉下一張」。`;
+    const lr=st.lastRev&&st.lastRev[0]===l&&l!==0?st.lastRev[1]:-1;
+    if(lr>=0){const pp=PAPERS[lr],o=vm(LIGHTS[l].v,pp.v),on=o.some(x=>x),ln=obj?LIGHTS[l].o:LIGHTS[l].n;
+      const why=`${pp.n}紙在${ln}下是${obj?(on?'亮的':'暗的'):vname(o)} → `+(on?`${ln}進入眼睛 → ${pp.n}紙<b>反射</b>${ln}`:`沒有光進入眼睛 → ${pp.n}紙<b>吸收</b>${ln}`);
+      return why+(k<5?`（已揭曉 ${k}／5）`:'。五張都翻開了：白紙跟著光源變色，黑紙永遠是黑的。');}
     if(k<5)return `已揭曉 <b>${k}／5</b> 張：${done}。下一張會是什麼？`;
     return obj?'每張紙只反射特定的頻段：白紙全部反射，黑紙全部吸收；光源裡沒有那段頻率，紙就沒有東西可以反射。'
       :`在${LIGHTS[l].n}下：`+PAPERS.map(p=>`${p.n}紙→${vname(vm(LIGHTS[l].v,p.v))}`).join('、')+'。白紙跟著光源變色，黑紙永遠是黑的。'}
@@ -715,9 +741,10 @@ function ctrlBC(){
   }else{
     const lights=act=>LIGHTS.map((l,i)=>B(act,i,lname(i),st[act]===i)).join('');
     if(st.sC===0)h='<span class="lbl">光源</span>'+lights('src')+'<span class="sep"></span><span class="lbl">玻璃紙</span>'+FILMS.map((f,i)=>B('film',i,f.n,st.film===i)).join('');
-    if(st.sC===1)h='<span class="lbl">光源</span>'+lights('lc')+'<span class="sep"></span>'+B('rev',0,'揭曉下一張',0,'primary')+B('all',0,'全部顯示',0)+B('hide',0,'重新猜',0);
-    if(st.sC===2)h='<span class="lbl">色紙</span>'+PAPERS.map((p,i)=>B('wp',i,p.n+'紙',st.wp===i)).join('')+'<span class="sep"></span><span class="lbl">光源</span>'+lights('wl');
-    if(st.sC===3)h=B('q',0,'國旗',st.q===0)+B('q',1,'綠色植物',st.q===1)+'<span class="sep"></span>'+
+    if(st.sC===1)h=B('irev',0,'揭曉',st.irev,'primary')+B('ihide',0,'蓋回去',0);
+    if(st.sC===2)h='<span class="lbl">光源</span>'+lights('lc')+'<span class="sep"></span>'+B('rev',0,'揭曉下一張',0,'primary')+B('all',0,'全部顯示',0)+B('hide',0,'重新猜',0);
+    if(st.sC===3)h='<span class="lbl">色紙</span>'+PAPERS.map((p,i)=>B('wp',i,p.n+'紙',st.wp===i)).join('')+'<span class="sep"></span><span class="lbl">光源</span>'+lights('wl');
+    if(st.sC===4)h=B('q',0,'國旗',st.q===0)+B('q',1,'綠色植物',st.q===1)+'<span class="sep"></span>'+
       (st.q===0?B('fl',0,obj?'全部頻段':'白光',st.fl===0)+B('fl',1,obj?'低頻段':'紅光',st.fl===1):['(A) 綠光','(B) 白光','(C) 紅光','(D) 太陽光'].map((t,i)=>B('pl',i,t,st.pl===i)).join(''))+
       '<span class="sep"></span>'+B('ans',0,'揭曉答案',st.ans,'primary');
   }
@@ -726,7 +753,8 @@ function ctrlBC(){
     if(a==='lamp')st.lamp[v]=st.lamp[v]?0:1;
     else if(a==='pre')st.px=b.dataset.v.split(',').map(Number);
     else if(a==='reset'){st.blobs[0].x=560;st.blobs[0].y=390;st.blobs[1].x=800;st.blobs[1].y=390;st.blobs[2].x=680;st.blobs[2].y=590;st.probe.x=680;st.probe.y=470}
-    else if(a==='rev'){const j=st.rev[st.lc].indexOf(0);if(j>=0)st.rev[st.lc][j]=1}else if(a==='all')st.rev=st.rev.map(r=>r.map(()=>1));else if(a==='hide')st.rev=st.rev.map(r=>r.map(()=>0));
+    else if(a==='irev')st.irev=1;else if(a==='ihide')st.irev=0;
+    else if(a==='rev'){const j=st.rev[st.lc].indexOf(0);if(j>=0){st.rev[st.lc][j]=1;st.lastRev=[st.lc,j]}}else if(a==='all'){st.rev=st.rev.map(r=>r.map(()=>1));st.lastRev=null}else if(a==='hide'){st.rev=st.rev.map(r=>r.map(()=>0));st.lastRev=null}
     else if(a==='q'){st.q=v;st.ans=0}else if(a==='ans'){st.ans=st.ans?0:1;if(st.ans){if(st.q===0)st.fl=1;else st.pl=2}}
     else if(a==='fl'||a==='pl'){st[a]=v}
     else st[a]=v;
@@ -743,7 +771,7 @@ const CONCL={
   C:{o:['光源決定有哪些<b>頻段</b>','透明物體讓某些頻段<b>穿透</b>，其餘吸收','不透明物體把某些頻段<b>反射</b>，其餘吸收'],ob:'物體只決定哪些頻率進入眼睛',
      s:['透明物體的顏色：看<b>穿透</b>出來的光','不透明物體的顏色：看<b>反射</b>出來的光','光源換了，看到的顏色就跟著變'],sb:'顏色是進入眼睛的光引起的感覺'}};
 function drawConcl(){
-  const on=(st.tab==='A'&&st.step===6)||(st.tab==='C'&&st.sC===4),c=$('#concl');c.classList.toggle('on',on);if(!on)return;
+  const on=(st.tab==='A'&&st.step===6)||(st.tab==='C'&&st.sC===5),c=$('#concl');c.classList.toggle('on',on);if(!on)return;
   const d=CONCL[st.tab],li=a=>a.map(x=>`<li>${x}</li>`).join('');
   c.innerHTML=`<div class="cd obj ${st.mode==='obj'?'hl':''}"><h2>客觀（物理）</h2><ol>${li(d.o)}</ol><div class="big">${d.ob}</div></div><div class="mid">→</div><div class="cd sub ${st.mode==='sub'?'hl':''}"><h2>主觀（人眼視覺）</h2><ol>${li(d.s)}</ol><div class="big">${d.sb}</div></div>`;
 }
@@ -753,9 +781,10 @@ function drawBadge(){
     T(32,46,obj?'客觀：電磁波的頻率':'主觀：眼睛看到的顏色',{size:25,w:700,anchor:'start',fill:obj?'#99f6e4':'#fed7aa'});
 }
 (()=>{const sv=$('#svg'),P=PAPER,cl=(v,a,b)=>Math.max(a,Math.min(b,v));
-  sv.addEventListener('click',e=>{if(!(st.tab==='C'&&st.sC===1))return;const p=svgPt(e);
+  sv.addEventListener('click',e=>{if(st.tab==='C'&&st.sC===1){const p=svgPt(e);if(p[1]>560&&p[1]<730&&(Math.abs(p[0]-470)<150||Math.abs(p[0]-1130)<150)&&!st.irev){st.irev=1;render()}return}
+    if(!(st.tab==='C'&&st.sC===2))return;const p=svgPt(e);
     if(p[1]<215||p[1]>415)return;const i=Math.floor((p[0]-170)/270);if(i<0||i>4||p[0]-170-i*270>200)return;
-    if(!st.rev[st.lc][i]){st.rev[st.lc][i]=1;render()}});
+    if(!st.rev[st.lc][i]){st.rev[st.lc][i]=1;st.lastRev=[st.lc,i];render()}});
   sv.addEventListener('pointerdown',e=>{if(!(st.tab==='B'&&st.sB===2))return;const p=svgPt(e);
     if(p[0]<P.x0||p[0]>P.x1||p[1]<P.y0||p[1]>P.y1)return;
     let t=Math.hypot(p[0]-st.probe.x,p[1]-st.probe.y)<46?st.probe:null;
@@ -768,7 +797,7 @@ function drawBadge(){
 })();
 
 // ---------- 步驟列（每個分頁各自的步驟） ----------
-const TABS={A:STEPS,B:['色光混合','螢幕放大','顏料混合','對照'],C:['玻璃紙','暗箱色紙','為什麼','挑戰題','結論']};
+const TABS={A:STEPS,B:['色光混合','螢幕放大','顏料混合','對照'],C:['玻璃紙','看見顏色','暗箱色紙','為什麼','挑戰題','結論']};
 const cur=()=>st.tab==='A'?st.step:st.tab==='B'?st.sB:st.sC;
 function buildBar(){
   const host=$('#bar');host.innerHTML='';const labels=TABS[st.tab];

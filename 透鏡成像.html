@@ -82,6 +82,9 @@ table.sum tr.hot td{background:#fff4ec}
 .rhead{display:flex;align-items:center;gap:8px;margin:2px 0 4px}
 .rhead .chip{font-size:.85em;padding:.15em .8em}
 .rhead{position:relative}
+.rhead .mnav{margin-left:auto;display:flex;gap:6px}
+.rhead .mnav .btn{font-size:.85em;padding:.15em .8em}
+.rules.tall svg{max-height:calc(100vh - 250px)}
 .rhead .rule{position:absolute;left:50%;transform:translateX(-50%);white-space:nowrap;font-weight:700;color:var(--accent);font-size:1.05em}
 table.sum.compact{font-size:1.15em}
 table.sum.compact th,table.sum.compact td{padding:.28em .6em}
@@ -140,8 +143,9 @@ table.sum.compact th,table.sum.compact td{padding:.28em .6em}
       <div class="quiz" id="quiz"><span class="q" id="qText"></span><span class="g">先猜：實／虛．正／倒．大／小</span><span class="sp" style="flex:1"></span><button class="btn primary" id="qShow">▶ 揭曉</button></div>
       <table class="sum" id="sumTable"></table>
       <div class="rules" id="rules" hidden>
-        <div class="rhead"><button class="chip on" data-r="a">實虛．正倒．大小</button><button class="chip" data-r="b">成像位置</button>
-          <span class="rule" id="ruleTxt" hidden>物體往右，像也往右；物體往左，像也往左</span></div>
+        <div class="rhead"><button class="chip on" data-r="a">實虛．正倒．大小</button><button class="chip" data-r="b">成像位置</button><button class="chip" data-r="c">多點成像</button>
+          <span class="rule" id="ruleTxt" hidden>物體往右，像也往右；物體往左，像也往左</span>
+          <span class="mnav" id="mNav" hidden><button class="btn" id="mPrev">← 上一個</button><button class="btn primary" id="mNext">下一個 →</button></span></div>
         <svg id="ruleSvg" viewBox="0 0 1600 290"></svg></div>
     </div>
   </section>
@@ -719,8 +723,57 @@ const C=(()=>{
     row(B2,'凸透鏡．f 以內',false,xf(-.6),xf(-1.5),52,'virtual','像在物體後');
     row(B3,'凹透鏡',true,xf(-2),xf(-2/3),24,'virtual','像在物體前');
   }
+  /* 多點成像：同一條主軸上依序加入 ①②③④ */
+  const MULTI=[{u:2.6,c:'#d9829b'},{u:2,c:'#3d7bd9'},{u:1.4,c:'#e8743b'},{u:.5,c:'#2a9d8f'}];
+  let mStep=1;
+  function drawMulti(){
+    RS.setAttribute('viewBox','0 0 1600 560');RS.replaceChildren();
+    const XC=900, FU=170, AY=300, H=70, xf=k=>XC+k*FU;
+    const T=(x,y,str,a)=>txt(RS,x,y,str,Object.assign({'font-size':30,'font-weight':700,'text-anchor':'middle',fill:'#191c2e'},a||{}));
+    // 主軸、透鏡、f、2f
+    el('line',{x1:40,y1:AY,x2:1580,y2:AY,stroke:'#191c2e','stroke-width':3},RS);
+    el('ellipse',{cx:XC,cy:AY,rx:16,ry:200,fill:'#cfe8f6','fill-opacity':.85,stroke:'#6aaed6','stroke-width':3},RS);
+    el('line',{x1:XC,y1:AY-200,x2:XC,y2:AY+200,stroke:'#6aaed6','stroke-width':1.5,'stroke-dasharray':'5 6'},RS);
+    for(const k of [-2,-1,1,2]){el('circle',{cx:xf(k),cy:AY,r:8,fill:'#191c2e'},RS);T(xf(k),k<0?AY+44:AY-18,Math.abs(k)===2?'2f':'f',{'font-size':32})}
+    el('circle',{cx:XC,cy:AY,r:6,fill:'#3c7fa8'},RS);
+    // 實心箭頭：h>0 朝上
+    const blk=(x,h,col,dashed)=>{
+      const d=Math.sign(h), a=Math.abs(h), head=Math.min(30,a*.45), sw=9, hw=22;
+      const tip=AY-d*a, neck=AY-d*(a-head);
+      el('path',{d:`M${x-sw},${AY} V${neck} H${x-hw} L${x},${tip} L${x+hw},${neck} H${x+sw} V${AY} Z`,
+        fill:col,'fill-opacity':dashed?.3:1,stroke:dashed?col:'#ffffff','stroke-width':dashed?3:1.5,'stroke-dasharray':dashed?'8 6':'none','stroke-linejoin':'round'},RS);
+      return tip;
+    };
+    const badge=(x,y,n,col)=>{el('circle',{cx:x,cy:y,r:19,fill:col},RS);T(x,y+10,'1234'[n],{fill:'#fff','font-size':28})};
+    const cut=(x1,y1,x2,y2)=>{const k=(y2-y1)/(x2-x1),X=1590;return [X,y1+k*(X-x1)]};
+    MULTI.slice(0,mStep).forEach((o,i)=>{
+      const xo=xf(-o.u), v=o.u/(o.u-1), m=-v/o.u, xi=XC+v*FU, real=v>0, last=i===mStep-1;
+      // 最新一組畫兩條光線（淡色）
+      if(last){
+        const g=el('g',{opacity:.85},RS), Y=AY-H, ray={stroke:'#e8b931','stroke-width':4,fill:'none'};
+        const [ex1,ey1]=cut(XC,Y,xf(1),AY), [ex2,ey2]=cut(xo,Y,XC,AY);
+        el('path',Object.assign({d:`M${xo},${Y} L${XC},${Y} L${ex1},${ey1}`},ray),g);
+        el('path',Object.assign({d:`M${xo},${Y} L${ex2},${ey2}`},ray),g);
+        if(!real){
+          const yt=AY-m*H, dash={stroke:'#e8b931','stroke-width':3,'stroke-dasharray':'10 8'};
+          el('line',Object.assign({x1:XC,y1:Y,x2:xi,y2:yt},dash),g);
+          el('line',Object.assign({x1:xo,y1:Y,x2:xi,y2:yt},dash),g);
+        }
+      }
+      const to=blk(xo,H,o.c,false); badge(xo,to-30,i,o.c);
+      const ti=blk(xi,m*H,o.c,!real); badge(xi,real?ti+30:ti-30,i,o.c);
+    });
+    const cap=mStep<4?'①→②→③：物體往 f 靠近，實像愈來愈大、愈來愈遠':'④ 進到 f 以內：變成正立放大的虛像';
+    $('#ruleTxt').textContent=cap;
+    $('#mPrev').disabled=mStep<=1;$('#mNext').disabled=mStep>=4;
+  }
+  function multiGo(n){mStep=Math.max(1,Math.min(4,n));drawMulti()}
+  $('#mPrev').addEventListener('click',()=>multiGo(mStep-1));
+  $('#mNext').addEventListener('click',()=>multiGo(mStep+1));
   function drawRules(hl){
     ruleHL=hl;
+    if(rulePage==='c')return drawMulti();
+    $('#ruleTxt').textContent='物體往右，像也往右；物體往左，像也往左';
     if(rulePage==='b')return drawPos(hl);
     RS.setAttribute('viewBox','0 0 1600 290');
     RS.replaceChildren();
@@ -762,11 +815,18 @@ const C=(()=>{
   document.querySelectorAll('.rhead .chip').forEach(b=>b.addEventListener('click',()=>{
     rulePage=b.dataset.r;
     document.querySelectorAll('.rhead .chip').forEach(c=>c.classList.toggle('on',c===b));
-    $('#ruleTxt').hidden=rulePage!=='b';drawRules(ruleHL);
+    $('#ruleTxt').hidden=rulePage==='a';$('#mNav').hidden=rulePage!=='c';
+    if(rulePage==='c')mStep=1;
+    layoutRules();drawRules(ruleHL);
   }));
+  function layoutRules(){ // 多點成像時收起表格，讓圖變大
+    const open=!$('#rules').hidden, big=open&&rulePage==='c';
+    $('#rules').classList.toggle('tall',big);tb.style.display=big?'none':'';
+    tb.classList.toggle('compact',open);
+  }
   $('#tRule').addEventListener('click',()=>{
     const on=$('#rules').hidden;$('#rules').hidden=!on;
-    $('#tRule').classList.toggle('on',on);tb.classList.toggle('compact',on);
+    $('#tRule').classList.toggle('on',on);layoutRules();
   });
   let last=null, cur=null;
   $('#qPick').addEventListener('click',()=>{
@@ -781,7 +841,7 @@ const C=(()=>{
   $('#qShow').addEventListener('click',()=>{if(cur)demo(cur)});
   $('#tAll').addEventListener('click',()=>ROWS.forEach(r=>fill(r.key)));
   $('#tClr').addEventListener('click',()=>{ROWS.forEach(r=>clearRow(r.key));$('#quiz').classList.remove('on');tb.querySelectorAll('tr').forEach(tr=>tr.classList.remove('hot'));cur=null;drawRules(null)});
-  return {fill};
+  return {fill,get multiOn(){return !$('#rules').hidden&&rulePage==='c'},multiNext(d){multiGo(mStep+d)}};
 })();
 /* 沙盤畫到「成像」時填表：B 初始化時 C 還沒建立，所以在此補一次 */
 B.redraw();
@@ -790,7 +850,8 @@ B.redraw();
 document.addEventListener('keydown',e=>{
   if(e.target.tagName==='INPUT'&&e.target.type!=='range')return;
   const P=curPanel==='pA'?A:curPanel==='pB'?B:null;
-  if(e.key==='ArrowRight'&&P){e.preventDefault();P.go(P.step+1)}
+  if(curPanel==='pC'&&C.multiOn&&(e.key==='ArrowRight'||e.key==='ArrowLeft')){e.preventDefault();C.multiNext(e.key==='ArrowRight'?1:-1)}
+  else if(e.key==='ArrowRight'&&P){e.preventDefault();P.go(P.step+1)}
   else if(e.key==='ArrowLeft'&&P){e.preventDefault();P.go(P.step-1)}
   else if(e.key==='1')showPanel('pA');else if(e.key==='2')showPanel('pB');else if(e.key==='3')showPanel('pC');
 });

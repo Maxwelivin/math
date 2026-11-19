@@ -88,6 +88,7 @@ table.sum tr.hot td{background:#fff4ec}
 .rhead .rule{position:absolute;left:50%;transform:translateX(-50%);white-space:nowrap;font-weight:700;color:var(--accent);font-size:1.05em}
 table.sum.compact{font-size:1.15em}
 table.sum.compact th,table.sum.compact td{padding:.28em .6em}
+#stepsD{display:flex;align-items:center;gap:8px;flex:1;flex-wrap:wrap}
 @keyframes pop{0%{transform:scale(.6);opacity:0}100%{transform:scale(1);opacity:1}}
 </style>
 </head>
@@ -98,6 +99,7 @@ table.sum.compact th,table.sum.compact td{padding:.28em .6em}
     <button data-p="pA" class="on">① 實驗觀察<small>實驗 4-2</small></button>
     <button data-p="pB">② 沙盤推演<small>兩條光線</small></button>
     <button data-p="pC">③ 表格統整<small>先猜再揭曉</small></button>
+    <button data-p="pD">④ 光學儀器<small>顯微鏡・望遠鏡・相機</small></button>
   </nav>
 </header>
 <main>
@@ -148,6 +150,19 @@ table.sum.compact th,table.sum.compact td{padding:.28em .6em}
           <span class="mnav" id="mNav" hidden><button class="btn" id="mPrev">← 上一個</button><button class="btn primary" id="mNext">下一個 →</button></span></div>
         <svg id="ruleSvg" viewBox="0 0 1600 290"></svg></div>
     </div>
+  </section>
+  <!-- ④ 光學儀器 -->
+  <section class="panel" id="pD">
+    <div class="bar">
+      <span class="seg" id="instSeg"><button data-i="mic" class="on">顯微鏡</button><button data-i="tel">望遠鏡</button><button data-i="cam">相機</button></span>
+      <div id="stepsD"></div>
+    </div>
+    <div class="stage"><svg id="svgD" viewBox="0 0 1600 660"></svg></div>
+    <div class="ctrl" id="ctrlD">
+      <span class="lbl" id="lblD">標本</span><span class="lbl" id="lblD1">遠</span><input type="range" id="uSliderD" min="-2" max="-1.25" step="0.01" value="-1.35"><span class="lbl" id="lblD2">近</span>
+      <span class="read" id="uReadD"></span>
+    </div>
+    <div class="cap"><span class="txt" id="capD"></span></div>
   </section>
 </main>
 
@@ -846,14 +861,238 @@ const C=(()=>{
 /* 沙盤畫到「成像」時填表：B 初始化時 C 還沒建立，所以在此補一次 */
 B.redraw();
 
+/* ===================== ④ 光學儀器 ===================== */
+/* 標本：原創「菜瓜布小海綿」（黃色海綿＋綠色菜瓜布層，右手舉起，用來看左右相反） */
+function drawSponge(g,cx,cy,s,rot){
+  const t=el('g',{transform:`translate(${cx},${cy}) rotate(${rot||0}) scale(${s})`},g);
+  el('rect',{x:-26,y:-22,width:52,height:40,rx:7,fill:'#ffd84d',stroke:'#b08f00','stroke-width':1.5},t);
+  el('rect',{x:-26,y:-34,width:52,height:14,rx:6,fill:'#3fae5a',stroke:'#23753a','stroke-width':1.5},t);
+  for(const [x,y,r] of [[-17,8,2.4],[15,10,2],[-6,13,1.6],[19,-14,1.8],[-20,-12,1.6]])el('circle',{cx:x,cy:y,r,fill:'#e0b92a'},t);
+  for(const x of [-9,9]){el('circle',{cx:x,cy:-9,r:3.4,fill:'#222'},t);el('circle',{cx:x+1.2,cy:-10.2,r:1.1,fill:'#fff'},t)}
+  el('path',{d:'M-6,0 Q0,6 6,0',fill:'none',stroke:'#7a3b10','stroke-width':1.8,'stroke-linecap':'round'},t);
+  el('circle',{cx:-15,cy:-1,r:2.6,fill:'#f59f8b','fill-opacity':.8},t);el('circle',{cx:15,cy:-1,r:2.6,fill:'#f59f8b','fill-opacity':.8},t);
+  for(const x of [-11,11]){el('line',{x1:x,y1:18,x2:x,y2:27,stroke:'#b08f00','stroke-width':3},t);el('ellipse',{cx:x+(x<0?-1.5:1.5),cy:28,rx:4.5,ry:2.2,fill:'#3fae5a'},t)}
+  el('line',{x1:-26,y1:2,x2:-34,y2:14,stroke:'#b08f00','stroke-width':3},t);el('circle',{cx:-34.5,cy:15.5,r:3,fill:'#ffd84d',stroke:'#b08f00','stroke-width':1},t);
+  el('line',{x1:26,y1:-2,x2:37,y2:-18,stroke:'#b08f00','stroke-width':3},t);el('circle',{cx:38,cy:-20,r:3.4,fill:'#ffd84d',stroke:'#b08f00','stroke-width':1},t);
+  return t;
+}
+/* 樹（右邊停一隻鳥，用來看左右相反） */
+function drawTree(g,cx,cy,s,rot){
+  const t=el('g',{transform:`translate(${cx},${cy}) rotate(${rot||0}) scale(${s})`},g);
+  el('rect',{x:-4,y:2,width:8,height:24,fill:'#8b5a2b'},t);
+  for(const [x,y,r] of [[0,-14,16],[-11,-4,11],[11,-4,11]])el('circle',{cx:x,cy:y,r,fill:'#3a9d4a'},t);
+  el('path',{d:'M15,-24 q4,-5 8,0 q4,-5 8,0',fill:'none',stroke:'#222','stroke-width':2.2},t);
+  return t;
+}
+const D=(()=>{
+  const svg=$('#svgD'), W=1100, VH=660;
+  const PB={x:1135,y:40,w:440};
+  const st={inst:'mic',step:0,u:1.35,lens:600};
+  const C1='#d9480f', C2='#5b4bb7', CI='#e8743b', CV='#15803d', CE='#0f766e';
+  const cp=el('clipPath',{id:'clipD'},svg);el('rect',{x:0,y:0,width:W,height:VH},cp);
+  const dia=el('g',{'clip-path':'url(#clipD)'},svg), right=el('g',{},svg);
+  const LAB={
+    mic:['放標本','物鏡成像','落在目鏡焦距內','目鏡的光線','放大的虛像','眼睛看到'],
+    tel:['遠方的光','物鏡成像','落在目鏡焦距內','目鏡的光線','放大的虛像','比一比'],
+    cam:['針孔相機','把孔放大','換成凸透鏡','對焦']};
+  const T=(g,x,y,s,a)=>txt(g,x,y,s,Object.assign({'font-size':24,'font-weight':700,'text-anchor':'middle',fill:'#191c2e'},a||{}));
+  const L=(g,x1,y1,x2,y2,col,dash,w)=>el('line',{x1,y1,x2,y2,stroke:col,'stroke-width':w||4,'stroke-dasharray':dash||'none','stroke-linecap':'round'},g);
+  const thru=(x1,y1,x2,y2,X)=>y1+(y2-y1)/(x2-x1)*(X-x1);
+  const fade=(e,d)=>e.animate([{opacity:0},{opacity:1}],{duration:600,delay:d||0,easing:'ease',fill:'backwards'});
+  function lens(g,x,y,ry,name,col){
+    el('ellipse',{cx:x,cy:y,rx:Math.max(8,ry*.07),ry,fill:'#cfe8f6','fill-opacity':.85,stroke:'#6aaed6','stroke-width':3},g);
+    T(g,x,y-ry-14,name,{fill:col,'font-size':24});
+  }
+  function fdots(g,x,y,f,col,below,both){
+    for(const k of both?[-2,-1,1,2]:[-1,1]){const X=x+k*f;if(X<10||X>W-10)continue;
+      el('circle',{cx:X,cy:y,r:6,fill:col},g);T(g,X,below?y+30:y-14,Math.abs(k)===2?'2f':'f',{fill:col,'font-size':20})}
+  }
+  function arrow(g,x,y0,h,col,dashed){ // h>0 朝上
+    const d=Math.sign(h)||1, tip=y0-h;
+    L(g,x,y0,x,tip+d*12,col,dashed?'9 7':'none',5);
+    el('path',{d:`M${x},${tip} l-9,${d*15} h18 Z`,fill:col},g);
+  }
+  function box(g,y,h,title){
+    T(g,PB.x+PB.w/2,y-10,title,{'font-size':26,'font-weight':900,'font-family':'Noto Serif TC, serif'});
+    el('rect',{x:PB.x,y,width:PB.w,height:h,rx:14,fill:'#1d1f2b',stroke:'#c5c9da','stroke-width':3},g);
+  }
+  function scope(g,cx,cy,r,title){
+    T(g,cx,cy-r-14,title,{'font-size':26,'font-weight':900,'font-family':'Noto Serif TC, serif'});
+    el('circle',{cx,cy,r,fill:'#f4f1e6',stroke:'#9fd0ec','stroke-width':10},g);
+    const id='scD'+(++fxId), c=el('clipPath',{id},g);el('circle',{cx,cy,r:r-5},c);
+    return el('g',{'clip-path':`url(#${id})`},g);
+  }
+  /* ---------------- 顯微鏡 ---------------- */
+  function mic(anim){
+    const Y0=330, XO=290, F1=70, XE=670, F2=150, h0=26, s=st.step;
+    const u=st.u*F1, v=st.u/(st.u-1)*F1, m1=-v/u, xo=XO-u, x1=XO+v, y1=Y0-m1*h0;
+    const u2=XE-x1, inside=u2>0&&u2<F2;
+    const v2=u2*F2/(u2-F2), x2=XE+v2, m2=-v2/u2, y2=Y0-m1*m2*h0;
+    L(dia,10,Y0,W-10,Y0,'#8d92aa','none',2.5);
+    if(s>=2){const b=el('rect',{x:XE-F2,y:Y0-200,width:F2,height:400,fill:CE,'fill-opacity':.09},dia);
+      T(dia,XE-F2/2,Y0+190,'目鏡焦距內',{fill:CE,'font-size':20});if(anim===2)fade(b)}
+    lens(dia,XO,Y0,90,'物鏡',C2);lens(dia,XE,Y0,160,'目鏡',CE);
+    fdots(dia,XO,Y0,F1,C2,true,true);fdots(dia,XE,Y0,F2,CE,false,false);
+    arrow(dia,xo,Y0,h0,'#e0b000');T(dia,xo,Y0-h0-12,'標本',{'font-size':20,fill:'#a07800'});
+    if(s>=1){
+      const g=el('g',{},dia);
+      L(g,xo,Y0-h0,XO,Y0-h0,C1);L(g,XO,Y0-h0,x1,y1,C1);L(g,xo,Y0-h0,x1,y1,C2);
+      arrow(g,x1,Y0,Y0-y1,CI);T(g,x1-10,y1+30,'第一個像',{fill:CI,'font-size':20,'text-anchor':'end'});
+      if(anim===1)fade(g);
+    }
+    if(s>=2){
+      const ok=el('g',{},dia);
+      T(ok,x1,Y0-60,inside?'✔ 在目鏡焦距內':'✕ 在目鏡焦距外',{fill:inside?CV:'#c92a2a','font-size':22});
+      if(anim===2)fade(ok,300);
+    }
+    if(s>=3){
+      const g=el('g',{},dia), E=W+40;
+      L(g,x1,y1,XE,y1,C1);L(g,XE,y1,E,thru(XE,y1,XE+F2,Y0,E),C1);
+      L(g,x1,y1,E,thru(x1,y1,XE,Y0,E),C2);
+      if(anim===3)fade(g);
+    }
+    if(s>=4&&inside){
+      const g=el('g',{},dia);
+      L(g,XE,y1,x2,y2,C1,'10 8',3);L(g,x1,y1,x2,y2,C2,'10 8',3);
+      arrow(g,x2,Y0,Y0-y2,CV,true);T(g,x2-12,y2+8,'最後看到的像',{fill:CV,'font-size':20,'text-anchor':'end'});
+      if(anim===4)fade(g);
+    }
+    if(s>=5)drawEye(dia,XE+230,Y0,1.2);
+    // 右側
+    box(right,PB.y+30,150,'玻片上');drawSponge(right,PB.x+PB.w/2,PB.y+104,1.05,0);
+    const vw=scope(right,PB.x+PB.w/2,PB.y+390,160,'視野下');
+    const M=m1*m2;
+    if(s>=5&&inside){const sp=drawSponge(vw,PB.x+PB.w/2,PB.y+392,clamp(Math.abs(M)*.3,1.2,2.3),180);if(anim===5)fade(sp)}
+    else if(s>=5)T(vw,PB.x+PB.w/2,PB.y+400,'看不清楚',{fill:'#8d92aa','font-size':30});
+    else T(vw,PB.x+PB.w/2,PB.y+414,'？',{fill:'#8d92aa','font-size':72});
+    if(s>=5&&inside)T(right,PB.x+PB.w/2,PB.y+600,`物鏡 ×${Math.abs(m1).toFixed(1)} × 目鏡 ×${m2.toFixed(1)} ≈ ${Math.abs(M).toFixed(0)} 倍`,{fill:'#5b6078','font-size':24});
+    $('#uReadD').textContent=inside?'✔ 對準':'✕ 沒對準';$('#uReadD').style.color=inside?CV:'#c92a2a';
+    const CAP=['標本放在物鏡的 f 和 2f 之間。',
+      '物鏡的兩條光線：在物鏡後 2f 外形成第一個像（倒立、放大的實像）。',
+      '第一個像要落在目鏡的焦距以內。',
+      '把第一個像當成新的物體，畫目鏡的兩條光線：穿過目鏡後散開。',
+      '往回延長，交會處就是最後看到的像：再放大一次的虛像。',
+      '兩次透鏡成像：先放大一次，再放大一次。總放大倍率＝物鏡倍率 × 目鏡倍率。'];
+    return s>=2&&!inside?'✕ 第一個像跑到目鏡焦距外，看不到放大的虛像。拖動滑桿對焦。':CAP[s];
+  }
+  /* ---------------- 望遠鏡 ---------------- */
+  function tel(anim){
+    const Y0=330, XO=180, F1=380, XE=630, F2=90, t=.11, s=st.step;
+    const x1=XO+F1, y1=Y0+F1*t, u2=XE-x1, v2=u2*F2/(u2-F2), x2=XE+v2, m2=-v2/u2, y2=Y0+(y1-Y0)*m2;
+    L(dia,10,Y0,W-10,Y0,'#8d92aa','none',2.5);
+    if(s>=2){const b=el('rect',{x:XE-F2,y:Y0-200,width:F2,height:400,fill:CE,'fill-opacity':.09},dia);
+      T(dia,XE-F2/2,Y0+190,'目鏡焦距內',{fill:CE,'font-size':20});if(anim===2)fade(b)}
+    lens(dia,XO,Y0,130,'物鏡（焦距長）',C2);lens(dia,XE,Y0,100,'目鏡（焦距短）',CE);
+    fdots(dia,XO,Y0,F1,C2,true,false);fdots(dia,XE,Y0,F2,CE,false,false);
+    drawTree(dia,50,Y0-150,1.1,0);T(dia,50,Y0-196,'很遠的樹',{'font-size':20,fill:'#2f7d3b'});
+    const g0=el('g',{},dia);
+    for(const yl of [Y0-90,Y0,Y0+70]){const ys=yl-t*XO;L(g0,0,ys,XO,yl,'#e8b931','none',3.5);if(s>=1)L(g0,XO,yl,x1,y1,'#e8b931','none',3.5)}
+    if(s>=1){const g=el('g',{},dia);arrow(g,x1,Y0,Y0-y1,CI);T(g,x1-10,y1+34,'第一個像',{fill:CI,'font-size':20,'text-anchor':'end'});if(anim===1)fade(g)}
+    if(s>=2){const ok=el('g',{},dia);T(ok,x1+30,Y0-40,'✔ 在目鏡焦距內',{fill:CV,'font-size':22});if(anim===2)fade(ok,300)}
+    if(s>=3){const g=el('g',{},dia),E=W+40;
+      L(g,x1,y1,XE,y1,C1);L(g,XE,y1,E,thru(XE,y1,XE+F2,Y0,E),C1);L(g,x1,y1,E,thru(x1,y1,XE,Y0,E),C2);if(anim===3)fade(g)}
+    if(s>=4){const g=el('g',{},dia);
+      L(g,XE,y1,x2,y2,C1,'10 8',3);L(g,x1,y1,x2,y2,C2,'10 8',3);
+      arrow(g,x2,Y0,Y0-y2,CV,true);T(g,x2+14,y2+8,'最後看到的像',{fill:CV,'font-size':20,'text-anchor':'start'});if(anim===4)fade(g)}
+    if(s>=5)drawEye(dia,XE+200,Y0,1.2);
+    const v1=scope(right,PB.x+PB.w/2,PB.y+150,110,'肉眼看');drawTree(v1,PB.x+PB.w/2,PB.y+150,.55,0);
+    const v2g=scope(right,PB.x+PB.w/2,PB.y+440,150,'望遠鏡看');
+    if(s>=5){const tr=drawTree(v2g,PB.x+PB.w/2,PB.y+440,2.1,180);if(anim===5)fade(tr)}
+    else T(v2g,PB.x+PB.w/2,PB.y+464,'？',{fill:'#8d92aa','font-size':72});
+    const CAP=['很遠的物體射來的光，幾乎是平行的。',
+      '物鏡（焦距長）把光會聚，在焦點附近形成第一個像：倒立、縮小的實像。',
+      '第一個像落在目鏡（焦距短）的焦距以內。',
+      '把第一個像當成新的物體，畫目鏡的兩條光線：穿過目鏡後散開。',
+      '往回延長，得到放大的虛像。',
+      '顯微鏡：物鏡焦距短、目鏡焦距長；望遠鏡正好相反。兩者都是兩次透鏡成像。'];
+    return CAP[s];
+  }
+  /* ---------------- 相機 ---------------- */
+  function cam(anim){
+    const Y0=360, S=733, F=100, Hc=130, s=st.step, O=s>=3?300:200, Lx=s>=3?st.lens:600;
+    const u=Lx-O, v=u*F/(u-F), xi=Lx+v, m=v/u, blurL=Math.abs(xi-S)*120/v;
+    // 機身
+    el('rect',{x:590,y:Y0-120,width:S-590+24,height:240,rx:10,fill:'#eef0f6',stroke:'#5d6178','stroke-width':4},dia);
+    el('rect',{x:S,y:Y0-95,width:10,height:190,fill:'#3a3d52'},dia);T(dia,S+10,Y0+150,'感光元件',{'font-size':20,fill:'#3a3d52'});
+    L(dia,10,Y0,W-10,Y0,'#8d92aa','8 8',2);
+    drawCandle(dia,O,Y0,Hc,1,'obj');T(dia,O,Y0-Hc-16,'物體',{'font-size':22});
+    const tip=[O,Y0-Hc], g=el('g',{},dia);
+    if(s<=1){
+      const hole=s===0?5:40;
+      el('rect',{x:584,y:Y0-120,width:12,height:120-hole,fill:'#5d6178'},dia);el('rect',{x:584,y:Y0+hole,width:12,height:120-hole,fill:'#5d6178'},dia);
+      const yS=y=>thru(tip[0],tip[1],600,y,S);
+      if(s===0){L(g,tip[0],tip[1],S,yS(Y0),'#e8b931','none',3.5);L(g,O,Y0,S,Y0,'#e8b931','none',3.5)}
+      else{el('path',{d:`M${tip[0]},${tip[1]} L600,${Y0-hole} L${S},${yS(Y0-hole)} L${S},${yS(Y0+hole)} L600,${Y0+hole} Z`,fill:'#e8b931','fill-opacity':.35},g)}
+      if(anim===s)fade(g);
+    }else{
+      el('ellipse',{cx:Lx,cy:Y0,rx:10,ry:100,fill:'#cfe8f6',stroke:'#6aaed6','stroke-width':3},dia);T(dia,Lx-10,Y0+150,'凸透鏡',{fill:'#3c7fa8','font-size':20});
+      for(const k of [-2,-1,1])el('circle',{cx:Lx+k*F,cy:Y0,r:6,fill:C2},dia);
+      for(const k of [-2,-1,1])T(dia,Lx+k*F,Y0+30,Math.abs(k)===2?'2f':'f',{fill:C2,'font-size':20});
+      const yi=Y0+Hc*m, E=Math.max(xi,S)+10;
+      L(g,tip[0],tip[1],Lx,tip[1],C1);L(g,Lx,tip[1],E,thru(Lx,tip[1],Lx+F,Y0,E),C1);L(g,tip[0],tip[1],E,thru(tip[0],tip[1],Lx,Y0,E),C2);
+      if(Math.abs(xi-S)<3)drawCandle(g,S-4,Y0,Hc*m,-1,'real');
+      if(anim===s)fade(g);
+    }
+    // 右側：感光元件上
+    box(right,PB.y+60,330,'感光元件上');
+    const cx=PB.x+PB.w/2, cy=PB.y+130, h=120*(s<=1?(S-600)/(600-200):m)/.33;
+    const k=el('g',{},right);
+    if(s===0){k.setAttribute('opacity',.25)}
+    const blur=s===1?14:s>=2?Math.min(18,blurL*.6):0;
+    if(blur>.5){const id='bD'+(++fxId),f=el('filter',{id,x:'-50%',y:'-50%',width:'200%',height:'200%'},right);el('feGaussianBlur',{stdDeviation:blur},f);k.setAttribute('filter',`url(#${id})`)}
+    drawCandle(k,cx,cy,Math.min(h,230),-1,'glow');
+    const tag=s===0?'很暗':s===1?'變亮，但模糊':(Math.abs(xi-S)<3?'又亮又清楚':'模糊');
+    T(right,cx,PB.y+430,tag,{fill:s>=2&&Math.abs(xi-S)<3?CV:'#c92a2a','font-size':30});
+    if(s>=2)T(right,cx,PB.y+480,'倒立、縮小的實像',{fill:'#5b6078','font-size':24});
+    $('#uReadD').textContent=Math.abs(xi-S)<3?'✔ 對準':'✕ 沒對準';$('#uReadD').style.color=Math.abs(xi-S)<3?CV:'#c92a2a';
+    const CAP=['針孔相機：光沿直線穿過小孔，在後面形成倒立的像，但很暗。',
+      '把孔放大：進來的光變多、變亮，但像糊掉了。',
+      '換成凸透鏡：光被會聚，又亮又清楚。物體在 2f 外，形成倒立縮小的實像。',
+      '物體靠近了，像跑到感光元件後面。拖動滑桿移動鏡頭，把像對準（對焦）。'];
+    return CAP[s];
+  }
+  function draw(anim){
+    dia.replaceChildren();right.replaceChildren();
+    const cap=({mic,tel,cam})[st.inst](anim);
+    $('#capD').textContent=cap;
+    const ctl=st.inst==='mic'||(st.inst==='cam'&&st.step===3);
+    $('#ctrlD').style.visibility=ctl?'visible':'hidden';
+  }
+  function setupCtrl(){
+    const r=$('#uSliderD');
+    if(st.inst==='mic'){$('#lblD').textContent='標本';$('#lblD1').textContent='遠';$('#lblD2').textContent='近';r.min=-2;r.max=-1.25;r.step=.01;r.value=-st.u}
+    else{$('#lblD').textContent='鏡頭';$('#lblD1').textContent='往物體';$('#lblD2').textContent='往感光元件';r.min=560;r.max=640;r.step=1;r.value=st.lens}
+  }
+  $('#uSliderD').addEventListener('input',e=>{
+    if(st.inst==='mic')st.u=-e.target.value;else{let x=+e.target.value;if(Math.abs(x-576)<3)x=576.3;st.lens=x}
+    draw();
+  });
+  function go(n){
+    n=clamp(n,0,LAB[st.inst].length-1);const fwd=n===st.step+1;st.step=n;
+    if(st.inst==='cam'&&n===3&&!fwd){}
+    if(st.inst==='cam'&&n===3&&fwd){st.lens=600;$('#uSliderD').value=600}
+    bar.refresh(n);draw(fwd?n:undefined);
+  }
+  let bar;
+  function build(){
+    const h=$('#stepsD');h.replaceChildren();
+    bar=mkBar(h,LAB[st.inst],go);st.step=0;st.u=1.35;st.lens=600;setupCtrl();bar.refresh(0);draw();
+  }
+  document.querySelectorAll('#instSeg button').forEach(b=>b.addEventListener('click',()=>{
+    st.inst=b.dataset.i;document.querySelectorAll('#instSeg button').forEach(c=>c.classList.toggle('on',c===b));build();
+  }));
+  build();
+  return {go,get step(){return st.step}};
+})();
+
 /* ===================== 鍵盤 ===================== */
 document.addEventListener('keydown',e=>{
   if(e.target.tagName==='INPUT'&&e.target.type!=='range')return;
-  const P=curPanel==='pA'?A:curPanel==='pB'?B:null;
+  const P=curPanel==='pA'?A:curPanel==='pB'?B:curPanel==='pD'?D:null;
   if(curPanel==='pC'&&C.multiOn&&(e.key==='ArrowRight'||e.key==='ArrowLeft')){e.preventDefault();C.multiNext(e.key==='ArrowRight'?1:-1)}
   else if(e.key==='ArrowRight'&&P){e.preventDefault();P.go(P.step+1)}
   else if(e.key==='ArrowLeft'&&P){e.preventDefault();P.go(P.step-1)}
-  else if(e.key==='1')showPanel('pA');else if(e.key==='2')showPanel('pB');else if(e.key==='3')showPanel('pC');
+  else if(e.key==='1')showPanel('pA');else if(e.key==='2')showPanel('pB');else if(e.key==='3')showPanel('pC');else if(e.key==='4')showPanel('pD');
 });
 </script>
 </body>

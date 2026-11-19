@@ -593,7 +593,6 @@ function drawC(){
     h+=`<rect x="770" y="230" width="30" height="380" rx="4" fill="${obj?'#94a3b8':(st.film===3?'#e2e8f0':cv(fm))}" opacity="${obj?.45:st.film===3?.3:.6}" stroke="#cbd5e1" stroke-width="2"/>`;
     h+=T(785,665,FILMS[st.film].n+'玻璃紙',{size:26,w:700});
     h+=T(785,705,obj?(st.film===3?'全部頻段都能穿過':'只讓'+bandsOf(fm)+'段穿過'):'',{size:22,fill:'#94a3b8'});
-    if(Math.max(...abs)>0)h+=T(785,745,'被吸收：'+(obj?bandsOf(abs):colsOf(abs)),{size:22,fill:'#f87171'});
     h+=`<rect x="1330" y="230" width="30" height="380" rx="4" fill="#1e293b" stroke="#64748b" stroke-width="2"/>`;
     if(Math.max(...out)>0&&!obj)h+=`<ellipse cx="1328" cy="420" rx="16" ry="70" fill="${cv(out)}" filter="url(#glow)"/>`;
     h+=T(1345,665,'屏幕',{size:24,fill:'#94a3b8'});

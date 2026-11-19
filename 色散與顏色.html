@@ -775,10 +775,9 @@ function buildBar(){
   const prev=document.createElement('button');prev.className='btn';prev.textContent='← 上一步';
   const next=document.createElement('button');next.className='btn primary';next.textContent='下一步 →';
   const sp=document.createElement('span');sp.className='sp';
-  const hint=document.createElement('span');hint.className='hint';hint.textContent='← → 換步驟　↑ ↓ 切換看法　1 2 3 換分頁';
   const chips=labels.map((t,i)=>{const b=document.createElement('button');b.className='chip';b.innerHTML=`<b>${i}</b>${t}`;b.addEventListener('click',()=>go(i));return b});
   prev.addEventListener('click',()=>go(cur()-1));next.addEventListener('click',()=>go(cur()+1));
-  host.append(prev,...chips,sp,hint,next);
+  host.append(prev,...chips,sp,next);
   return {refresh(s){chips.forEach((c,i)=>{c.classList.toggle('on',i===s);c.classList.toggle('past',i<s)});prev.disabled=s===0;next.disabled=s===labels.length-1}};
 }
 let bar=null;
